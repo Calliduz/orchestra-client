@@ -19,35 +19,32 @@ export const Card: React.FC<CardProps> = ({
   children,
   className = '',
   bodyClassName = '',
-  withCorners = false,
 }) => {
   return (
     <div
-      className={`bg-hud-surface border border-hud-border text-hud-text relative rounded-sm ${
-        withCorners ? 'corner-hud' : ''
-      } ${className}`}
+      className={`bg-hud-surface border border-hud-border text-hud-text relative rounded-xl shadow-md ${className}`}
     >
       {(title || action || badge) && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-hud-border bg-hud-elevated rounded-t-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-3.5 border-b border-hud-border/60 bg-hud-elevated/30 rounded-t-xl gap-2">
           <div>
             {title && (
               <div className="flex items-center gap-2.5">
-                <h3 className="font-sans font-semibold text-xs tracking-wider uppercase text-hud-text">
+                <h3 className="font-sans font-semibold text-sm tracking-wide text-hud-text">
                   {title}
                 </h3>
                 {badge && <div>{badge}</div>}
               </div>
             )}
             {subtitle && (
-              <p className="font-mono text-[11px] text-hud-secondary mt-0.5 tracking-tight">
+              <p className="text-xs text-hud-secondary mt-0.5">
                 {subtitle}
               </p>
             )}
           </div>
-          {action && <div className="font-mono text-xs">{action}</div>}
+          {action && <div className="text-xs">{action}</div>}
         </div>
       )}
-      <div className={`p-4 ${bodyClassName}`}>{children}</div>
+      <div className={`p-5 ${bodyClassName}`}>{children}</div>
     </div>
   );
 };

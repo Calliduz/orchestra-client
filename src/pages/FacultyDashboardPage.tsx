@@ -37,7 +37,7 @@ export const FacultyDashboardPage: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
-    document.title = 'ORCHESTRA | Faculty Live Telemetry Matrix';
+    document.title = 'ORCHESTRA | Faculty Attendance Matrix';
   }, []);
 
   const fetchActiveSession = useCallback(async () => {
@@ -179,21 +179,21 @@ export const FacultyDashboardPage: React.FC = () => {
 
       {/* Hardware-Enforced Trust Interlock Card */}
       {isLocked && (
-        <div className="bg-hud-surface border-l-4 border-l-hud-amber border-y border-r border-hud-border hatch-pattern p-4 font-mono text-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 rounded-sm">
+        <div className="bg-amber-500/10 border border-amber-500/25 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-start gap-3.5">
-            <div className="w-8 h-8 rounded-sm bg-hud-amber-bg border border-hud-amber-border flex items-center justify-center text-hud-amber shrink-0 mt-0.5">
-              <Lock className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <Lock className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-sans font-bold text-xs uppercase tracking-wider text-hud-amber">
-                  HARDWARE-ENFORCED SESSION TRUST: TERMINAL {terminalId} LOCKED
+                <span className="font-sans font-semibold text-sm text-amber-300">
+                  Hardware Trust Boundary Active: Terminal {terminalId} Locked
                 </span>
-                <span className="text-[9px] bg-hud-amber-bg text-hud-amber border border-hud-amber-border px-1.5 py-0.2 rounded-sm font-semibold">
-                  INTERLOCK ARMED
+                <span className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">
+                  STANDBY
                 </span>
               </div>
-              <p className="text-hud-secondary text-[11px] mt-1 leading-relaxed max-w-3xl">
+              <p className="text-slate-300 text-xs mt-1 leading-relaxed max-w-2xl">
                 Terminal ingress is rejected by default. Student RFID taps return <code>403 SESSION_LOCKED</code> until the authorized instructor presents Master Badge <code>0xA1B2C3D4</code> to establish the trust boundary.
               </p>
             </div>
@@ -201,6 +201,8 @@ export const FacultyDashboardPage: React.FC = () => {
 
           <Button
             size="sm"
+            variant="secondary"
+            className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-500/30 shrink-0"
             onClick={async () => {
               await fetch('http://localhost:5000/api/v1/hardware/tap', {
                 method: 'POST',
@@ -212,19 +214,19 @@ export const FacultyDashboardPage: React.FC = () => {
               });
               fetchActiveSession();
             }}
-            leftIcon={<Unlock className="w-3.5 h-3.5" />}
+            leftIcon={<Unlock className="w-4 h-4" />}
           >
             Interrogate Master Badge
           </Button>
         </div>
       )}
 
-      {/* Genuine Telemetry Multi-Register Ribbon */}
+      {/* Real-time Headcount Telemetry Multi-Register Ribbon */}
       <KpiGrid stats={stats} />
 
-      {/* ASYMMETRIC 70 / 30 CORE LAYOUT */}
+      {/* Main Core 2-Column Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* 70% LEFT: Roster Telemetry Ledger */}
+        {/* Left: Attendance Roster Ledger */}
         <div className="lg:col-span-8 space-y-6">
           <RosterTable
             roster={roster}
@@ -236,7 +238,7 @@ export const FacultyDashboardPage: React.FC = () => {
           />
         </div>
 
-        {/* 30% RIGHT: Precision Controls & Instructor Auth Console */}
+        {/* Right: Operational Settings & Faculty Clearance */}
         <div className="lg:col-span-4 space-y-6">
           {/* Punctuality Sliders */}
           <ThresholdSliders
@@ -249,29 +251,29 @@ export const FacultyDashboardPage: React.FC = () => {
 
           {/* Hardware Security Interlock Diagnostics */}
           <Card
-            title="Edge Trust Specifications"
-            subtitle="Firmware pacing and transponder parameters"
+            title="Edge Hardware Parameters"
+            subtitle="ESP32 firmware pacing and ISO14443A configuration"
           >
-            <div className="space-y-2.5 font-mono text-[11px] text-hud-secondary">
-              <div className="flex justify-between border-b border-hud-subtle pb-1.5">
-                <span>PACING_INTERLOCK:</span>
-                <span className="text-hud-lime font-bold num-tabular">3000 ms (millis)</span>
+            <div className="space-y-3 font-mono text-xs text-hud-secondary">
+              <div className="flex justify-between items-center border-b border-hud-subtle pb-2">
+                <span className="text-hud-muted">PACING INTERLOCK:</span>
+                <span className="text-emerald-400 font-semibold num-tabular">3000 ms (millis)</span>
               </div>
-              <div className="flex justify-between border-b border-hud-subtle pb-1.5">
-                <span>ANTI_PASSBACK_DEFENSE:</span>
-                <span className="text-hud-lime font-bold">UNIQUE(session, student)</span>
+              <div className="flex justify-between items-center border-b border-hud-subtle pb-2">
+                <span className="text-hud-muted">ANTI-PASSBACK:</span>
+                <span className="text-emerald-400 font-semibold">UNIQUE(session, student)</span>
               </div>
-              <div className="flex justify-between border-b border-hud-subtle pb-1.5">
-                <span>FALLBACK_TTL:</span>
-                <span className="text-hud-text font-bold num-tabular">60000 ms (6-Digit OTP)</span>
+              <div className="flex justify-between items-center border-b border-hud-subtle pb-2">
+                <span className="text-hud-muted">KEYPAD OTP TTL:</span>
+                <span className="text-hud-text font-semibold num-tabular">60s (Decaying PIN)</span>
               </div>
-              <div className="flex justify-between border-b border-hud-subtle pb-1.5">
-                <span>SPI_TRANSCEIVER:</span>
+              <div className="flex justify-between items-center border-b border-hud-subtle pb-2">
+                <span className="text-hud-muted">SPI TRANSCEIVER:</span>
                 <span className="text-hud-text">MFRC522 (13.56 MHz)</span>
               </div>
-              <div className="flex justify-between">
-                <span>MASTER_BADGE:</span>
-                <span className="text-hud-amber font-bold">0xA1B2C3D4</span>
+              <div className="flex justify-between items-center">
+                <span className="text-hud-muted">MASTER BADGE UID:</span>
+                <span className="text-amber-400 font-semibold">0xA1B2C3D4</span>
               </div>
             </div>
           </Card>
@@ -282,12 +284,12 @@ export const FacultyDashboardPage: React.FC = () => {
             subtitle="JWT credential required for manual overrides"
           >
             {authToken ? (
-              <div className="space-y-3 font-mono text-xs">
-                <div className="flex items-center gap-2 text-hud-lime bg-hud-lime-bg border border-hud-lime-border p-2.5 rounded-sm">
-                  <Shield className="w-4 h-4 shrink-0" />
+              <div className="space-y-3 font-sans text-xs">
+                <div className="flex items-center gap-2.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">
+                  <Shield className="w-5 h-5 shrink-0" />
                   <div>
-                    <div className="font-bold">FACULTY CLEARANCE ACTIVE</div>
-                    <div className="text-[10px] text-hud-secondary mt-0.5">
+                    <div className="font-semibold text-sm">Faculty Session Authenticated</div>
+                    <div className="text-xs text-slate-400 mt-0.5">
                       Bearer authentication active for manual overrides
                     </div>
                   </div>
@@ -302,13 +304,13 @@ export const FacultyDashboardPage: React.FC = () => {
                     localStorage.removeItem('orchestra-faculty-token');
                   }}
                 >
-                  Revoke Clearance Token
+                  Sign Out of Console
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleLogin} className="space-y-3 font-mono text-xs">
+              <form onSubmit={handleLogin} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[10px] text-hud-secondary uppercase mb-1">
+                  <label className="block text-xs font-medium text-hud-secondary mb-1">
                     Institutional Email
                   </label>
                   <input
@@ -316,12 +318,12 @@ export const FacultyDashboardPage: React.FC = () => {
                     value={facultyEmail}
                     onChange={(e) => setFacultyEmail(e.target.value)}
                     required
-                    className="w-full px-2.5 py-1.5 text-xs border border-hud-border bg-hud-bg text-hud-text focus:outline-none focus:border-hud-lime rounded-sm transition-colors"
+                    className="w-full px-3 py-2 text-xs border border-hud-border bg-hud-elevated/50 text-hud-text focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded-lg transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] text-hud-secondary uppercase mb-1">
+                  <label className="block text-xs font-medium text-hud-secondary mb-1">
                     Faculty Password
                   </label>
                   <div className="relative">
@@ -330,20 +332,20 @@ export const FacultyDashboardPage: React.FC = () => {
                       value={facultyPassword}
                       onChange={(e) => setFacultyPassword(e.target.value)}
                       required
-                      className="w-full px-2.5 py-1.5 text-xs border border-hud-border bg-hud-bg text-hud-text focus:outline-none focus:border-hud-lime rounded-sm pr-8 transition-colors"
+                      className="w-full px-3 py-2 text-xs border border-hud-border bg-hud-elevated/50 text-hud-text focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded-lg pr-9 transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hud-secondary hover:text-hud-text"
                     >
-                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
                 {authError && (
-                  <div className="p-2 bg-hud-rose-bg border border-hud-rose-border text-hud-rose text-[11px] rounded-sm">
+                  <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-lg">
                     {authError}
                   </div>
                 )}
@@ -354,9 +356,9 @@ export const FacultyDashboardPage: React.FC = () => {
                   variant="secondary"
                   className="w-full"
                   isLoading={isLoggingIn}
-                  leftIcon={<LogIn className="w-3.5 h-3.5" />}
+                  leftIcon={<LogIn className="w-4 h-4" />}
                 >
-                  Authenticate Clearance
+                  Authenticate Faculty Clearance
                 </Button>
               </form>
             )}

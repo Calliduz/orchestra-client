@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   FileText,
   FileSpreadsheet,
-  Lock,
   PowerOff,
   Clock,
   RefreshCw,
@@ -96,16 +95,16 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
   };
 
   return (
-    <div className="bg-hud-surface border border-hud-border p-5 relative corner-hud rounded-sm">
+    <div className="bg-hud-surface border border-hud-border/70 p-6 rounded-2xl shadow-sm">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         {/* Left: Section Specs & Hardware Status */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-sans font-bold text-2xl text-hud-text tracking-tight">
               {session?.sectionCode || sectionCode}
             </h1>
-            <span className="text-hud-muted font-mono">•</span>
-            <span className="font-sans text-sm text-hud-secondary font-medium">
+            <span className="text-hud-muted font-sans">•</span>
+            <span className="font-sans text-base text-hud-secondary font-medium">
               {session?.courseName || courseName}
             </span>
             <Badge
@@ -114,29 +113,32 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-hud-secondary font-mono">
-            <div className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-hud-secondary" />
-              <span>ROOM:</span>
-              <span className="text-hud-text font-semibold">{session?.roomNumber || roomNumber}</span>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-hud-secondary font-sans">
+            <div className="flex items-center gap-1.5 bg-hud-elevated/50 px-2.5 py-1 rounded-lg">
+              <MapPin className="w-3.5 h-3.5 text-hud-muted" />
+              <span className="text-hud-muted">Room:</span>
+              <span className="text-hud-text font-medium">{session?.roomNumber || roomNumber}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-hud-lime" />
-              <span>TERMINAL:</span>
-              <span className="text-hud-lime font-bold">{terminalId}</span>
-              <CopyButton text={terminalId} label="" className="border-0 bg-transparent p-0 ml-0.5" />
+
+            <div className="flex items-center gap-1.5 bg-hud-elevated/50 px-2.5 py-1 rounded-lg">
+              <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-hud-muted">Terminal:</span>
+              <span className="text-emerald-400 font-mono font-medium">{terminalId}</span>
+              <CopyButton text={terminalId} label="" className="p-0 ml-0.5" />
             </div>
+
             {session && (
-              <div className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-hud-secondary" />
-                <span>INSTRUCTOR:</span>
-                <span className="text-hud-text">{session.facultyName}</span>
+              <div className="flex items-center gap-1.5 bg-hud-elevated/50 px-2.5 py-1 rounded-lg">
+                <User className="w-3.5 h-3.5 text-hud-muted" />
+                <span className="text-hud-muted">Instructor:</span>
+                <span className="text-hud-text font-medium">{session.facultyName}</span>
               </div>
             )}
+
             {session && (
-              <div className="flex items-center gap-1.5 bg-hud-lime-bg border border-hud-lime-border px-2 py-0.5 text-hud-lime font-bold rounded-sm">
-                <Clock className="w-3 h-3" />
-                <span className="num-tabular">ELAPSED: {elapsedTime}</span>
+              <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 font-medium px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                <Clock className="w-3.5 h-3.5" />
+                <span className="font-mono num-tabular">Elapsed: {elapsedTime}</span>
               </div>
             )}
           </div>
@@ -160,7 +162,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
                 variant="secondary"
                 size="sm"
                 onClick={() => handleDownload('pdf')}
-                leftIcon={<FileText className="w-3.5 h-3.5 text-hud-lime" />}
+                leftIcon={<FileText className="w-3.5 h-3.5 text-emerald-400" />}
               >
                 PDF Manifest
               </Button>
@@ -180,7 +182,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
                 onClick={() => setShowCloseModal(true)}
                 leftIcon={<PowerOff className="w-3.5 h-3.5" />}
               >
-                Terminate Session
+                End Session
               </Button>
             </>
           )}
@@ -191,46 +193,26 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
       <Modal
         isOpen={showCloseModal}
         onClose={() => setShowCloseModal(false)}
-        title="Hardware Session Termination Confirmation"
+        title="Terminate Attendance Session"
+        confirmLabel="Yes, Terminate & Compile Roster"
+        confirmVariant="danger"
+        onConfirm={handleConfirmClose}
+        isLoading={isClosing}
       >
-        <div className="space-y-4 font-mono text-xs text-hud-secondary">
+        <div className="space-y-3 text-sm text-hud-secondary">
           <p>
-            You are about to terminate the active hardware ingress session for section{' '}
-            <strong className="text-hud-lime">{session?.sectionCode || sectionCode}</strong> on terminal{' '}
-            <strong className="text-hud-text">{terminalId}</strong>.
+            You are about to close the active attendance ingress for section{' '}
+            <strong className="text-hud-text">{session?.sectionCode || sectionCode}</strong> on terminal{' '}
+            <strong className="text-emerald-400 font-mono">{terminalId}</strong>.
           </p>
-
-          <div className="bg-hud-rose-bg border border-hud-rose-border p-3 text-[11px] text-hud-rose space-y-1 rounded-sm">
-            <div className="font-bold flex items-center gap-1.5 uppercase">
-              <Lock className="w-3.5 h-3.5" />
-              <span>Automated Roster Ledger Compilation</span>
-            </div>
-            <p>
-              1. All unrecorded students in the manifest will automatically transition to{' '}
-              <strong>ABSENT</strong> status.
-            </p>
-            <p>
-              2. System will compile official PDF &amp; CSV attendance reports and dispatch them to the
-              instructor's registered email via Nodemailer.
-            </p>
-            <p>
-              3. Terminal [{terminalId}] will return to hardware state <strong>LOCKED</strong>.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-hud-border">
-            <Button variant="ghost" size="sm" onClick={() => setShowCloseModal(false)}>
-              Abort
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleConfirmClose}
-              isLoading={isClosing}
-              leftIcon={<PowerOff className="w-3.5 h-3.5" />}
-            >
-              Confirm Termination
-            </Button>
+          <div className="p-3 bg-hud-elevated/60 border border-hud-border/70 rounded-xl text-xs space-y-1">
+            <div className="text-hud-text font-semibold">Immediate Automated Outcomes:</div>
+            <ul className="list-disc pl-4 space-y-0.5 text-hud-secondary">
+              <li>Terminal hardware returns to <code>LOCKED</code> standby state.</li>
+              <li>Unrecorded students will be classified as <code>ABSENT</code>.</li>
+              <li>Official PDF and CSV attendance manifests will be compiled.</li>
+              <li>Automated email notifications dispatched to faculty.</li>
+            </ul>
           </div>
         </div>
       </Modal>

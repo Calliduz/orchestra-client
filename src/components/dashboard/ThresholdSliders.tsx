@@ -62,58 +62,58 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
 
   return (
     <Card
-      title="Punctuality Calibration Engine"
+      title="Punctuality Thresholds"
       subtitle="Dynamic threshold reclassification based on session arrival offsets"
       action={
-        <div className="flex items-center gap-1.5 font-mono text-[10px] text-hud-secondary">
-          <Sliders className="w-3.5 h-3.5 text-hud-lime" />
-          <span>CHRONO_EVAL</span>
+        <div className="flex items-center gap-1.5 text-xs text-hud-secondary">
+          <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Active Policy</span>
         </div>
       }
     >
-      <div className="space-y-4 font-mono text-xs">
+      <div className="space-y-5 text-xs">
         {/* Interactive Time-Bracket Visualizer */}
-        <div className="space-y-1.5">
-          <div className="text-[10px] text-hud-secondary uppercase tracking-wider flex justify-between">
-            <span>Punctuality Bracket Mapping</span>
-            <span className="text-hud-muted">0m — 60m Timeline</span>
+        <div className="space-y-2">
+          <div className="text-xs text-hud-secondary uppercase font-medium tracking-wider flex justify-between">
+            <span>Arrival Timeline</span>
+            <span className="text-hud-muted">0m — 60m</span>
           </div>
-          <div className="h-2.5 w-full bg-hud-elevated border border-hud-border flex overflow-hidden rounded-sm">
+          <div className="h-3 w-full bg-hud-elevated/70 flex overflow-hidden rounded-full">
             <div
               style={{ width: `${Math.min(100, (lateThreshold / 60) * 100)}%` }}
-              className="bg-hud-lime h-full border-r border-hud-bg"
+              className="bg-emerald-500 h-full transition-all"
               title={`Present: 0 to ${lateThreshold} mins`}
             />
             <div
               style={{
                 width: `${Math.min(100, ((cutThreshold - lateThreshold) / 60) * 100)}%`,
               }}
-              className="bg-hud-amber h-full border-r border-hud-bg"
+              className="bg-amber-500 h-full transition-all"
               title={`Late: ${lateThreshold} to ${cutThreshold} mins`}
             />
             <div
-              className="bg-hud-rose flex-1 h-full"
+              className="bg-rose-500 flex-1 h-full transition-all"
               title={`Cut: > ${cutThreshold} mins`}
             />
           </div>
-          <div className="flex justify-between text-[9px] text-hud-secondary">
-            <span className="text-hud-lime">0m (Present)</span>
-            <span className="text-hud-amber">{lateThreshold}m (Late)</span>
-            <span className="text-hud-rose">{cutThreshold}m (Cut)</span>
+          <div className="flex justify-between text-xs text-hud-secondary font-mono">
+            <span className="text-emerald-400">0m (On-Time)</span>
+            <span className="text-amber-400">{lateThreshold}m (Late)</span>
+            <span className="text-rose-400">{cutThreshold}m (Cut)</span>
             <span className="text-hud-muted">60m+</span>
           </div>
         </div>
 
-        {/* Sliders Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Clean Stacked Sliders */}
+        <div className="space-y-4">
           {/* Late Slider */}
-          <div className="bg-hud-bg p-3 border border-hud-border rounded-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-hud-amber font-semibold text-[11px] uppercase tracking-wider">
+          <div className="bg-hud-elevated/40 p-4 border border-hud-border/70 rounded-xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-amber-400 font-semibold text-xs uppercase tracking-wider">
                 Late Grace Window
               </span>
-              <span className="bg-hud-amber-bg text-hud-amber border border-hud-amber-border px-2 py-0.5 font-bold num-tabular rounded-sm">
-                {lateThreshold}m ({(lateThreshold * 60).toLocaleString()}s)
+              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 font-bold font-mono num-tabular rounded-full text-xs">
+                {lateThreshold} mins
               </span>
             </div>
             <input
@@ -126,21 +126,21 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
               onChange={(e) => setLateThreshold(parseInt(e.target.value, 10))}
               className="w-full cursor-pointer disabled:opacity-30"
             />
-            <div className="flex justify-between text-[9px] text-hud-muted mt-1.5">
-              <span>01m</span>
-              <span>0 to {lateThreshold}m = Present</span>
-              <span>45m</span>
+            <div className="flex justify-between text-xs text-hud-muted">
+              <span>01 min</span>
+              <span className="text-slate-400">0 to {lateThreshold}m = Present</span>
+              <span>45 mins</span>
             </div>
           </div>
 
           {/* Cut Slider */}
-          <div className="bg-hud-bg p-3 border border-hud-border rounded-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-hud-rose font-semibold text-[11px] uppercase tracking-wider">
+          <div className="bg-hud-elevated/40 p-4 border border-hud-border/70 rounded-xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-rose-400 font-semibold text-xs uppercase tracking-wider">
                 Cut-off Threshold
               </span>
-              <span className="bg-hud-rose-bg text-hud-rose border border-hud-rose-border px-2 py-0.5 font-bold num-tabular rounded-sm">
-                {cutThreshold}m ({(cutThreshold * 60).toLocaleString()}s)
+              <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 font-bold font-mono num-tabular rounded-full text-xs">
+                {cutThreshold} mins
               </span>
             </div>
             <input
@@ -153,20 +153,20 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
               onChange={(e) => setCutThreshold(parseInt(e.target.value, 10))}
               className="w-full cursor-pointer disabled:opacity-30"
             />
-            <div className="flex justify-between text-[9px] text-hud-muted mt-1.5">
-              <span>05m</span>
-              <span>{lateThreshold}m to {cutThreshold}m = Late</span>
-              <span>90m</span>
+            <div className="flex justify-between text-xs text-hud-muted">
+              <span>05 mins</span>
+              <span className="text-slate-400">{lateThreshold}m to {cutThreshold}m = Late</span>
+              <span>90 mins</span>
             </div>
           </div>
         </div>
 
         {/* Action Row */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-hud-subtle">
-          <div className="text-[10px] text-hud-secondary flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-hud-border/60">
+          <div className="text-xs text-hud-secondary">
             <span>&gt; {cutThreshold}m = Cut</span>
-            <span className="text-hud-muted">•</span>
-            <span>Manual overrides preserved</span>
+            <span className="mx-1.5 text-hud-muted">•</span>
+            <span>Overrides preserved</span>
           </div>
 
           <Button
@@ -175,7 +175,7 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
             disabled={disabled || !isDirty}
             onClick={handleApply}
             isLoading={isApplying}
-            leftIcon={<RefreshCw className={`w-3 h-3 ${isApplying ? 'animate-spin' : ''}`} />}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isApplying ? 'animate-spin' : ''}`} />}
           >
             Apply Recalculation
           </Button>
@@ -184,16 +184,16 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
         {/* Feedback message */}
         {feedback && (
           <div
-            className={`p-2.5 text-xs flex items-center gap-2 border rounded-sm ${
+            className={`p-3 text-xs flex items-center gap-2 border rounded-xl ${
               feedback.type === 'success'
-                ? 'bg-hud-lime-bg text-hud-lime border-hud-lime-border'
-                : 'bg-hud-rose-bg text-hud-rose border-hud-rose-border'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
             }`}
           >
             {feedback.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-hud-lime shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-hud-rose shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
             )}
             <span>{feedback.message}</span>
           </div>
