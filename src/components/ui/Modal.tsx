@@ -50,11 +50,11 @@ export const Modal: React.FC<ModalProps> = ({
       <div className="relative w-full max-w-lg bg-hud-surface border border-hud-border shadow-2xl p-6 z-10 rounded-2xl">
         <div className="flex items-start justify-between pb-3.5 border-b border-hud-border/60">
           <div>
-            <h3 className="font-sans font-semibold text-base text-hud-text">
+            <h3 className="font-sans font-extrabold text-base tracking-tight text-hud-text">
               {title}
             </h3>
             {description && (
-              <p className="text-xs text-hud-secondary mt-1">
+              <p className="text-xs text-hud-secondary mt-1 font-body">
                 {description}
               </p>
             )}

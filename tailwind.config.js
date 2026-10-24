@@ -6,41 +6,53 @@ export default {
     extend: {
       colors: {
         hud: {
-          bg: '#090D14',           // Deep rich dark canvas (gentle on eyes)
-          surface: '#0F1523',      // Primary card and panel surface
-          elevated: '#171F32',     // Inputs, modals, elevated surfaces
-          hover: '#1E2942',        // Interactive hover state
-          border: 'rgba(255, 255, 255, 0.08)', // Soft, subtle hairline boundary
-          subtle: 'rgba(255, 255, 255, 0.04)', // Minimal inner divider
-          
+          bg: 'var(--hud-bg)',
+          surface: 'var(--hud-surface)',
+          elevated: 'var(--hud-elevated)',
+          hover: 'var(--hud-hover)',
+          border: 'var(--hud-border)',
+          subtle: 'var(--hud-subtle)',
+
           // Typography
-          text: '#F8FAFC',         // Crisp, clear primary text
-          secondary: '#94A3B8',    // Readable secondary technical text
-          muted: '#64748B',        // Muted captions & placeholders
-          
-          // Primary Mint/Lime Tech Accent (Pleasing, high-legibility, no eye-strain)
-          lime: '#10B981',
-          'lime-dim': '#059669',
-          'lime-bg': 'rgba(16, 185, 129, 0.12)',
-          'lime-border': 'rgba(16, 185, 129, 0.28)',
+          text: 'var(--hud-text)',
+          secondary: 'var(--hud-secondary)',
+          muted: 'var(--hud-muted)',
 
-          // Semantic Status Accents (Softened)
-          amber: '#F59E0B',
-          'amber-bg': 'rgba(245, 158, 11, 0.12)',
-          'amber-border': 'rgba(245, 158, 11, 0.28)',
+          // Signature Session Hero Ribbon
+          'hero-bg': 'var(--hud-hero-bg)',
+          'hero-text': 'var(--hud-hero-text)',
+          'hero-muted': 'var(--hud-hero-muted)',
 
-          rose: '#F43F5E',
-          'rose-bg': 'rgba(244, 63, 94, 0.12)',
-          'rose-border': 'rgba(244, 63, 94, 0.28)',
+          // Primary Signal Accent (Cyan / Sky Induction from Stitch)
+          cyan: 'var(--hud-cyan)',
+          'cyan-bright': 'var(--hud-cyan-bright)',
+          'cyan-bg': 'var(--hud-cyan-bg)',
+          'cyan-border': 'var(--hud-cyan-border)',
 
-          slate: '#94A3B8',
-          'slate-bg': 'rgba(148, 163, 184, 0.10)',
-          'slate-border': 'rgba(148, 163, 184, 0.20)',
+          // Verified Scan / Present Accent (Emerald)
+          lime: 'var(--hud-lime)',
+          'lime-dim': 'var(--hud-lime-dim)',
+          'lime-bg': 'var(--hud-lime-bg)',
+          'lime-border': 'var(--hud-lime-border)',
+
+          // Semantic Status Accents
+          amber: 'var(--hud-amber)',
+          'amber-bg': 'var(--hud-amber-bg)',
+          'amber-border': 'var(--hud-amber-border)',
+
+          rose: 'var(--hud-rose)',
+          'rose-bg': 'var(--hud-rose-bg)',
+          'rose-border': 'var(--hud-rose-border)',
+
+          slate: 'var(--hud-slate)',
+          'slate-bg': 'var(--hud-slate-bg)',
+          'slate-border': 'var(--hud-slate-border)',
         },
       },
       fontFamily: {
-        sans: ['Space Grotesk', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        body: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
       },
       borderRadius: {
         none: '0px',
@@ -49,6 +61,14 @@ export default {
         md: '10px',
         lg: '12px',
         xl: '16px',
+        '2xl': '20px',
+      },
+      boxShadow: {
+        tactile: '0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04)',
+        'glow-cyan': '0 0 20px rgba(56, 189, 248, 0.25)',
+        'glow-emerald': '0 0 24px rgba(16, 185, 129, 0.30)',
+        'glow-rose': '0 0 24px rgba(239, 68, 68, 0.30)',
+        'glow-amber': '0 0 20px rgba(245, 158, 11, 0.25)',
       },
     },
   },

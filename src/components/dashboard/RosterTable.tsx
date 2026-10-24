@@ -52,15 +52,15 @@ export const RosterTable: React.FC<RosterTableProps> = ({
       title="Section Attendance Manifest"
       subtitle={`Enrolled Records: ${roster.length} active students in database`}
       action={
-        <div className="flex items-center gap-1.5 p-1 bg-hud-elevated/50 border border-hud-border/50 rounded-xl overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 bg-hud-elevated/60 border border-hud-border/70 rounded-2xl shadow-tactile overflow-x-auto">
           {['ALL', 'PRESENT', 'LATE', 'CUT', 'EXCUSED', 'ABSENT'].map((filter) => (
             <button
               key={filter}
               onClick={() => setStatusFilter(filter)}
-              className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
+              className={`px-3 py-1 text-xs rounded-xl font-semibold transition-all ${
                 statusFilter === filter
-                  ? 'bg-emerald-500/15 text-emerald-400 font-semibold shadow-sm'
-                  : 'text-hud-secondary hover:text-white hover:bg-white/5'
+                  ? 'bg-sky-600 text-white font-bold shadow-sm'
+                  : 'text-hud-secondary hover:text-hud-text hover:bg-hud-hover'
               }`}
             >
               {filter}
@@ -71,27 +71,27 @@ export const RosterTable: React.FC<RosterTableProps> = ({
       bodyClassName="p-0"
     >
       {/* Search Header Strip */}
-      <div className="p-4 border-b border-hud-border/60 bg-hud-elevated/20 flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
+      <div className="p-4 border-b border-hud-border/70 bg-hud-elevated/30 flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-hud-muted" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-hud-muted" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by ID, name, or institutional email..."
-            className="w-full pl-9 pr-3.5 py-2 text-xs border border-hud-border bg-hud-elevated/50 text-hud-text focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded-xl placeholder:text-hud-muted transition-colors"
+            className="w-full pl-10 pr-4 py-2 text-xs border border-hud-border/80 bg-hud-surface text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl placeholder:text-hud-muted transition-colors shadow-sm font-body"
           />
         </div>
 
-        <div className="text-xs text-hud-secondary">
-          Records matched: <span className="text-emerald-400 font-bold font-mono num-tabular">{filteredRoster.length}</span> of {roster.length}
+        <div className="text-xs text-hud-secondary font-body">
+          Records matched: <span className="text-sky-600 dark:text-sky-400 font-bold font-mono num-tabular">{filteredRoster.length}</span> of {roster.length}
         </div>
       </div>
 
       {/* Spacious High-Readability Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-hud-text">
-          <thead className="bg-hud-elevated/40 text-xs font-semibold text-hud-secondary uppercase tracking-wider border-b border-hud-border/60">
+          <thead className="bg-hud-elevated/60 text-xs font-semibold text-hud-secondary uppercase tracking-wider border-b border-hud-border/60">
             <tr>
               <th className="py-3.5 px-4 w-10 text-center">#</th>
               <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">STUDENT ID</th>
@@ -124,29 +124,29 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                 return (
                   <tr
                     key={student.id}
-                    className="hover:bg-hud-hover/40 transition-colors group"
+                    className="hover:bg-hud-hover/50 transition-colors group"
                   >
                     <td className="py-3.5 px-4 text-hud-muted font-mono text-center">
                       {String(idx + 1).padStart(2, '0')}
                     </td>
                     <td className="py-3.5 px-4 font-mono whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-200 group-hover:text-white transition-colors">
+                        <span className="font-semibold text-hud-text group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                           {student.studentNumber}
                         </span>
-                        <CopyButton text={student.studentNumber} label="" className="p-0 text-hud-muted hover:text-emerald-400" />
+                        <CopyButton text={student.studentNumber} label="" className="p-0 text-hud-muted hover:text-sky-600 dark:hover:text-sky-400" />
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-xs font-semibold text-emerald-400 shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-700 dark:bg-slate-800/80 dark:border-slate-700/80 dark:text-sky-400 flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
                           {initials}
                         </div>
                         <div>
-                          <div className="font-sans font-medium text-sm text-hud-text group-hover:text-emerald-400 transition-colors">
+                          <div className="font-sans font-bold text-sm text-hud-text group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">
                             {student.fullName}
                           </div>
-                          <div className="font-mono text-xs text-hud-muted">
+                          <div className="font-mono text-xs text-hud-secondary">
                             {student.email}
                           </div>
                         </div>
@@ -154,8 +154,8 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                     </td>
                     <td className="py-3.5 px-4 font-mono whitespace-nowrap">
                       {student.rfidUid ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-300 bg-hud-elevated/70 border border-hud-border/60 px-2 py-1 rounded-md">
-                          <Tag className="w-3 h-3 text-hud-muted" />
+                        <span className="inline-flex items-center gap-1.5 text-xs text-hud-text bg-hud-elevated border border-hud-border px-2.5 py-1 rounded-lg shadow-sm">
+                          <Tag className="w-3 h-3 text-sky-600 dark:text-sky-400" />
                           <span>0x{student.rfidUid}</span>
                         </span>
                       ) : (

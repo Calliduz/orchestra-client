@@ -179,30 +179,30 @@ export const FacultyDashboardPage: React.FC = () => {
 
       {/* Hardware-Enforced Trust Interlock Card */}
       {isLocked && (
-        <div className="bg-amber-500/10 border border-amber-500/25 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+        <div className="bg-amber-50/90 border border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-200 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300/60 dark:bg-amber-500/20 dark:border-amber-500/30 flex items-center justify-center text-amber-800 dark:text-amber-400 shrink-0">
               <Lock className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-sans font-semibold text-sm text-amber-300">
+                <span className="font-sans font-bold text-sm text-amber-950 dark:text-amber-300">
                   Hardware Trust Boundary Active: Terminal {terminalId} Locked
                 </span>
-                <span className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-amber-200/80 text-amber-900 border border-amber-300/80 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold">
                   STANDBY
                 </span>
               </div>
-              <p className="text-slate-300 text-xs mt-1 leading-relaxed max-w-2xl">
-                Terminal ingress is rejected by default. Student RFID taps return <code>403 SESSION_LOCKED</code> until the authorized instructor presents Master Badge <code>0xA1B2C3D4</code> to establish the trust boundary.
+              <p className="text-amber-900/90 dark:text-slate-300 text-xs mt-1 leading-relaxed max-w-2xl font-body">
+                Terminal ingress is rejected by default. Student RFID taps return <code className="bg-amber-200/50 dark:bg-amber-950/40 px-1 py-0.5 rounded text-amber-950 dark:text-amber-200 font-mono">403 SESSION_LOCKED</code> until the authorized instructor presents Master Badge <code className="bg-amber-200/50 dark:bg-amber-950/40 px-1 py-0.5 rounded text-amber-950 dark:text-amber-200 font-mono">0xA1B2C3D4</code> to establish the trust boundary.
               </p>
             </div>
           </div>
 
           <Button
             size="sm"
-            variant="secondary"
-            className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-500/30 shrink-0"
+            variant="primary"
+            className="bg-[#0D1C2F] hover:bg-[#1E293B] text-white border-0 shadow-sm shrink-0 font-bold"
             onClick={async () => {
               await fetch('http://localhost:5000/api/v1/hardware/tap', {
                 method: 'POST',
@@ -214,7 +214,7 @@ export const FacultyDashboardPage: React.FC = () => {
               });
               fetchActiveSession();
             }}
-            leftIcon={<Unlock className="w-4 h-4" />}
+            leftIcon={<Unlock className="w-4 h-4 text-amber-300" />}
           >
             Interrogate Master Badge
           </Button>
@@ -310,7 +310,7 @@ export const FacultyDashboardPage: React.FC = () => {
             ) : (
               <form onSubmit={handleLogin} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-xs font-medium text-hud-secondary mb-1">
+                  <label className="block text-xs font-semibold text-hud-secondary mb-1.5 font-body">
                     Institutional Email
                   </label>
                   <input
@@ -318,12 +318,12 @@ export const FacultyDashboardPage: React.FC = () => {
                     value={facultyEmail}
                     onChange={(e) => setFacultyEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-xs border border-hud-border bg-hud-elevated/50 text-hud-text focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded-lg transition-colors"
+                    className="w-full px-3.5 py-2 text-xs border border-hud-border bg-hud-elevated/70 text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl transition-colors font-body shadow-tactile"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-hud-secondary mb-1">
+                  <label className="block text-xs font-semibold text-hud-secondary mb-1.5 font-body">
                     Faculty Password
                   </label>
                   <div className="relative">
@@ -332,12 +332,12 @@ export const FacultyDashboardPage: React.FC = () => {
                       value={facultyPassword}
                       onChange={(e) => setFacultyPassword(e.target.value)}
                       required
-                      className="w-full px-3 py-2 text-xs border border-hud-border bg-hud-elevated/50 text-hud-text focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded-lg pr-9 transition-colors"
+                      className="w-full px-3.5 py-2 text-xs border border-hud-border bg-hud-elevated/70 text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl pr-10 transition-colors font-body shadow-tactile"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hud-secondary hover:text-hud-text"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-hud-secondary hover:text-hud-text"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -345,7 +345,7 @@ export const FacultyDashboardPage: React.FC = () => {
                 </div>
 
                 {authError && (
-                  <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-lg">
+                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-xl shadow-sm">
                     {authError}
                   </div>
                 )}
@@ -353,8 +353,8 @@ export const FacultyDashboardPage: React.FC = () => {
                 <Button
                   type="submit"
                   size="sm"
-                  variant="secondary"
-                  className="w-full"
+                  variant="primary"
+                  className="w-full shadow-md"
                   isLoading={isLoggingIn}
                   leftIcon={<LogIn className="w-4 h-4" />}
                 >

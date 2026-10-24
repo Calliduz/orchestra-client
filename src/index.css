@@ -3,24 +3,123 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Google Stitch Academic Signal Clean Light Palette (Default) */
+    --hud-bg: #F8FAFC;
+    --hud-surface: #FFFFFF;
+    --hud-elevated: #F1F5F9;
+    --hud-hover: #E2E8F0;
+    --hud-border: #E2E8F0;
+    --hud-subtle: #F1F5F9;
+
+    /* High-contrast Typography */
+    --hud-text: #0F172A;
+    --hud-secondary: #475569;
+    --hud-muted: #94A3B8;
+
+    /* Session Banner */
+    --hud-hero-bg: #FFFFFF;
+    --hud-hero-text: #0F172A;
+    --hud-hero-muted: #475569;
+
+    /* Signal Sky Accent */
+    --hud-cyan: #006398;
+    --hud-cyan-bright: #0284C7;
+    --hud-cyan-bg: #EFF6FF;
+    --hud-cyan-border: #BAE6FD;
+
+    /* Verified Scan / Present Accent (Emerald) */
+    --hud-lime: #009668;
+    --hud-lime-dim: #005236;
+    --hud-lime-bg: #ECFDF5;
+    --hud-lime-border: #A7F3D0;
+
+    /* Tardy / Grace Window Accent (Amber) */
+    --hud-amber: #B45309;
+    --hud-amber-bg: #FFFBEB;
+    --hud-amber-border: #FDE68A;
+
+    /* Cut / Absent / High Risk Accent (Red) */
+    --hud-rose: #BA1A1A;
+    --hud-rose-bg: #FEF2F2;
+    --hud-rose-border: #FECACA;
+
+    /* Neutral Slate Utilities */
+    --hud-slate: #475569;
+    --hud-slate-bg: #F1F5F9;
+    --hud-slate-border: #E2E8F0;
+
+    --hud-slider-track: #E2E8F0;
+    --hud-slider-thumb-border: #FFFFFF;
+  }
+
+  html.dark {
+    /* Stitch Slate Dark Alternate */
+    --hud-bg: #0F172A;
+    --hud-surface: #1E293B;
+    --hud-elevated: #334155;
+    --hud-hover: #475569;
+    --hud-border: #334155;
+    --hud-subtle: #1E293B;
+
+    --hud-text: #F8FAFC;
+    --hud-secondary: #94A3B8;
+    --hud-muted: #64748B;
+
+    --hud-hero-bg: #1E293B;
+    --hud-hero-text: #FFFFFF;
+    --hud-hero-muted: #94A3B8;
+
+    --hud-cyan: #0284C7;
+    --hud-cyan-bright: #38BDF8;
+    --hud-cyan-bg: rgba(2, 132, 199, 0.15);
+    --hud-cyan-border: rgba(2, 132, 199, 0.35);
+
+    --hud-lime: #10B981;
+    --hud-lime-dim: #059669;
+    --hud-lime-bg: rgba(16, 185, 129, 0.15);
+    --hud-lime-border: rgba(16, 185, 129, 0.35);
+
+    --hud-amber: #F59E0B;
+    --hud-amber-bg: rgba(245, 158, 11, 0.15);
+    --hud-amber-border: rgba(245, 158, 11, 0.35);
+
+    --hud-rose: #EF4444;
+    --hud-rose-bg: rgba(239, 68, 68, 0.15);
+    --hud-rose-border: rgba(239, 68, 68, 0.35);
+
+    --hud-slate: #94A3B8;
+    --hud-slate-bg: rgba(148, 163, 184, 0.15);
+    --hud-slate-border: rgba(148, 163, 184, 0.25);
+
+    --hud-slider-track: #334155;
+    --hud-slider-thumb-border: #1E293B;
+  }
+
   html {
     scroll-behavior: smooth;
-    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #090D14;
-    color: #F8FAFC;
-    color-scheme: dark;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--hud-bg);
+    color: var(--hud-text);
   }
 
   body {
-    background-color: #090D14;
+    background-color: var(--hud-bg);
+    color: var(--hud-text);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
-  /* Selection highlight */
+  /* Selection highlight matching Stitch Induction Cyan */
   ::selection {
-    background-color: rgba(16, 185, 129, 0.3);
+    background-color: rgba(2, 132, 199, 0.20);
+    color: #0D1C2F;
+  }
+
+  html.dark ::selection {
+    background-color: rgba(2, 132, 199, 0.40);
     color: #FFFFFF;
   }
 }
@@ -46,7 +145,7 @@
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  background: #171F32;
+  background: var(--hud-slider-track);
   height: 6px;
   border-radius: 9999px;
   cursor: pointer;
@@ -57,17 +156,18 @@ input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   width: 18px;
   height: 18px;
-  background: #10B981;
-  border: 3px solid #0F1523;
+  background: #0284C7;
+  border: 3px solid var(--hud-slider-thumb-border);
   border-radius: 9999px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  background: #34D399;
+  background: #006398;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.5);
 }
 
 /* Custom Sleek Scrollbar */
@@ -81,10 +181,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(148, 163, 184, 0.35);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(148, 163, 184, 0.60);
 }

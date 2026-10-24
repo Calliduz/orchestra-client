@@ -71,12 +71,12 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
     >
       <div className="space-y-4 font-mono text-xs">
         {/* Student Summary */}
-        <div className="p-3 bg-hud-bg border border-hud-border flex items-center justify-between rounded-sm">
+        <div className="p-3.5 bg-hud-elevated/50 border border-hud-border/70 flex items-center justify-between rounded-xl shadow-tactile">
           <div>
             <div className="font-bold text-hud-text text-sm font-sans">
               {student.fullName}
             </div>
-            <div className="text-[11px] text-hud-secondary font-mono mt-0.5">
+            <div className="text-xs text-hud-secondary font-mono mt-0.5">
               ID: {student.studentNumber} · {student.email}
             </div>
           </div>
@@ -87,14 +87,14 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
 
         {/* Status Selection */}
         <div>
-          <label htmlFor="status-select" className="block text-[11px] text-hud-secondary uppercase tracking-wider mb-1.5 font-medium">
+          <label htmlFor="status-select" className="block text-xs text-hud-secondary uppercase tracking-wider mb-2 font-semibold font-body">
             Target Status Flag
           </label>
           <select
             id="status-select"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="w-full px-3 py-2 border border-hud-border bg-hud-bg text-hud-text font-mono text-xs focus:border-hud-lime focus:outline-none rounded-sm transition-colors"
+            className="w-full px-3.5 py-2.5 border border-hud-border/80 bg-hud-elevated/70 text-hud-text font-mono text-xs focus:ring-1 focus:ring-sky-500 focus:outline-none rounded-xl transition-colors shadow-tactile"
           >
             <option value="PRESENT">PRESENT — On-Time Ingress</option>
             <option value="LATE">LATE — Tardy Grace Period</option>
@@ -106,7 +106,7 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
 
         {/* Reason / Remarks */}
         <div>
-          <label htmlFor="reason-input" className="block text-[11px] text-hud-secondary uppercase tracking-wider mb-1.5 font-medium">
+          <label htmlFor="reason-input" className="block text-xs text-hud-secondary uppercase tracking-wider mb-2 font-semibold font-body">
             Justification Memo
           </label>
           <input
@@ -115,16 +115,16 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="e.g. University Clinic Referral - Acute Fever"
-            className="w-full px-3 py-2 border border-hud-border bg-hud-bg text-hud-text font-mono text-xs focus:border-hud-lime focus:outline-none rounded-sm placeholder:text-hud-muted transition-colors"
+            className="w-full px-3.5 py-2.5 border border-hud-border/80 bg-hud-elevated/70 text-hud-text font-body text-xs focus:ring-1 focus:ring-sky-500 focus:outline-none rounded-xl placeholder:text-hud-muted transition-colors shadow-tactile"
           />
-          <div className="flex gap-1.5 mt-2 flex-wrap">
+          <div className="flex gap-2 mt-2.5 flex-wrap font-body">
             {['Clinic Medical Referral', "Dean's Excused Slip", 'Card Reader Hardware Misread', 'Official University Delegation'].map(
               (preset) => (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => setReason(preset)}
-                  className="px-2 py-0.5 text-[10px] border border-hud-border bg-hud-elevated hover:border-hud-lime text-hud-secondary hover:text-hud-lime rounded-sm transition-colors"
+                  className="px-2.5 py-1 text-xs border border-hud-border/70 bg-hud-elevated hover:border-sky-500/50 text-hud-secondary hover:text-sky-400 rounded-lg shadow-sm transition-colors"
                 >
                   +{preset}
                 </button>
@@ -134,7 +134,7 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
         </div>
 
         {error && (
-          <div className="p-2.5 border border-hud-rose-border bg-hud-rose-bg text-hud-rose text-xs rounded-sm">
+          <div className="p-3 border border-rose-500/30 bg-rose-500/10 text-rose-400 text-xs rounded-xl shadow-sm">
             {error}
           </div>
         )}

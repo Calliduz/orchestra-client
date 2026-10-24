@@ -108,17 +108,17 @@ export const TerminalMonitorPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       {/* Header */}
-      <div className="border-b border-hud-border pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="border-b border-hud-border/80 pb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-sans font-bold text-2xl text-hud-text tracking-tight">
+          <div className="flex items-center gap-3">
+            <h1 className="font-sans font-extrabold text-2xl text-hud-text tracking-tight">
               Edge Terminal Diagnostics &amp; OLED Mirror
             </h1>
-            <span className="text-[10px] font-mono font-semibold bg-hud-lime-bg text-hud-lime border border-hud-lime-border px-2 py-0.5 rounded-sm">
+            <span className="text-[11px] font-sans font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
               ESP32 Node
             </span>
           </div>
-          <p className="text-xs text-hud-muted mt-1 font-mono">
+          <p className="text-xs text-hud-secondary mt-1 font-body">
             Physical ESP32 firmware state machine, SPI MFRC522 transponder polling, and non-blocking 3000ms pacing interlock.
           </p>
         </div>
@@ -133,7 +133,7 @@ export const TerminalMonitorPage: React.FC = () => {
             variant="outline"
             onClick={fetchTerminalStatus}
             isLoading={isLoading}
-            leftIcon={<RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
           >
             Poll State
           </Button>
@@ -148,42 +148,42 @@ export const TerminalMonitorPage: React.FC = () => {
             title="SSD1306 0.96&quot; I2C OLED Screen Mirror (128x64)"
             subtitle="Pixel-mapped hardware rendering matching the physical classroom display"
           >
-            <div className="flex flex-col items-center justify-center p-6 bg-hud-bg border border-hud-border rounded-sm">
-              {/* Graphic Screen Enclosure */}
-              <div className="w-full max-w-sm aspect-[128/64] bg-black border border-hud-border p-3 flex flex-col justify-between relative overflow-hidden font-mono shadow-[inset_0_0_24px_rgba(0,0,0,0.95)] rounded-sm">
+            <div className="flex flex-col items-center justify-center p-6 bg-hud-elevated/40 border border-hud-border/70 rounded-2xl shadow-tactile">
+              {/* Graphic Screen Enclosure with Tactile Bezel */}
+              <div className="w-full max-w-sm aspect-[128/64] bg-slate-950 border-2 border-slate-700/80 p-3.5 flex flex-col justify-between relative overflow-hidden font-mono shadow-[inset_0_0_30px_rgba(0,0,0,0.95)] rounded-xl">
                 {/* OLED Header */}
-                <div className="flex items-center justify-between text-[10px] text-hud-lime font-bold border-b border-hud-lime/20 pb-0.5">
+                <div className="flex items-center justify-between text-[10px] text-sky-400 font-bold border-b border-sky-500/25 pb-1">
                   <span>ORCHESTRA IoT</span>
                   <span>{terminalId}</span>
                 </div>
 
                 {/* OLED Main Phosphor Graphic Text */}
                 <div className="my-auto text-center py-2">
-                  <pre className="text-hud-lime font-bold text-xs tracking-wider leading-relaxed whitespace-pre-wrap font-mono select-none">
+                  <pre className="text-sky-300 font-bold text-xs tracking-wider leading-relaxed whitespace-pre-wrap font-mono select-none drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">
                     {oledMessage}
                   </pre>
                 </div>
 
                 {/* OLED Status Footer */}
-                <div className="flex items-center justify-between text-[9px] text-hud-lime border-t border-hud-lime/20 pt-0.5">
+                <div className="flex items-center justify-between text-[9px] text-sky-400 border-t border-sky-500/25 pt-1">
                   <span className="truncate max-w-[200px]">{oledSubtext}</span>
                   {cooldownRemaining > 0 ? (
-                    <span className="text-hud-amber font-bold num-tabular">
+                    <span className="text-amber-400 font-bold num-tabular">
                       COOLDOWN: {cooldownRemaining.toFixed(1)}s
                     </span>
                   ) : (
-                    <span className="text-hud-lime">READY</span>
+                    <span className="text-emerald-400 font-bold">READY</span>
                   )}
                 </div>
               </div>
 
-              {/* Hardware GPIO Status LED Strip */}
-              <div className="flex items-center gap-6 mt-4 text-[11px] font-mono text-hud-muted">
+              {/* Hardware GPIO Status LED Strip with Luminous Halos */}
+              <div className="flex items-center gap-6 mt-5 text-xs font-mono text-hud-secondary">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`w-2 h-2 rounded-full transition-colors ${
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${
                       !terminalStatus?.isLocked && cooldownRemaining === 0
-                        ? 'bg-hud-lime shadow-[0_0_8px_rgba(204,255,0,0.6)]'
+                        ? 'bg-emerald-400 shadow-glow-emerald'
                         : 'bg-hud-elevated border border-hud-border'
                     }`}
                   />
@@ -191,9 +191,9 @@ export const TerminalMonitorPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`w-2 h-2 rounded-full transition-colors ${
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${
                       terminalStatus?.isLocked
-                        ? 'bg-hud-rose shadow-[0_0_8px_rgba(248,113,113,0.6)]'
+                        ? 'bg-rose-500 shadow-glow-rose'
                         : 'bg-hud-elevated border border-hud-border'
                     }`}
                   />
@@ -201,9 +201,9 @@ export const TerminalMonitorPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`w-2 h-2 rounded-full transition-colors ${
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${
                       cooldownRemaining > 0
-                        ? 'bg-hud-amber shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+                        ? 'bg-amber-400 shadow-glow-amber'
                         : 'bg-hud-elevated border border-hud-border'
                     }`}
                   />
@@ -220,7 +220,7 @@ export const TerminalMonitorPage: React.FC = () => {
             title="SPI Transponder Interrogator"
             subtitle="Trigger card scans directly via hardware REST endpoint"
           >
-            <div className="space-y-2.5 font-mono text-xs">
+            <div className="space-y-3 font-mono text-xs">
               <Button
                 variant="primary"
                 size="sm"
@@ -228,44 +228,44 @@ export const TerminalMonitorPage: React.FC = () => {
                 onClick={() => simulateTap('A1B2C3D4', 'Faculty Master Badge')}
               >
                 <span>MASTER BADGE [0xA1B2C3D4]</span>
-                <span className="text-[10px] font-sans opacity-85">Prof. Macadat</span>
+                <span className="text-xs font-body opacity-90">Prof. Macadat</span>
               </Button>
 
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-between"
+                className="w-full justify-between bg-hud-elevated/50"
                 onClick={() => simulateTap('10A1B2C3', 'Student 2023-0001-CCS')}
               >
                 <span>STUDENT BADGE [0x10A1B2C3]</span>
-                <span className="text-[10px] text-hud-muted">Agbada</span>
+                <span className="text-xs text-sky-400 font-body">Agbada</span>
               </Button>
 
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-between"
+                className="w-full justify-between bg-hud-elevated/50"
                 onClick={() => simulateTap('20B2C3D4', 'Student 2023-0002-CCS')}
               >
                 <span>STUDENT BADGE [0x20B2C3D4]</span>
-                <span className="text-[10px] text-hud-muted">Altichie</span>
+                <span className="text-xs text-sky-400 font-body">Altichie</span>
               </Button>
 
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-between"
+                className="w-full justify-between bg-hud-elevated/50 hover:border-rose-500/40"
                 onClick={() => simulateTap('99999999', 'Foreign UID')}
               >
                 <span>FOREIGN TAG [0x99999999]</span>
-                <span className="text-[10px] text-hud-rose">404 Unregistered</span>
+                <span className="text-xs text-rose-400 font-body">404 Unregistered</span>
               </Button>
 
-              <div className="p-3 bg-hud-elevated border border-hud-border text-[11px] text-hud-secondary space-y-1 rounded-sm">
-                <div className="text-hud-lime font-bold">
+              <div className="p-3.5 bg-hud-elevated/70 border border-hud-border/70 text-xs text-hud-secondary space-y-1.5 rounded-xl shadow-tactile font-body">
+                <div className="text-sky-400 font-bold uppercase tracking-wider text-[11px] font-sans">
                   HARDWARE PACING INTERLOCK
                 </div>
-                <p>
+                <p className="leading-relaxed">
                   Enforces a deterministic 3000ms non-blocking cooldown via embedded <code>millis()</code> between consecutive student scans to disrupt rapid batch-swiping.
                 </p>
               </div>

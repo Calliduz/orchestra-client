@@ -82,24 +82,24 @@ export const StudentOtpPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Header Banner */}
-      <div className="border-b border-hud-border pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="border-b border-hud-border/80 pb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-sans font-bold text-2xl text-hud-text tracking-tight">
-              Student Keypad PIN Generator
+          <div className="flex items-center gap-3">
+            <h1 className="font-sans font-extrabold text-2xl text-hud-text tracking-tight">
+              Student Keypad PIN Ingress Portal
             </h1>
-            <span className="text-[10px] font-mono font-semibold bg-hud-lime-bg text-hud-lime border border-hud-lime-border px-2 py-0.5 rounded-sm">
-              60s TTL Interlock
+            <span className="text-[11px] font-sans font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
+              60s Ephemeral TTL
             </span>
           </div>
-          <p className="text-xs text-hud-secondary mt-1 font-mono">
-            Physical badge unavailable? Generate an ephemeral 6-digit PIN for 4x4 hardware keypad entry.
+          <p className="text-xs text-hud-secondary mt-1 font-body">
+            Physical student badge unavailable? Generate an ephemeral 6-digit induction PIN for terminal keypad entry.
           </p>
         </div>
 
-        <div className="text-right text-[11px] font-mono text-hud-secondary">
-          <span>TARGET TERMINAL: </span>
-          <span className="text-hud-lime font-bold">TERM-CL304 (LAB-304)</span>
+        <div className="text-right text-xs font-mono text-hud-secondary bg-hud-surface border border-hud-border/70 px-3.5 py-2 rounded-xl shadow-tactile">
+          <span className="text-hud-muted">TARGET: </span>
+          <span className="text-sky-400 font-bold">TERM-CL304 (LAB-304)</span>
         </div>
       </div>
 
@@ -108,14 +108,14 @@ export const StudentOtpPage: React.FC = () => {
         {/* 60% Left: Request Form & Anti-Proxy Notice */}
         <div className="lg:col-span-7 space-y-6">
           <Card
-            title="Request Ingress PIN"
+            title="Request Terminal Ingress PIN"
             subtitle="Requires active class session in your enrolled section"
           >
-            <form onSubmit={handleRequestOtp} className="space-y-4 text-xs font-mono">
+            <form onSubmit={handleRequestOtp} className="space-y-4 text-xs font-body">
               <div>
                 <label
                   htmlFor="identifier-input"
-                  className="block text-[11px] font-medium text-hud-secondary uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold text-hud-secondary uppercase tracking-wider mb-2"
                 >
                   Student ID or Institutional Email
                 </label>
@@ -125,26 +125,26 @@ export const StudentOtpPage: React.FC = () => {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="e.g. 2023-0001-CCS or altichie.rjhay@student.orchestra.edu"
-                  className="w-full px-3 py-2 border border-hud-border bg-hud-bg text-hud-text focus:outline-none focus:border-hud-lime rounded-sm placeholder:text-hud-muted transition-colors"
+                  className="w-full px-4 py-2.5 border border-hud-border/80 bg-hud-elevated/70 text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl placeholder:text-hud-muted transition-colors shadow-tactile font-mono text-xs"
                 />
-                <div className="flex flex-wrap gap-2 text-[10px] text-hud-secondary mt-2">
-                  <span>PRESETS:</span>
-                  <button type="button" onClick={() => setIdentifier('2023-0001-CCS')} className="text-hud-lime hover:underline">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-hud-secondary mt-2.5 font-mono">
+                  <span className="text-hud-muted text-[11px]">PRESETS:</span>
+                  <button type="button" onClick={() => setIdentifier('2023-0001-CCS')} className="text-sky-400 hover:text-sky-300 hover:underline">
                     2023-0001-CCS (Agbada)
                   </button>
                   <span className="text-hud-muted">•</span>
-                  <button type="button" onClick={() => setIdentifier('2023-0002-CCS')} className="text-hud-lime hover:underline">
+                  <button type="button" onClick={() => setIdentifier('2023-0002-CCS')} className="text-sky-400 hover:text-sky-300 hover:underline">
                     2023-0002-CCS (Altichie)
                   </button>
                   <span className="text-hud-muted">•</span>
-                  <button type="button" onClick={() => setIdentifier('2023-0003-CCS')} className="text-hud-lime hover:underline">
+                  <button type="button" onClick={() => setIdentifier('2023-0003-CCS')} className="text-sky-400 hover:text-sky-300 hover:underline">
                     2023-0003-CCS (Cabunoc)
                   </button>
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-hud-rose-bg border border-hud-rose-border text-hud-rose text-xs flex items-center gap-2 rounded-sm">
+                <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 rounded-xl shadow-sm">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -154,11 +154,11 @@ export const StudentOtpPage: React.FC = () => {
                 type="submit"
                 variant="primary"
                 size="md"
-                className="w-full"
+                className="w-full shadow-md"
                 isLoading={isLoading}
-                leftIcon={<KeyRound className="w-3.5 h-3.5" />}
+                leftIcon={<KeyRound className="w-4 h-4" />}
               >
-                Generate 60-Second PIN
+                Generate 60-Second Ingress PIN
               </Button>
             </form>
           </Card>
@@ -166,41 +166,41 @@ export const StudentOtpPage: React.FC = () => {
           {/* Hardware Keypad Operation Instructions */}
           <Card
             title="Terminal Keypad Procedure"
-            subtitle="Step-by-step physical entry on the classroom 4x4 matrix unit"
+            subtitle="Physical entry guide for the classroom 4x4 matrix unit"
           >
-            <div className="space-y-3 font-mono text-xs text-hud-secondary">
-              <div className="flex items-start gap-3 p-2.5 bg-hud-bg border border-hud-border rounded-sm">
-                <div className="w-6 h-6 rounded-sm bg-hud-elevated border border-hud-border text-hud-lime font-bold flex items-center justify-center shrink-0 text-xs">
+            <div className="space-y-3 font-body text-xs text-hud-secondary">
+              <div className="flex items-start gap-3.5 p-3.5 bg-hud-elevated/50 border border-hud-border/70 rounded-xl shadow-tactile">
+                <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-400 font-bold flex items-center justify-center shrink-0 font-mono text-sm shadow-sm">
                   #
                 </div>
                 <div>
-                  <div className="text-hud-text font-medium">1. Enter OTP Mode</div>
-                  <div className="text-[11px] text-hud-secondary mt-0.5">
-                    Press <strong className="text-hud-lime">#</strong> on the physical 4x4 keypad. The SSD1306 OLED will switch to <code>[ ENTER OTP ]</code> mode.
+                  <div className="text-hud-text font-bold text-sm">1. Enter OTP Mode</div>
+                  <div className="text-xs text-hud-secondary mt-0.5 leading-relaxed">
+                    Press <strong className="text-sky-400 font-mono">#</strong> on the physical 4x4 keypad. The SSD1306 OLED displays <code>[ ENTER OTP ]</code>.
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-2.5 bg-hud-bg border border-hud-border rounded-sm">
-                <div className="w-6 h-6 rounded-sm bg-hud-elevated border border-hud-border text-hud-text font-bold flex items-center justify-center shrink-0 text-xs">
+              <div className="flex items-start gap-3.5 p-3.5 bg-hud-elevated/50 border border-hud-border/70 rounded-xl shadow-tactile">
+                <div className="w-7 h-7 rounded-lg bg-hud-elevated border border-hud-border text-hud-text font-bold flex items-center justify-center shrink-0 font-mono text-xs shadow-sm">
                   123
                 </div>
                 <div>
-                  <div className="text-hud-text font-medium">2. Key In 6 Digits</div>
-                  <div className="text-[11px] text-hud-secondary mt-0.5">
-                    Enter the 6-digit PIN displayed on your device. Each keypress echoes a bullet on the OLED. Use <strong className="text-hud-amber">*</strong> to backspace or clear.
+                  <div className="text-hud-text font-bold text-sm">2. Key In 6 Digits</div>
+                  <div className="text-xs text-hud-secondary mt-0.5 leading-relaxed">
+                    Enter your 6-digit PIN. Each keypress echoes on the OLED. Press <strong className="text-amber-400 font-mono">*</strong> to backspace or clear.
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-2.5 bg-hud-bg border border-hud-border rounded-sm">
-                <div className="w-6 h-6 rounded-sm bg-hud-elevated border border-hud-border text-hud-lime font-bold flex items-center justify-center shrink-0 text-xs">
+              <div className="flex items-start gap-3.5 p-3.5 bg-hud-elevated/50 border border-hud-border/70 rounded-xl shadow-tactile">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center shrink-0 font-mono text-sm shadow-sm">
                   #
                 </div>
                 <div>
-                  <div className="text-hud-text font-medium">3. Submit &amp; Verify</div>
-                  <div className="text-[11px] text-hud-secondary mt-0.5">
-                    Press <strong className="text-hud-lime">#</strong> again to dispatch HTTP POST to backend. Successful verification emits high piezo chime + green LED.
+                  <div className="text-hud-text font-bold text-sm">3. Submit &amp; Verify</div>
+                  <div className="text-xs text-hud-secondary mt-0.5 leading-relaxed">
+                    Press <strong className="text-emerald-400 font-mono">#</strong> again to dispatch verification. Successful ingress triggers piezobuzzer chime + green status LED.
                   </div>
                 </div>
               </div>
@@ -212,74 +212,74 @@ export const StudentOtpPage: React.FC = () => {
         <div className="lg:col-span-5 space-y-6">
           <Card
             title="Generated Ingress Credential"
-            subtitle="Ephemeral single-use credential for terminal ingress"
+            subtitle="Single-use ephemeral token for terminal ingress"
           >
             {otpData ? (
               <div className="space-y-4 font-mono text-center">
-                {/* 6-Digit PIN Vault Box */}
+                {/* 6-Digit PIN Vault Box with Radiant Luminous Halo */}
                 <div
-                  className={`p-6 border rounded-sm ${
+                  className={`p-6 border rounded-2xl transition-all shadow-sm ${
                     isExpired
-                      ? 'bg-hud-rose-bg border-hud-rose-border text-hud-muted'
-                      : 'bg-hud-lime-bg border-hud-lime-border text-hud-lime shadow-[0_0_20px_rgba(204,255,0,0.12)]'
+                      ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400'
+                      : 'bg-sky-50 border-sky-300 text-sky-800 dark:bg-sky-500/15 dark:border-sky-400/40 dark:text-sky-300 dark:shadow-glow-cyan/25'
                   }`}
                 >
-                  <div className="text-[10px] text-hud-secondary uppercase tracking-wider mb-2">
+                  <div className="text-[11px] font-sans font-bold uppercase tracking-wider mb-2 text-slate-500 dark:text-hud-secondary">
                     {isExpired ? 'EXPIRED OTP TOKEN' : 'ACTIVE INGRESS PIN'}
                   </div>
 
-                  <div className="text-4xl sm:text-5xl font-mono font-bold tracking-widest my-2 num-tabular select-all">
+                  <div className="text-4xl sm:text-5xl font-mono font-extrabold tracking-widest my-2 num-tabular select-all text-white">
                     {otpData.otp}
                   </div>
 
-                  <div className="flex items-center justify-center gap-2 mt-3">
+                  <div className="flex items-center justify-center gap-2 mt-3.5">
                     <CopyButton text={otpData.otp} label="Copy 6-Digit PIN" />
                   </div>
                 </div>
 
                 {/* Decaying Bar Timer */}
-                <div className="bg-hud-bg border border-hud-border p-3 text-xs rounded-sm">
-                  <div className="flex items-center justify-between text-hud-secondary text-[11px] mb-1.5">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-hud-amber" />
-                      <span>TIME TO EXPIRATION:</span>
+                <div className="bg-hud-elevated/50 border border-hud-border/70 p-3.5 text-xs rounded-xl shadow-tactile">
+                  <div className="flex items-center justify-between text-hud-secondary text-xs mb-2">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" />
+                      <span>TIME REMAINING:</span>
                     </span>
-                    <span className="font-bold text-hud-text num-tabular">
+                    <span className="font-bold text-hud-text font-mono num-tabular">
                       {secondsRemaining}s
                     </span>
                   </div>
 
-                  <div className="w-full h-1.5 bg-hud-elevated overflow-hidden rounded-sm">
+                  <div className="w-full h-2 bg-hud-elevated overflow-hidden rounded-full shadow-inner">
                     <div
                       style={{ width: `${(secondsRemaining / 60) * 100}%` }}
                       className={`h-full transition-all duration-1000 ${
                         secondsRemaining > 20
-                          ? 'bg-hud-lime'
+                          ? 'bg-sky-500'
                           : secondsRemaining > 10
-                          ? 'bg-hud-amber'
-                          : 'bg-hud-rose'
+                          ? 'bg-amber-500'
+                          : 'bg-rose-500'
                       }`}
                     />
                   </div>
                 </div>
 
                 {/* Student Manifest Context */}
-                <div className="text-left text-[11px] space-y-1.5 text-hud-secondary bg-hud-bg border border-hud-border p-3 rounded-sm">
-                  <div className="flex justify-between border-b border-hud-subtle pb-1">
-                    <span>STUDENT:</span>
-                    <span className="text-hud-text font-medium">{otpData.studentName}</span>
+                <div className="text-left text-xs space-y-2 text-hud-secondary bg-hud-elevated/40 border border-hud-border/70 p-4 rounded-xl shadow-tactile font-body">
+                  <div className="flex justify-between border-b border-hud-subtle pb-1.5">
+                    <span className="text-hud-muted">STUDENT:</span>
+                    <span className="text-hud-text font-bold">{otpData.studentName}</span>
                   </div>
-                  <div className="flex justify-between border-b border-hud-subtle pb-1">
-                    <span>STUDENT ID:</span>
-                    <span className="text-hud-text">{otpData.studentId}</span>
+                  <div className="flex justify-between border-b border-hud-subtle pb-1.5">
+                    <span className="text-hud-muted">STUDENT ID:</span>
+                    <span className="text-hud-text font-mono font-semibold">{otpData.studentId}</span>
                   </div>
-                  <div className="flex justify-between border-b border-hud-subtle pb-1">
-                    <span>SECTION:</span>
-                    <span className="text-hud-lime font-bold">{otpData.sectionCode}</span>
+                  <div className="flex justify-between border-b border-hud-subtle pb-1.5">
+                    <span className="text-hud-muted">SECTION:</span>
+                    <span className="text-sky-400 font-bold font-mono">{otpData.sectionCode}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>TERMINAL NODE:</span>
-                    <span className="text-hud-text">{otpData.terminalId}</span>
+                    <span className="text-hud-muted">TERMINAL NODE:</span>
+                    <span className="text-hud-text font-mono">{otpData.terminalId}</span>
                   </div>
                 </div>
               </div>
