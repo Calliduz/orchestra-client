@@ -26,12 +26,12 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, label, className =
       onClick={handleCopy}
       type="button"
       title={`Copy: ${text}`}
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase rounded-none border border-[#2D3540] bg-[#14191E] text-[#7D8794] hover:border-[#CCFF00] hover:text-[#CCFF00] focus:outline-none transition-colors ${className}`}
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase rounded-sm border border-hud-border bg-hud-elevated text-hud-muted hover:border-hud-lime hover:text-hud-lime hover:bg-hud-hover focus:outline-none transition-colors ${className}`}
     >
       {copied ? (
         <>
-          <Check className="w-3 h-3 text-[#CCFF00]" />
-          <span className="text-[#CCFF00]">COPIED</span>
+          <Check className="w-3 h-3 text-hud-lime" />
+          <span className="text-hud-lime">COPIED</span>
         </>
       ) : (
         <>

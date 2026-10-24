@@ -28,7 +28,7 @@ export const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-hud-bg text-hud-text selection:bg-hud-lime selection:text-black font-sans antialiased">
       {/* Accessibility Skip Link */}
       <SkipLink />
 

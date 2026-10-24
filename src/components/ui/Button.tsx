@@ -21,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-mono font-medium tracking-wide uppercase transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-[#CCFF00] disabled:opacity-35 disabled:cursor-not-allowed select-none rounded-none';
+    'inline-flex items-center justify-center font-mono tracking-wide uppercase transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-hud-lime disabled:opacity-35 disabled:cursor-not-allowed select-none rounded-sm';
 
   const sizeStyles = {
     sm: 'text-[10px] px-2.5 py-1.5 gap-1.5 border',
@@ -31,15 +31,15 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      'bg-[#CCFF00] hover:bg-[#D4FF1A] active:bg-[#B8E600] text-[#080A0D] font-bold border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.18)] hover:shadow-[0_0_14px_rgba(204,255,0,0.3)]',
+      'bg-hud-lime hover:brightness-105 active:scale-[0.98] text-black font-bold border-hud-lime shadow-[0_0_12px_rgba(204,255,0,0.18)]',
     secondary:
-      'bg-[#141A23] hover:bg-[#1A222E] active:bg-[#10151C] text-[#E2E8F0] border-[#253040] hover:border-[#3E4D63]',
+      'bg-hud-elevated hover:bg-hud-hover active:bg-hud-surface text-hud-text font-medium border-hud-border hover:border-hud-muted',
     danger:
-      'bg-[#DC2626] hover:bg-[#EF4444] active:bg-[#B91C1C] text-white font-bold border-[#DC2626] shadow-[0_0_10px_rgba(220,38,38,0.25)]',
+      'bg-hud-rose-bg hover:bg-hud-rose hover:text-black text-hud-rose font-bold border-hud-rose-border transition-colors',
     outline:
-      'bg-transparent hover:bg-[#121720] active:bg-[#171E2A] text-[#CBD5E1] border-[#253040] hover:border-[#CCFF00] hover:text-[#CCFF00]',
+      'bg-transparent hover:bg-hud-lime-bg text-hud-secondary border-hud-border hover:border-hud-lime hover:text-hud-lime',
     ghost:
-      'bg-transparent hover:bg-[#121720] text-[#8C98A8] hover:text-[#F1F5F9] border-transparent',
+      'bg-transparent hover:bg-hud-hover text-hud-secondary hover:text-hud-text border-transparent',
   };
 
   return (
@@ -49,7 +49,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin text-current" />
+        <Loader2 className="w-3.5 h-3.5 animate-spin text-current shrink-0" />
       ) : (
         leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>
       )}

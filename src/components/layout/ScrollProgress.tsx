@@ -18,7 +18,7 @@ export const ScrollProgress: React.FC = () => {
 
   return (
     <div
-      className="fixed top-0 left-0 h-0.5 bg-blue-600 z-50 transition-all duration-75 ease-out"
+      className="fixed top-0 left-0 h-0.5 bg-hud-lime shadow-[0_0_8px_rgba(204,255,0,0.8)] z-50 transition-all duration-75 ease-out"
       style={{ width: `${scrollProgress}%` }}
       role="progressbar"
       aria-valuenow={Math.round(scrollProgress)}

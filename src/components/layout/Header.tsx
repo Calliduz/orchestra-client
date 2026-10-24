@@ -32,27 +32,27 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#080A0D]/95 backdrop-blur-md border-b border-[#1E2632]">
+    <header className="sticky top-0 z-40 w-full bg-hud-bg/95 backdrop-blur-md border-b border-hud-border">
       {/* Precision Telemetry Hairline Ticker */}
-      <div className="w-full bg-[#0B0E12] border-b border-[#161D26] px-4 sm:px-6 py-1 flex items-center justify-between text-[10px] font-mono text-[#7E8B9B] select-none overflow-x-auto whitespace-nowrap">
-        <div className="flex items-center gap-5">
+      <div className="w-full bg-hud-surface border-b border-hud-subtle px-4 sm:px-6 py-1 flex items-center justify-between text-[10px] font-mono text-hud-secondary select-none overflow-x-auto whitespace-nowrap">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00] animate-pulse" />
-            <span className="text-[#CCFF00] font-bold">BUS INTERLOCK ACTIVE</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-hud-lime animate-pulse" />
+            <span className="text-hud-lime font-bold">BUS INTERLOCK ACTIVE</span>
           </div>
-          <span className="text-[#364252]">•</span>
+          <span className="text-hud-muted">•</span>
           <span>SPI CARRIER: 13.56 MHz (ISO/IEC 14443A)</span>
-          <span className="text-[#364252]">•</span>
+          <span className="text-hud-muted">•</span>
           <span>PACING DELAY: 3000 ms</span>
-          <span className="text-[#364252]">•</span>
+          <span className="text-hud-muted">•</span>
           <span>I2C OLED: 0x3C</span>
-          <span className="text-[#364252]">•</span>
+          <span className="text-hud-muted">•</span>
           <span>ENGINE: NEON POSTGRESQL</span>
         </div>
         <div className="hidden sm:flex items-center gap-4">
-          <span>LOCAL CLOCK: <span className="font-bold text-[#E2E8F0] num-tabular">{currentTime || '00:00:00'}</span></span>
-          <span className="text-[#364252]">|</span>
-          <span className="text-[#94A3B8]">ORCHESTRA v1.0.4</span>
+          <span>LOCAL CLOCK: <span className="font-bold text-hud-text num-tabular">{currentTime || '00:00:00'}</span></span>
+          <span className="text-hud-muted">|</span>
+          <span className="text-hud-secondary font-medium">ORCHESTRA v1.0.4</span>
         </div>
       </div>
 
@@ -61,20 +61,20 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-14">
           {/* Brand Identity */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-none bg-[#11161F] border border-[#232D3B] flex items-center justify-center text-[#CCFF00] shadow-[0_0_8px_rgba(204,255,0,0.15)]">
+            <div className="w-8 h-8 bg-hud-elevated border border-hud-border flex items-center justify-center text-hud-lime rounded-sm shadow-[0_0_10px_rgba(204,255,0,0.12)]">
               <Shield className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-sans font-black text-sm tracking-widest text-[#F1F5F9] uppercase">
+                <span className="font-sans font-bold text-sm tracking-widest text-hud-text uppercase">
                   ORCHESTRA
                 </span>
-                <span className="text-[9px] font-mono font-semibold bg-[#162309] text-[#CCFF00] border border-[#2F4613] px-1.5 py-0.2">
+                <span className="text-[9px] font-mono font-semibold bg-hud-lime-bg text-hud-lime border border-hud-lime-border px-1.5 py-0.2 rounded-sm">
                   HARDWARE TRUST
                 </span>
               </div>
-              <p className="hidden md:block font-mono text-[10px] text-[#7E8B9B] tracking-tight">
-                RFID Ingress Framework · Terminal <span className="text-[#CBD5E1]">{terminalId}</span>
+              <p className="hidden md:block font-mono text-[10px] text-hud-secondary tracking-tight">
+                RFID Ingress Framework · Terminal <span className="text-hud-text font-medium">{terminalId}</span>
               </p>
             </div>
           </div>
@@ -83,10 +83,10 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="flex items-center gap-1.5">
             <button
               onClick={() => onSelectTab('dashboard')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-all border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-all border rounded-sm ${
                 currentTab === 'dashboard'
-                  ? 'bg-[#15200A] text-[#CCFF00] border-[#395316] shadow-[0_0_10px_rgba(204,255,0,0.12)]'
-                  : 'bg-transparent text-[#7E8B9B] border-transparent hover:border-[#222C3B] hover:text-[#E2E8F0]'
+                  ? 'bg-hud-lime-bg text-hud-lime border-hud-lime-border shadow-[0_0_10px_rgba(204,255,0,0.1)]'
+                  : 'bg-transparent text-hud-secondary border-transparent hover:border-hud-border hover:text-hud-text hover:bg-hud-hover'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -95,10 +95,10 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => onSelectTab('otp')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-all border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-all border rounded-sm ${
                 currentTab === 'otp'
-                  ? 'bg-[#15200A] text-[#CCFF00] border-[#395316] shadow-[0_0_10px_rgba(204,255,0,0.12)]'
-                  : 'bg-transparent text-[#7E8B9B] border-transparent hover:border-[#222C3B] hover:text-[#E2E8F0]'
+                  ? 'bg-hud-lime-bg text-hud-lime border-hud-lime-border shadow-[0_0_10px_rgba(204,255,0,0.1)]'
+                  : 'bg-transparent text-hud-secondary border-transparent hover:border-hud-border hover:text-hud-text hover:bg-hud-hover'
               }`}
             >
               <KeyRound className="w-3.5 h-3.5" />
@@ -107,10 +107,10 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => onSelectTab('terminal')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-all border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-all border rounded-sm ${
                 currentTab === 'terminal'
-                  ? 'bg-[#15200A] text-[#CCFF00] border-[#395316] shadow-[0_0_10px_rgba(204,255,0,0.12)]'
-                  : 'bg-transparent text-[#7E8B9B] border-transparent hover:border-[#222C3B] hover:text-[#E2E8F0]'
+                  ? 'bg-hud-lime-bg text-hud-lime border-hud-lime-border shadow-[0_0_10px_rgba(204,255,0,0.1)]'
+                  : 'bg-transparent text-hud-secondary border-transparent hover:border-hud-border hover:text-hud-text hover:bg-hud-hover'
               }`}
             >
               <Terminal className="w-3.5 h-3.5" />
@@ -120,22 +120,22 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Terminal Node & Socket Connection Status */}
           <div className="flex items-center gap-2.5">
-            <div className="hidden lg:flex items-center gap-1.5 font-mono text-[10px] bg-[#0E131A] border border-[#1E2632] px-2.5 py-1 text-[#7E8B9B]">
+            <div className="hidden lg:flex items-center gap-1.5 font-mono text-[10px] bg-hud-elevated border border-hud-border px-2.5 py-1 text-hud-secondary rounded-sm">
               <span>NODE:</span>
-              <span className="text-[#CCFF00] font-bold">{terminalId}</span>
+              <span className="text-hud-lime font-bold">{terminalId}</span>
               <CopyButton text={terminalId} label="" className="border-0 bg-transparent p-0 ml-0.5" />
             </div>
 
             <div
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-bold border ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-semibold border rounded-sm ${
                 isConnected
-                  ? 'bg-[#112209] text-[#CCFF00] border-[#29420D]'
-                  : 'bg-[#241303] text-[#F59E0B] border-[#522E06]'
+                  ? 'bg-hud-lime-bg text-hud-lime border-hud-lime-border'
+                  : 'bg-hud-amber-bg text-hud-amber border-hud-amber-border'
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isConnected ? 'bg-[#CCFF00] animate-pulse' : 'bg-[#F59E0B]'
+                  isConnected ? 'bg-hud-lime animate-pulse' : 'bg-hud-amber'
                 }`}
               />
               <span>{isConnected ? 'ONLINE' : 'RECONNECTING'}</span>
@@ -144,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={toggleTheme}
               aria-label="Toggle visual mode"
-              className="p-1.5 border border-[#1E2632] bg-[#0E131A] text-[#7E8B9B] hover:text-[#CCFF00] hover:border-[#CCFF00] transition-colors"
+              className="p-1.5 border border-hud-border bg-hud-elevated text-hud-secondary hover:text-hud-lime hover:border-hud-lime rounded-sm transition-colors"
             >
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>

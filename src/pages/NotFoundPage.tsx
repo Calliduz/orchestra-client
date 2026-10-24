@@ -15,15 +15,15 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 font-mono">
       <Card className="max-w-md w-full text-center p-8 space-y-5">
-        <div className="text-4xl font-mono font-black text-[#FF3333] tracking-widest">
+        <div className="text-4xl font-mono font-black text-hud-rose tracking-widest">
           [404_NOT_FOUND]
         </div>
 
         <div className="space-y-1">
-          <h1 className="font-sans font-bold text-sm text-[#E6EDF3] uppercase tracking-wider">
+          <h1 className="font-sans font-bold text-sm text-hud-text uppercase tracking-wider">
             ROUTER_ENDPOINT_UNRESOLVED
           </h1>
-          <p className="text-xs text-[#7D8794] leading-relaxed">
+          <p className="text-xs text-hud-secondary leading-relaxed">
             The target route or telemetry socket path is unregistered in the ORCHESTRA framework dispatch table.
           </p>
         </div>

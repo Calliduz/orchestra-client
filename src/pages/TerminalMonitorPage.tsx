@@ -108,17 +108,17 @@ export const TerminalMonitorPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       {/* Header */}
-      <div className="border-b border-[#1E2632] pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="border-b border-hud-border pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-sans font-bold text-2xl text-[#F1F5F9] tracking-tight">
+            <h1 className="font-sans font-bold text-2xl text-hud-text tracking-tight">
               Edge Terminal Diagnostics &amp; OLED Mirror
             </h1>
-            <span className="text-[10px] font-mono font-semibold bg-[#112209] text-[#CCFF00] border border-[#29420D] px-2 py-0.5">
+            <span className="text-[10px] font-mono font-semibold bg-hud-lime-bg text-hud-lime border border-hud-lime-border px-2 py-0.5 rounded-sm">
               ESP32 Node
             </span>
           </div>
-          <p className="text-xs text-[#8C98A8] mt-1 font-mono">
+          <p className="text-xs text-hud-muted mt-1 font-mono">
             Physical ESP32 firmware state machine, SPI MFRC522 transponder polling, and non-blocking 3000ms pacing interlock.
           </p>
         </div>
@@ -148,43 +148,43 @@ export const TerminalMonitorPage: React.FC = () => {
             title="SSD1306 0.96&quot; I2C OLED Screen Mirror (128x64)"
             subtitle="Pixel-mapped hardware rendering matching the physical classroom display"
           >
-            <div className="flex flex-col items-center justify-center p-6 bg-[#06080B] border border-[#1E2632]">
+            <div className="flex flex-col items-center justify-center p-6 bg-hud-bg border border-hud-border rounded-sm">
               {/* Graphic Screen Enclosure */}
-              <div className="w-full max-w-sm aspect-[128/64] bg-black border border-[#222E3D] p-3 flex flex-col justify-between relative overflow-hidden font-mono shadow-[inset_0_0_24px_rgba(0,0,0,0.95)]">
+              <div className="w-full max-w-sm aspect-[128/64] bg-black border border-hud-border p-3 flex flex-col justify-between relative overflow-hidden font-mono shadow-[inset_0_0_24px_rgba(0,0,0,0.95)] rounded-sm">
                 {/* OLED Header */}
-                <div className="flex items-center justify-between text-[10px] text-[#CCFF00] font-bold border-b border-[#CCFF00]/20 pb-0.5">
+                <div className="flex items-center justify-between text-[10px] text-hud-lime font-bold border-b border-hud-lime/20 pb-0.5">
                   <span>ORCHESTRA IoT</span>
                   <span>{terminalId}</span>
                 </div>
 
                 {/* OLED Main Phosphor Graphic Text */}
                 <div className="my-auto text-center py-2">
-                  <pre className="text-[#CCFF00] font-bold text-xs tracking-wider leading-relaxed whitespace-pre-wrap font-mono select-none">
+                  <pre className="text-hud-lime font-bold text-xs tracking-wider leading-relaxed whitespace-pre-wrap font-mono select-none">
                     {oledMessage}
                   </pre>
                 </div>
 
                 {/* OLED Status Footer */}
-                <div className="flex items-center justify-between text-[9px] text-[#CCFF00] border-t border-[#CCFF00]/20 pt-0.5">
+                <div className="flex items-center justify-between text-[9px] text-hud-lime border-t border-hud-lime/20 pt-0.5">
                   <span className="truncate max-w-[200px]">{oledSubtext}</span>
                   {cooldownRemaining > 0 ? (
-                    <span className="text-[#FB923C] font-bold num-tabular">
+                    <span className="text-hud-amber font-bold num-tabular">
                       COOLDOWN: {cooldownRemaining.toFixed(1)}s
                     </span>
                   ) : (
-                    <span className="text-[#CCFF00]">READY</span>
+                    <span className="text-hud-lime">READY</span>
                   )}
                 </div>
               </div>
 
               {/* Hardware GPIO Status LED Strip */}
-              <div className="flex items-center gap-6 mt-4 text-[11px] font-mono text-[#7E8B9B]">
+              <div className="flex items-center gap-6 mt-4 text-[11px] font-mono text-hud-muted">
                 <div className="flex items-center gap-2">
                   <span
                     className={`w-2 h-2 rounded-full transition-colors ${
                       !terminalStatus?.isLocked && cooldownRemaining === 0
-                        ? 'bg-[#CCFF00] shadow-[0_0_8px_#CCFF00]'
-                        : 'bg-[#18202B]'
+                        ? 'bg-hud-lime shadow-[0_0_8px_rgba(204,255,0,0.6)]'
+                        : 'bg-hud-elevated border border-hud-border'
                     }`}
                   />
                   <span>GPIO 2 [GREEN]</span>
@@ -193,8 +193,8 @@ export const TerminalMonitorPage: React.FC = () => {
                   <span
                     className={`w-2 h-2 rounded-full transition-colors ${
                       terminalStatus?.isLocked
-                        ? 'bg-[#EF4444] shadow-[0_0_8px_#EF4444]'
-                        : 'bg-[#18202B]'
+                        ? 'bg-hud-rose shadow-[0_0_8px_rgba(248,113,113,0.6)]'
+                        : 'bg-hud-elevated border border-hud-border'
                     }`}
                   />
                   <span>GPIO 4 [RED]</span>
@@ -203,8 +203,8 @@ export const TerminalMonitorPage: React.FC = () => {
                   <span
                     className={`w-2 h-2 rounded-full transition-colors ${
                       cooldownRemaining > 0
-                        ? 'bg-[#F59E0B] shadow-[0_0_8px_#F59E0B]'
-                        : 'bg-[#18202B]'
+                        ? 'bg-hud-amber shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+                        : 'bg-hud-elevated border border-hud-border'
                     }`}
                   />
                   <span>GPIO 15 [BUZZER]</span>
@@ -238,7 +238,7 @@ export const TerminalMonitorPage: React.FC = () => {
                 onClick={() => simulateTap('10A1B2C3', 'Student 2023-0001-CCS')}
               >
                 <span>STUDENT BADGE [0x10A1B2C3]</span>
-                <span className="text-[10px] text-[#8C98A8]">Agbada</span>
+                <span className="text-[10px] text-hud-muted">Agbada</span>
               </Button>
 
               <Button
@@ -248,7 +248,7 @@ export const TerminalMonitorPage: React.FC = () => {
                 onClick={() => simulateTap('20B2C3D4', 'Student 2023-0002-CCS')}
               >
                 <span>STUDENT BADGE [0x20B2C3D4]</span>
-                <span className="text-[10px] text-[#8C98A8]">Altichie</span>
+                <span className="text-[10px] text-hud-muted">Altichie</span>
               </Button>
 
               <Button
@@ -258,11 +258,11 @@ export const TerminalMonitorPage: React.FC = () => {
                 onClick={() => simulateTap('99999999', 'Foreign UID')}
               >
                 <span>FOREIGN TAG [0x99999999]</span>
-                <span className="text-[10px] text-[#F87171]">404 Unregistered</span>
+                <span className="text-[10px] text-hud-rose">404 Unregistered</span>
               </Button>
 
-              <div className="p-3 bg-[#0A0D12] border border-[#1E2632] text-[11px] text-[#8C98A8] space-y-1">
-                <div className="text-[#CCFF00] font-bold">
+              <div className="p-3 bg-hud-elevated border border-hud-border text-[11px] text-hud-secondary space-y-1 rounded-sm">
+                <div className="text-hud-lime font-bold">
                   HARDWARE PACING INTERLOCK
                 </div>
                 <p>
@@ -280,9 +280,9 @@ export const TerminalMonitorPage: React.FC = () => {
         subtitle="Live UART 115200 baud bus telemetry stream"
         bodyClassName="p-0"
       >
-        <div className="p-4 bg-[#06080B] border-t border-[#1E2632] text-[#8C98A8] font-mono text-xs max-h-56 overflow-y-auto space-y-1">
+        <div className="p-4 bg-hud-bg border-t border-hud-border text-hud-secondary font-mono text-xs max-h-56 overflow-y-auto space-y-1">
           {simLog.length === 0 ? (
-            <div className="text-[#475569] py-4 text-center">
+            <div className="text-hud-muted py-4 text-center">
               TERMINAL LISTENER ACTIVE: Awaiting RFID interrogation or keypad packet...
             </div>
           ) : (

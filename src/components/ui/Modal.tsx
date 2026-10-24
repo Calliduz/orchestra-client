@@ -41,41 +41,38 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/85 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg bg-[#101418] border border-[#2D3540] shadow-2xl p-6 z-10 corner-hud font-mono">
-        <div className="flex items-start justify-between pb-3 border-b border-[#212830]">
+      <div className="relative w-full max-w-lg bg-hud-surface border border-hud-border shadow-2xl p-6 z-10 corner-hud rounded-sm">
+        <div className="flex items-start justify-between pb-3 border-b border-hud-border">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#CCFF00] text-xs">//</span>
-              <h3 className="font-sans font-bold text-sm uppercase tracking-wider text-[#E6EDF3]">
-                {title}
-              </h3>
-            </div>
+            <h3 className="font-sans font-bold text-sm uppercase tracking-wider text-hud-text">
+              {title}
+            </h3>
             {description && (
-              <p className="text-[11px] text-[#7D8794] mt-1 font-mono tracking-tight">
+              <p className="text-[11px] text-hud-secondary mt-1 font-mono tracking-tight">
                 {description}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1 border border-[#212830] text-[#7D8794] hover:text-[#E6EDF3] hover:border-[#CCFF00] transition"
+            className="p-1 border border-hud-border bg-hud-elevated text-hud-secondary hover:text-hud-text hover:border-hud-lime rounded-sm transition-colors"
             aria-label="Close modal"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="py-4 text-xs text-[#E6EDF3]">{children}</div>
+        <div className="py-4 text-xs text-hud-text">{children}</div>
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#212830]">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={isLoading}>
-            CANCEL
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-hud-border">
+          <Button variant="ghost" size="sm" onClick={onClose} disabled={isLoading}>
+            Cancel
           </Button>
           {onConfirm && (
             <Button
@@ -92,4 +89,5 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   );
 };
+
 export default Modal;

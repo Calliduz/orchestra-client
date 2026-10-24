@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MailCheck, MailWarning, Edit3, ShieldCheck, Tag, Clock } from 'lucide-react';
+import { Search, MailCheck, Edit3, Tag } from 'lucide-react';
 import { Badge, BadgeStatus } from '../ui/Badge.js';
 import { Button } from '../ui/Button.js';
 import { CopyButton } from '../ui/CopyButton.js';
@@ -57,10 +57,10 @@ export const RosterTable: React.FC<RosterTableProps> = ({
             <button
               key={filter}
               onClick={() => setStatusFilter(filter)}
-              className={`px-2.5 py-1 border transition-colors ${
+              className={`px-2.5 py-1 border rounded-sm transition-all ${
                 statusFilter === filter
-                  ? 'bg-[#15200A] text-[#CCFF00] border-[#395316] font-bold shadow-[0_0_8px_rgba(204,255,0,0.15)]'
-                  : 'bg-[#0E131A] text-[#7E8B9B] border-[#1E2632] hover:border-[#384659] hover:text-[#E2E8F0]'
+                  ? 'bg-hud-lime-bg text-hud-lime border-hud-lime-border font-bold shadow-[0_0_8px_rgba(204,255,0,0.1)]'
+                  : 'bg-hud-surface text-hud-secondary border-hud-border hover:border-hud-muted hover:text-hud-text hover:bg-hud-hover'
               }`}
             >
               {filter}
@@ -71,27 +71,27 @@ export const RosterTable: React.FC<RosterTableProps> = ({
       bodyClassName="p-0"
     >
       {/* Search Header Strip */}
-      <div className="p-3 border-b border-[#1E2632] bg-[#0A0D12] flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
+      <div className="p-3 border-b border-hud-border bg-hud-surface flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
         <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-hud-muted" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by ID, name, or institutional email..."
-            className="w-full pl-8 pr-3 py-1.5 text-xs font-mono border border-[#1E2632] bg-[#0E131A] text-[#E2E8F0] focus:outline-none focus:border-[#CCFF00] rounded-none placeholder:text-[#525F70]"
+            className="w-full pl-8 pr-3 py-1.5 text-xs font-mono border border-hud-border bg-hud-bg text-hud-text focus:outline-none focus:border-hud-lime rounded-sm placeholder:text-hud-muted transition-colors"
           />
         </div>
 
-        <div className="text-[11px] font-mono text-[#7E8B9B]">
-          MATCHED: <span className="text-[#CCFF00] font-bold num-tabular">{filteredRoster.length}</span> / {roster.length}
+        <div className="text-[11px] font-mono text-hud-secondary">
+          MATCHED: <span className="text-hud-lime font-bold num-tabular">{filteredRoster.length}</span> / {roster.length}
         </div>
       </div>
 
       {/* High-Density Tabular Ledger */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-[#E2E8F0]">
-          <thead className="bg-[#0E131A] text-[10px] font-mono font-semibold text-[#7E8B9B] uppercase tracking-wider border-b border-[#1E2632]">
+        <table className="w-full text-left text-xs text-hud-text">
+          <thead className="bg-hud-elevated text-[10px] font-mono font-semibold text-hud-secondary uppercase tracking-wider border-b border-hud-border">
             <tr>
               <th className="py-2.5 px-3 w-8">#</th>
               <th className="py-2.5 px-3">STUDENT ID</th>
@@ -104,10 +104,10 @@ export const RosterTable: React.FC<RosterTableProps> = ({
               <th className="py-2.5 px-3 text-right">ACTION</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#171E28]">
+          <tbody className="divide-y divide-hud-subtle">
             {filteredRoster.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-[#6A7888] font-mono text-xs">
+                <td colSpan={9} className="py-8 text-center text-hud-muted font-mono text-xs">
                   NO MATCHING RECORDS IN SECTION MANIFEST
                 </td>
               </tr>
@@ -124,14 +124,14 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                 return (
                   <tr
                     key={student.id}
-                    className="hover:bg-[#121721] transition-colors group"
+                    className="hover:bg-hud-hover/60 transition-colors group"
                   >
-                    <td className="py-2.5 px-3 text-[#525F70] text-[11px] font-mono">
+                    <td className="py-2.5 px-3 text-hud-muted text-[11px] font-mono">
                       {String(idx + 1).padStart(2, '0')}
                     </td>
                     <td className="py-2.5 px-3 font-mono">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-[#CBD5E1]">
+                        <span className="font-semibold text-hud-secondary group-hover:text-hud-text transition-colors">
                           {student.studentNumber}
                         </span>
                         <CopyButton text={student.studentNumber} label="" className="border-0 bg-transparent p-0" />
@@ -139,14 +139,14 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                     </td>
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded-none bg-[#161D27] border border-[#263140] flex items-center justify-center text-[10px] font-mono font-bold text-[#CCFF00] shrink-0">
+                        <div className="w-6 h-6 rounded-sm bg-hud-elevated border border-hud-border flex items-center justify-center text-[10px] font-mono font-bold text-hud-lime shrink-0">
                           {initials}
                         </div>
                         <div>
-                          <div className="font-sans font-medium text-xs text-[#F1F5F9] group-hover:text-[#CCFF00] transition-colors">
+                          <div className="font-sans font-medium text-xs text-hud-text group-hover:text-hud-lime transition-colors">
                             {student.fullName}
                           </div>
-                          <div className="font-mono text-[10px] text-[#6A7888]">
+                          <div className="font-mono text-[10px] text-hud-muted">
                             {student.email}
                           </div>
                         </div>
@@ -154,21 +154,21 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                     </td>
                     <td className="py-2.5 px-3 font-mono">
                       {student.rfidUid ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-[#A5B4FC] bg-[#11162B] border border-[#252E58] px-1.5 py-0.2">
-                          <Tag className="w-2.5 h-2.5 opacity-60" />
+                        <span className="inline-flex items-center gap-1 text-[11px] text-hud-secondary bg-hud-elevated border border-hud-border px-1.5 py-0.2 rounded-sm">
+                          <Tag className="w-2.5 h-2.5 opacity-60 text-hud-muted" />
                           <span>0x{student.rfidUid}</span>
                         </span>
                       ) : (
-                        <span className="text-[#525F70] text-[10px]">UNBOUND</span>
+                        <span className="text-hud-muted text-[10px]">UNBOUND</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 font-mono">
                       {timeFormatted ? (
-                        <span className="text-[#E2E8F0] font-medium num-tabular">
+                        <span className="text-hud-text font-medium num-tabular">
                           {timeFormatted}
                         </span>
                       ) : (
-                        <span className="text-[#525F70] text-[11px]">--:--:--</span>
+                        <span className="text-hud-muted text-[11px]">--:--:--</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 font-mono">
@@ -186,7 +186,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                           dot={false}
                         />
                       ) : (
-                        <span className="text-[#525F70] text-[10px]">PENDING</span>
+                        <span className="text-hud-muted text-[10px]">PENDING</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3">
@@ -195,7 +195,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                         {student.isManualOverride && (
                           <span
                             title={`Override: ${student.overrideReason || 'Manual adjustment'}`}
-                            className="text-[9px] font-mono text-[#C084FC] bg-[#1E112B] border border-[#44265E] px-1 py-0.2"
+                            className="text-[9px] font-mono text-hud-amber bg-hud-amber-bg border border-hud-amber-border px-1 py-0.2 rounded-sm"
                           >
                             OVERRIDE
                           </span>
@@ -206,12 +206,12 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                       {student.reverseReceiptSent ? (
                         <span
                           title="Reverse-receipt attendance notification dispatched to student email"
-                          className="inline-flex text-[#CCFF00]"
+                          className="inline-flex text-hud-lime"
                         >
                           <MailCheck className="w-3.5 h-3.5" />
                         </span>
                       ) : (
-                        <span className="text-[#3E4A5B] font-mono text-[10px]">—</span>
+                        <span className="text-hud-muted font-mono text-[10px]">—</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right">
@@ -220,7 +220,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                         size="sm"
                         disabled={disabled}
                         onClick={() => onOpenOverride(student)}
-                        leftIcon={<Edit3 className="w-3 h-3 text-[#94A3B8]" />}
+                        leftIcon={<Edit3 className="w-3 h-3 text-hud-secondary" />}
                         className="py-1 px-2 text-[10px]"
                       >
                         Override
