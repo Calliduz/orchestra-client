@@ -13,6 +13,7 @@ import { Button } from '../ui/Button.js';
 import { Badge } from '../ui/Badge.js';
 import { Modal } from '../ui/Modal.js';
 import { CopyButton } from '../ui/CopyButton.js';
+import { API_V1_URL } from '../../config/api.js';
 
 interface SessionData {
   id: string;
@@ -90,7 +91,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
 
   const handleDownload = (type: 'pdf' | 'csv') => {
     if (!session) return;
-    const url = `http://localhost:5000/api/v1/sessions/${session.id}/export/${type}`;
+    const url = `${API_V1_URL}/sessions/${session.id}/export/${type}`;
     window.open(url, '_blank');
   };
 

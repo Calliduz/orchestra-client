@@ -8,6 +8,7 @@ import { RosterTable, StudentRosterRow } from '../components/dashboard/RosterTab
 import { OverrideModal } from '../components/dashboard/OverrideModal.js';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
+import { API_V1_URL } from '../config/api.js';
 
 export const FacultyDashboardPage: React.FC = () => {
   const { socket, terminalId } = useSocket();
@@ -43,7 +44,7 @@ export const FacultyDashboardPage: React.FC = () => {
   const fetchActiveSession = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const res = await fetch(`http://localhost:5000/api/v1/sessions/active/${terminalId}`);
+      const res = await fetch(`${API_V1_URL}/sessions/active/${terminalId}`);
       const json = await res.json();
 
       if (json.success && json.data) {
@@ -104,7 +105,7 @@ export const FacultyDashboardPage: React.FC = () => {
 
   const handleUpdateThresholds = async (late: number, cut: number) => {
     if (!sessionData?.session?.id) return;
-    const res = await fetch(`http://localhost:5000/api/v1/sessions/${sessionData.session.id}/thresholds`, {
+    const res = await fetch(`${API_V1_URL}/sessions/${sessionData.session.id}/thresholds`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lateThresholdMins: late, cutThresholdMins: cut }),
@@ -116,7 +117,7 @@ export const FacultyDashboardPage: React.FC = () => {
 
   const handleApplyOverride = async (studentId: string, status: string, reason: string) => {
     if (!sessionData?.session?.id) return;
-    const res = await fetch(`http://localhost:5000/api/v1/sessions/${sessionData.session.id}/override`, {
+    const res = await fetch(`${API_V1_URL}/sessions/${sessionData.session.id}/override`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -130,7 +131,7 @@ export const FacultyDashboardPage: React.FC = () => {
   };
 
   const handleCloseSession = async (sessionId: string) => {
-    const res = await fetch(`http://localhost:5000/api/v1/sessions/${sessionId}/close`, {
+    const res = await fetch(`${API_V1_URL}/sessions/${sessionId}/close`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -144,7 +145,7 @@ export const FacultyDashboardPage: React.FC = () => {
     try {
       setIsLoggingIn(true);
       setAuthError(null);
-      const res = await fetch('http://localhost:5000/api/v1/auth/login', {
+      const res = await fetch(`${API_V1_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: facultyEmail, password: facultyPassword }),
@@ -204,7 +205,7 @@ export const FacultyDashboardPage: React.FC = () => {
             variant="primary"
             className="bg-[#0D1C2F] hover:bg-[#1E293B] text-white border-0 shadow-sm shrink-0 font-bold"
             onClick={async () => {
-              await fetch('http://localhost:5000/api/v1/hardware/tap', {
+              await fetch(`${API_V1_URL}/hardware/tap`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

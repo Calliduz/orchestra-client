@@ -4,6 +4,7 @@ import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { Badge } from '../components/ui/Badge.js';
 import { useSocket } from '../context/SocketContext.js';
+import { API_V1_URL } from '../config/api.js';
 
 export const TerminalMonitorPage: React.FC = () => {
   const { terminalId } = useSocket();
@@ -22,7 +23,7 @@ export const TerminalMonitorPage: React.FC = () => {
   const fetchTerminalStatus = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`http://localhost:5000/api/v1/hardware/status/${terminalId}`);
+      const res = await fetch(`${API_V1_URL}/hardware/status/${terminalId}`);
       const json = await res.json();
       setTerminalStatus(json);
 
@@ -49,7 +50,7 @@ export const TerminalMonitorPage: React.FC = () => {
     try {
       addSimLog(`>> [SPI_MFRC522] Interrogating ISO14443A tag UID: 0x${rfidUid} (${label})...`);
 
-      const res = await fetch('http://localhost:5000/api/v1/hardware/tap', {
+      const res = await fetch(`${API_V1_URL}/hardware/tap`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

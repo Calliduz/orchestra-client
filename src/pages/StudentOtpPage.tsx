@@ -3,6 +3,7 @@ import { KeyRound, Clock, Key, AlertCircle } from 'lucide-react';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { CopyButton } from '../components/ui/CopyButton.js';
+import { API_V1_URL } from '../config/api.js';
 
 interface OtpData {
   otp: string;
@@ -56,7 +57,7 @@ export const StudentOtpPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/api/v1/otp/request', {
+      const response = await fetch(`${API_V1_URL}/otp/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: identifier.trim() }),

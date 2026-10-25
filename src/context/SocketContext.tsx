@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_URL } from '../config/api.js';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -16,8 +17,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [terminalId, setTerminalId] = useState('TERM-CL304');
 
   useEffect(() => {
-    // Socket connects through proxy or direct port 5000
-    const socketInstance = io('http://localhost:5000', {
+    // Socket connects dynamically via LAN IP or configured host
+    const socketInstance = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
