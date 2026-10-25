@@ -36,7 +36,7 @@ export const Badge: React.FC<BadgeProps> = ({
   const sizeClasses = size === 'sm' ? 'text-[11px] px-2.5 py-0.5' : 'text-xs px-3 py-1';
 
   // Default: Crisp neutral technical chip
-  let colorClasses = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-hud-elevated/80 dark:text-hud-secondary dark:border-hud-border/70';
+  let colorClasses = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700/80';
   let dotColor = 'bg-slate-500';
 
   if (norm === 'PRESENT' || norm === 'OPEN') {
@@ -52,10 +52,10 @@ export const Badge: React.FC<BadgeProps> = ({
     colorClasses = 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30';
     dotColor = 'bg-sky-500 shadow-[0_0_6px_rgba(56,189,248,0.7)]';
   } else if (norm === 'RFID_TAP' || norm === 'KEYPAD_OTP' || norm === 'AUTO_ABSENT') {
-    colorClasses = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-hud-elevated/90 dark:text-hud-secondary dark:border-hud-border/80';
+    colorClasses = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/90 dark:text-slate-300 dark:border-slate-700/80';
     dotColor = 'bg-sky-600 dark:bg-sky-400';
   } else if (norm === 'MANUAL_OVERRIDE') {
-    colorClasses = 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-hud-elevated dark:text-hud-text dark:border-hud-border';
+    colorClasses = 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-500/30';
     dotColor = 'bg-amber-500 dark:bg-amber-400';
   }
 

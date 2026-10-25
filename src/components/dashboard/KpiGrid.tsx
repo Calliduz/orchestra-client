@@ -45,15 +45,15 @@ export const KpiGrid: React.FC<KpiGridProps> = ({ stats }) => {
       {/* 6 Clean Individual Register Tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {/* Total Enrolled */}
-        <div className="p-4 bg-slate-50 border border-slate-200/80 dark:bg-hud-elevated/60 dark:border-hud-border/80 rounded-2xl shadow-sm hover:border-slate-300 transition-all">
-          <div className="text-xs font-semibold text-slate-600 dark:text-hud-secondary uppercase tracking-wider flex items-center justify-between">
+        <div className="p-4 bg-slate-50 border border-slate-200/80 dark:bg-slate-800/40 dark:border-slate-700/60 rounded-2xl shadow-sm hover:border-slate-300 transition-all">
+          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
             <span>Enrolled</span>
-            <Users className="w-4 h-4 text-slate-400 dark:text-hud-muted" />
+            <Users className="w-4 h-4 text-slate-400 dark:text-slate-400" />
           </div>
-          <div className="text-3xl font-extrabold font-sans text-slate-900 dark:text-hud-text mt-2 num-tabular">
+          <div className="text-3xl font-extrabold font-sans text-slate-900 dark:text-white mt-2 num-tabular">
             {String(stats.totalEnrolled).padStart(2, '0')}
           </div>
-          <div className="text-xs text-slate-500 dark:text-hud-muted mt-1 font-body">
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-body">
             Manifest Total
           </div>
         </div>

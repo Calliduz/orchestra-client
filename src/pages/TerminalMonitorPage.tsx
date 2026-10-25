@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, Radio, Shield, Zap, RefreshCw, Keyboard, Play, CheckCircle2, AlertTriangle, Terminal } from 'lucide-react';
+import { Cpu, Radio, Shield, Zap, RefreshCw, Keyboard, Play, CheckCircle2, AlertTriangle, Terminal, Volume2, VolumeX } from 'lucide-react';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { Badge } from '../components/ui/Badge.js';
 import { useSocket } from '../context/SocketContext.js';
 import { API_V1_URL } from '../config/api.js';
+import { sounds } from '../utils/audio.js';
 
 export const TerminalMonitorPage: React.FC = () => {
   const { terminalId } = useSocket();
@@ -14,6 +15,7 @@ export const TerminalMonitorPage: React.FC = () => {
   const [oledSubtext, setOledSubtext] = useState<string>('TERM-CL304 [STANDBY]');
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
   const [simLog, setSimLog] = useState<string[]>([]);
+  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
 
   // Virtual Keypad State Machine
   const [isOtpMode, setIsOtpMode] = useState<boolean>(false);
@@ -23,7 +25,40 @@ export const TerminalMonitorPage: React.FC = () => {
   useEffect(() => {
     document.title = 'ORCHESTRA | Edge Hardware Diagnostic Matrix';
     fetchTerminalStatus();
+
+    // Check if user navigated here with a minted PIN from StudentOtpPage
+    const autoOtp = localStorage.getItem('orchestra_ingress_otp');
+    if (autoOtp && autoOtp.length === 6) {
+      loadKeypadOtp(autoOtp);
+      localStorage.removeItem('orchestra_ingress_otp');
+    }
+
+    const handleKeypadBridge = (e: any) => {
+      const pin = e.detail?.otp;
+      if (pin) {
+        loadKeypadOtp(pin);
+      }
+    };
+
+    window.addEventListener('orchestra:test_keypad', handleKeypadBridge);
+    return () => window.removeEventListener('orchestra:test_keypad', handleKeypadBridge);
   }, [terminalId]);
+
+  const loadKeypadOtp = (pin: string) => {
+    setIsOtpMode(true);
+    setKeypadBuffer(pin);
+    const mask = pin.split('').map(() => '*').join(' ');
+    setOledMessage(`[ ENTER OTP ]\n${mask}`);
+    setOledSubtext('READY: PRESS # TO VERIFY');
+    addSimLog(`>> [KEYPAD_BRIDGE] Loaded ephemeral OTP '${pin}'. Ready for verification.`);
+    sounds.playKeyChirp();
+  };
+
+  const toggleAudio = () => {
+    const next = !isAudioMuted;
+    setIsAudioMuted(next);
+    sounds.enabled = !next;
+  };
 
   const fetchTerminalStatus = async () => {
     try {
@@ -51,6 +86,7 @@ export const TerminalMonitorPage: React.FC = () => {
   const simulateTap = async (rfidUid: string, label: string) => {
     if (cooldownRemaining > 0) {
       addSimLog(`[PACING INTERLOCK] Reader hold active: ${cooldownRemaining.toFixed(1)}s remaining.`);
+      sounds.playErrorBuzz();
       return;
     }
 
@@ -70,25 +106,33 @@ export const TerminalMonitorPage: React.FC = () => {
       addSimLog(`<< [HTTP ${res.status}] ${json.code}: ${json.message}`);
 
       if (json.code === 'ACCESS_GRANTED') {
+        sounds.playSuccessChime();
         setOledMessage(`ACCESS GRANTED\n${json.data.studentName.toUpperCase()}`);
         setOledSubtext(`STATUS: ${json.data.status} | REVERSE-RCV`);
         triggerCooldown();
       } else if (json.code === 'SESSION_STARTED') {
+        sounds.playSuccessChime();
         setOledMessage(`SESSION OPENED\n${json.data.sectionCode}`);
         setOledSubtext('MANIFEST LOADED');
       } else if (json.code === 'SESSION_CLOSED') {
+        sounds.playSuccessChime();
         setOledMessage('SESSION CLOSED\nROSTER COMPILED');
         setOledSubtext('REPORTS EMAILED');
       } else if (json.code === 'ALREADY_RECORDED') {
+        sounds.playErrorBuzz();
         setOledMessage('ANTI-PASSBACK\nALREADY LOGGED');
         setOledSubtext('DOUBLE-TAP REJECTED');
       } else if (json.code === 'SESSION_LOCKED') {
+        sounds.playErrorBuzz();
         setOledMessage('TERMINAL LOCKED\nACCESS REJECTED');
         setOledSubtext('SCAN FACULTY BADGE');
+      } else {
+        sounds.playErrorBuzz();
       }
 
       fetchTerminalStatus();
     } catch (err: any) {
+      sounds.playErrorBuzz();
       addSimLog(`!! [BUS FAULT] ${err.message}`);
     }
   };
@@ -96,8 +140,11 @@ export const TerminalMonitorPage: React.FC = () => {
   const handleKeypadPress = async (key: string) => {
     if (cooldownRemaining > 0) {
       addSimLog(`[PACING INTERLOCK] Keypad locked: ${cooldownRemaining.toFixed(1)}s remaining.`);
+      sounds.playErrorBuzz();
       return;
     }
+
+    sounds.playKeyChirp();
 
     // Key # triggers / toggles OTP mode or submits
     if (key === '#') {
@@ -113,6 +160,7 @@ export const TerminalMonitorPage: React.FC = () => {
         } else {
           addSimLog(`>> [KEYPAD] Incomplete PIN: requires 6 digits (currently ${keypadBuffer.length}).`);
           setOledSubtext(`NEED 6 DIGITS (${keypadBuffer.length}/6)`);
+          sounds.playErrorBuzz();
         }
       }
       return;
@@ -193,17 +241,20 @@ export const TerminalMonitorPage: React.FC = () => {
       addSimLog(`<< [HTTP ${res.status}] ${json.code}: ${json.message}`);
 
       if (json.code === 'ACCESS_GRANTED') {
+        sounds.playSuccessChime();
         setOledMessage(`ACCESS GRANTED\n${(json.data.studentName || 'STUDENT').toUpperCase()}`);
         setOledSubtext(`KEYPAD OTP | STATUS: ${json.data.status}`);
         setIsOtpMode(false);
         setKeypadBuffer('');
         triggerCooldown();
       } else if (json.code === 'LOCKED_OUT') {
+        sounds.playErrorBuzz();
         setOledMessage('TERMINAL LOCKED\n180S LOCKOUT ACTIVE');
         setOledSubtext('3 CONSECUTIVE STRIKES');
         setIsOtpMode(false);
         setKeypadBuffer('');
       } else {
+        sounds.playErrorBuzz();
         setOledMessage(`OTP REJECTED\n${json.code}`);
         setOledSubtext(json.message?.slice(0, 24) || 'INVALID CREDENTIAL');
         setIsOtpMode(false);
@@ -212,6 +263,7 @@ export const TerminalMonitorPage: React.FC = () => {
 
       fetchTerminalStatus();
     } catch (err: any) {
+      sounds.playErrorBuzz();
       addSimLog(`!! [KEYPAD DISPATCH FAULT] ${err.message}`);
       setOledMessage('COMMUNICATION\nERROR');
       setIsOtpMode(false);
@@ -247,6 +299,51 @@ export const TerminalMonitorPage: React.FC = () => {
     ['*', '0', '#', 'D'],
   ];
 
+  const TRANSPONDER_BADGES = [
+    {
+      uid: 'A1B2C3D4',
+      name: 'Prof. Karito Macadat',
+      role: 'FACULTY MASTER KEYCARD',
+      type: 'master',
+    },
+    {
+      uid: '10A1B2C3',
+      name: 'Agbada, Justine Jay',
+      role: 'STUDENT 2023-0001-CCS',
+      type: 'student',
+    },
+    {
+      uid: '20B2C3D4',
+      name: 'Altichie, Rjhay',
+      role: 'STUDENT 2023-0002-CCS',
+      type: 'student',
+    },
+    {
+      uid: '30C3D4E5',
+      name: 'Cabunoc, Rey',
+      role: 'STUDENT 2023-0003-CCS',
+      type: 'student',
+    },
+    {
+      uid: '40D4E5F6',
+      name: 'Dalupang, John Mark',
+      role: 'STUDENT 2023-0004-CCS',
+      type: 'student',
+    },
+    {
+      uid: '50E5F6A7',
+      name: 'Malate, Christian Dave',
+      role: 'STUDENT 2023-0005-CCS',
+      type: 'student',
+    },
+    {
+      uid: '99999999',
+      name: '404 Rogue Unregistered Tag',
+      role: 'FOREIGN ISO14443A TEST',
+      type: 'foreign',
+    },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       {/* Header */}
@@ -270,6 +367,18 @@ export const TerminalMonitorPage: React.FC = () => {
             status={terminalStatus?.isLocked ? 'LOCKED' : 'OPEN'}
             label={terminalStatus?.isLocked ? 'STATE: LOCKED' : 'STATE: OPEN'}
           />
+          <button
+            type="button"
+            onClick={toggleAudio}
+            className={`p-2 rounded-xl border transition-all ${
+              isAudioMuted
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                : 'bg-hud-surface border-hud-border/70 text-emerald-500 dark:text-emerald-400 hover:bg-hud-hover'
+            }`}
+            title={isAudioMuted ? 'Unmute Terminal Audio' : 'Mute Terminal Audio'}
+          >
+            {isAudioMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
           <Button
             size="sm"
             variant="outline"
@@ -444,78 +553,75 @@ export const TerminalMonitorPage: React.FC = () => {
             title="SPI Transponder Interrogator"
             subtitle="Trigger card scans directly via hardware REST endpoint"
           >
-            <div className="space-y-2.5 font-mono text-xs">
-              <Button
-                variant="primary"
-                size="sm"
-                className="w-full justify-between"
-                onClick={() => simulateTap('A1B2C3D4', 'Faculty Master Badge')}
-              >
-                <span>MASTER BADGE [0xA1B2C3D4]</span>
-                <span className="text-xs font-body opacity-90">Prof. Macadat</span>
-              </Button>
+            <div className="space-y-2.5 font-body text-xs">
+              {TRANSPONDER_BADGES.map((b) => {
+                const isMaster = b.type === 'master';
+                const isForeign = b.type === 'foreign';
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-hud-elevated/50"
-                onClick={() => simulateTap('10A1B2C3', 'Agbada, Justine Jay')}
-              >
-                <span>STUDENT [0x10A1B2C3]</span>
-                <span className="text-xs text-sky-400 font-body">Agbada, J.</span>
-              </Button>
+                return (
+                  <div
+                    key={b.uid}
+                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                      isMaster
+                        ? 'bg-sky-500/10 border-sky-500/40 text-sky-400 shadow-sm'
+                        : isForeign
+                        ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                        : 'bg-hud-elevated/40 border-hud-border/70 hover:border-sky-500/40 text-hud-text'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                          isMaster
+                            ? 'bg-sky-500/20 text-sky-400 border-sky-500/30'
+                            : isForeign
+                            ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                            : 'bg-hud-surface text-slate-400 border-hud-border/80'
+                        }`}
+                      >
+                        <Radio className="w-4 h-4" />
+                      </div>
+                      <div className="truncate">
+                        <div className="font-bold text-xs truncate leading-tight text-hud-text">
+                          {b.name}
+                        </div>
+                        <div className="font-mono text-[10px] text-hud-muted mt-0.5 flex items-center gap-1.5">
+                          <span
+                            className={
+                              isMaster
+                                ? 'text-sky-600 dark:text-sky-400 font-bold'
+                                : isForeign
+                                ? 'text-rose-600 dark:text-rose-400 font-bold'
+                                : 'text-slate-600 dark:text-slate-400 font-semibold'
+                            }
+                          >
+                            0x{b.uid}
+                          </span>
+                          <span>•</span>
+                          <span className="truncate">{b.role}</span>
+                        </div>
+                      </div>
+                    </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-hud-elevated/50"
-                onClick={() => simulateTap('20B2C3D4', 'Altichie, Rjhay')}
-              >
-                <span>STUDENT [0x20B2C3D4]</span>
-                <span className="text-xs text-sky-400 font-body">Altichie, R.</span>
-              </Button>
+                    <button
+                      type="button"
+                      disabled={cooldownRemaining > 0}
+                      onClick={() => simulateTap(b.uid, b.name)}
+                      className={`ml-2 px-3 py-1.5 rounded-lg font-mono text-[11px] font-bold tracking-wider shrink-0 transition-all active:scale-95 disabled:opacity-40 shadow-xs ${
+                        isMaster
+                          ? 'bg-sky-600 hover:bg-sky-500 text-white'
+                          : isForeign
+                          ? 'bg-rose-600 hover:bg-rose-500 text-white'
+                          : 'bg-hud-surface hover:bg-hud-hover border border-hud-border/80 text-sky-600 dark:text-sky-400'
+                      }`}
+                    >
+                      TAP
+                    </button>
+                  </div>
+                );
+              })}
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-hud-elevated/50"
-                onClick={() => simulateTap('30C3D4E5', 'Cabunoc, Rey')}
-              >
-                <span>STUDENT [0x30C3D4E5]</span>
-                <span className="text-xs text-sky-400 font-body">Cabunoc, R.</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-hud-elevated/50"
-                onClick={() => simulateTap('40D4E5F6', 'Dalupang, John Mark')}
-              >
-                <span>STUDENT [0x40D4E5F6]</span>
-                <span className="text-xs text-sky-400 font-body">Dalupang, J.</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-hud-elevated/50"
-                onClick={() => simulateTap('50E5F6A7', 'Malate, Christian Dave')}
-              >
-                <span>STUDENT [0x50E5F6A7]</span>
-                <span className="text-xs text-sky-400 font-body">Malate, C.</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-hud-elevated/50 hover:border-rose-500/40"
-                onClick={() => simulateTap('99999999', 'Foreign UID')}
-              >
-                <span>FOREIGN TAG [0x99999999]</span>
-                <span className="text-xs text-rose-400 font-body">404 Unregistered</span>
-              </Button>
-
-              <div className="p-3.5 bg-hud-elevated/70 border border-hud-border/70 text-xs text-hud-secondary space-y-1.5 rounded-xl shadow-tactile font-body mt-2">
+              <div className="p-3.5 bg-hud-elevated/70 border border-hud-border/70 text-xs text-hud-secondary space-y-1.5 rounded-xl shadow-tactile font-body mt-3">
                 <div className="text-sky-400 font-bold uppercase tracking-wider text-[11px] font-sans">
                   HARDWARE PACING INTERLOCK
                 </div>
@@ -553,4 +659,6 @@ export const TerminalMonitorPage: React.FC = () => {
 };
 
 export default TerminalMonitorPage;
+
+
 

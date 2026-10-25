@@ -116,19 +116,17 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           <thead className="bg-hud-elevated/60 text-xs font-semibold text-hud-secondary uppercase tracking-wider border-b border-hud-border/60">
             <tr>
               <th className="py-3 px-3.5 w-10 text-center">#</th>
-              <th className="py-3 px-3.5 min-w-[220px]">STUDENT &amp; CREDENTIAL</th>
-              <th className="py-3 px-3 whitespace-nowrap min-w-[100px]">RFID UID</th>
-              <th className="py-3 px-3 whitespace-nowrap min-w-[90px]">CHECK-IN</th>
-              <th className="py-3 px-3 whitespace-nowrap min-w-[90px]">INGRESS</th>
-              <th className="py-3 px-3 whitespace-nowrap min-w-[100px]">STATUS</th>
-              <th className="py-3 px-2 text-center whitespace-nowrap min-w-[70px]">RECEIPT</th>
-              <th className="py-3 px-3 text-right whitespace-nowrap min-w-[90px]">ACTION</th>
+              <th className="py-3 px-3.5 min-w-[210px]">STUDENT &amp; CREDENTIAL</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[95px]">RFID UID</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[110px]">CHECK-IN &amp; INGRESS</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[110px]">STATUS</th>
+              <th className="py-3 px-3.5 text-right whitespace-nowrap w-24">ACTION</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-hud-subtle text-xs">
             {filteredRoster.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-hud-muted font-sans text-sm">
+                <td colSpan={6} className="py-12 text-center text-hud-muted font-sans text-sm">
                   No matching records found in section manifest
                 </td>
               </tr>
@@ -169,7 +167,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                               className="p-0 text-hud-muted hover:text-sky-600 dark:hover:text-sky-400"
                             />
                             <span className="text-hud-muted">•</span>
-                            <span className="text-hud-muted truncate max-w-[150px]">
+                            <span className="text-hud-muted truncate max-w-[140px]">
                               {student.email}
                             </span>
                           </div>
@@ -186,66 +184,58 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                         <span className="text-hud-muted text-xs">UNBOUND</span>
                       )}
                     </td>
-                    <td className="py-3.5 px-3 font-mono whitespace-nowrap">
+                    <td className="py-3.5 px-3 whitespace-nowrap font-mono">
                       {timeFormatted ? (
-                        <span className="text-hud-text font-semibold num-tabular">
-                          {timeFormatted}
-                        </span>
-                      ) : (
-                        <span className="text-hud-muted text-xs font-mono">--:--:--</span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-3 font-mono whitespace-nowrap">
-                      {student.authMethod ? (
-                        <Badge
-                          status={student.authMethod}
-                          label={
-                            student.authMethod === 'RFID_TAP'
-                              ? 'RFID'
+                        <div>
+                          <div className="text-hud-text font-bold text-xs num-tabular">
+                            {timeFormatted}
+                          </div>
+                          <div className="text-[10px] text-sky-600 dark:text-sky-400 font-sans font-semibold mt-0.5">
+                            {student.authMethod === 'RFID_TAP'
+                              ? 'RFID TAG'
                               : student.authMethod === 'KEYPAD_OTP'
-                              ? 'KEYPAD'
-                              : student.authMethod
-                          }
-                          size="sm"
-                          dot={false}
-                        />
+                              ? 'KEYPAD PIN'
+                              : student.authMethod}
+                          </div>
+                        </div>
                       ) : (
-                        <span className="text-hud-muted text-xs">PENDING</span>
+                        <div>
+                          <div className="text-hud-muted text-xs">--:--:--</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
+                            PENDING
+                          </div>
+                        </div>
                       )}
                     </td>
                     <td className="py-3.5 px-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <Badge status={student.status} size="sm" />
+                        {student.reverseReceiptSent && (
+                          <span
+                            title="Reverse-receipt attendance notification dispatched"
+                            className="inline-flex text-emerald-500 dark:text-emerald-400 p-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-xs"
+                          >
+                            <MailCheck className="w-3.5 h-3.5" />
+                          </span>
+                        )}
                         {student.isManualOverride && (
                           <span
                             title={`Override: ${student.overrideReason || 'Manual adjustment'}`}
-                            className="text-[10px] font-mono font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-full"
+                            className="text-[9px] font-mono font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-full"
                           >
-                            OVERRIDE
+                            EDITED
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-2 text-center whitespace-nowrap">
-                      {student.reverseReceiptSent ? (
-                        <span
-                          title="Reverse-receipt attendance notification dispatched to student email"
-                          className="inline-flex text-emerald-500 dark:text-emerald-400"
-                        >
-                          <MailCheck className="w-4 h-4" />
-                        </span>
-                      ) : (
-                        <span className="text-hud-muted font-mono text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-3.5 text-right whitespace-nowrap">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         disabled={disabled}
                         onClick={() => onOpenOverride(student)}
-                        leftIcon={<Edit3 className="w-3.5 h-3.5 text-hud-secondary" />}
-                        className="py-1 px-2.5 text-xs hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-semibold"
+                        leftIcon={<Edit3 className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />}
+                        className="py-1 px-3 text-xs bg-hud-surface hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-semibold border-hud-border/80 shadow-xs"
                       >
                         Override
                       </Button>

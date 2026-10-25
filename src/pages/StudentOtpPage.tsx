@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound, Clock, Key, AlertCircle, Shield } from 'lucide-react';
+import { KeyRound, Clock, Key, AlertCircle, Shield, Terminal, Zap } from 'lucide-react';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { CopyButton } from '../components/ui/CopyButton.js';
 import { API_V1_URL } from '../config/api.js';
+import { sounds } from '../utils/audio.js';
 
 interface OtpData {
   otp: string;
@@ -54,9 +55,9 @@ export const StudentOtpPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [otpData]);
 
-  const handleRequestOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!identifier.trim()) {
+  const requestOtpForId = async (targetId: string) => {
+    setIdentifier(targetId);
+    if (!targetId.trim()) {
       setError('Please specify your Student ID or institutional email.');
       return;
     }
@@ -68,7 +69,7 @@ export const StudentOtpPage: React.FC = () => {
       const response = await fetch(`${API_V1_URL}/otp/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: identifier.trim() }),
+        body: JSON.stringify({ identifier: targetId.trim() }),
       });
 
       const data = await response.json();
@@ -79,11 +80,18 @@ export const StudentOtpPage: React.FC = () => {
 
       setOtpData(data.data);
       setSecondsRemaining(data.data.expiresInSeconds || 60);
+      sounds.playSuccessChime();
     } catch (err: any) {
       setError(err.message || 'Communication failed');
+      sounds.playErrorBuzz();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRequestOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await requestOtpForId(identifier);
   };
 
   const isExpired = otpData && secondsRemaining <= 0;
@@ -140,32 +148,44 @@ export const StudentOtpPage: React.FC = () => {
                   <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
                     Enrolled Student Presets:
                   </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-body">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-body">
                     {STUDENT_PRESETS.map((p) => {
                       const isSelected = identifier === p.id;
                       return (
-                        <button
+                        <div
                           key={p.id}
-                          type="button"
-                          onClick={() => setIdentifier(p.id)}
-                          className={`flex items-center gap-2.5 p-2 rounded-xl text-left border transition-all ${
+                          className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
                             isSelected
                               ? 'border-sky-500 bg-sky-500/10 text-sky-400 shadow-sm'
                               : 'border-hud-border/70 bg-hud-elevated/40 hover:bg-hud-hover text-hud-secondary hover:text-hud-text'
                           }`}
                         >
-                          <span className="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
-                            {p.initials}
-                          </span>
-                          <div className="truncate">
-                            <div className="font-semibold text-xs leading-none text-hud-text truncate">
-                              {p.name}
-                            </div>
-                            <div className="font-mono text-[10px] text-hud-muted mt-0.5">
-                              {p.id}
+                          <div
+                            onClick={() => setIdentifier(p.id)}
+                            className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
+                          >
+                            <span className="w-7 h-7 rounded-full bg-sky-500/20 text-sky-400 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
+                              {p.initials}
+                            </span>
+                            <div className="truncate">
+                              <div className="font-semibold text-xs leading-none text-hud-text truncate">
+                                {p.name}
+                              </div>
+                              <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                {p.id}
+                              </div>
                             </div>
                           </div>
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => requestOtpForId(p.id)}
+                            title="1-Click Mint OTP PIN"
+                            className="p-1.5 ml-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-600 text-sky-500 dark:text-sky-400 hover:text-white transition-all shrink-0 text-[10px] font-bold flex items-center gap-1 border border-sky-500/25"
+                          >
+                            <Zap className="w-3 h-3 text-amber-400" />
+                            <span>Mint</span>
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -261,8 +281,22 @@ export const StudentOtpPage: React.FC = () => {
                     {otpData.otp}
                   </div>
 
-                  <div className="flex items-center justify-center gap-2 mt-3.5">
-                    <CopyButton text={otpData.otp} label="Copy 6-Digit PIN" />
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
+                    <CopyButton text={otpData.otp} label="Copy PIN" />
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => {
+                        localStorage.setItem('orchestra_ingress_otp', otpData.otp);
+                        window.dispatchEvent(
+                          new CustomEvent('orchestra:test_keypad', { detail: { otp: otpData.otp } })
+                        );
+                      }}
+                      leftIcon={<Terminal className="w-3.5 h-3.5" />}
+                      className="w-full sm:w-auto shadow-sm"
+                    >
+                      Test on Keypad Terminal →
+                    </Button>
                   </div>
                 </div>
 

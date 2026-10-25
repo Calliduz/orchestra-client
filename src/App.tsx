@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './context/ThemeContext.js';
 import { SocketProvider } from './context/SocketContext.js';
 import { SkipLink } from './components/layout/SkipLink.js';
@@ -13,6 +13,20 @@ import { NotFoundPage } from './pages/NotFoundPage.js';
 
 export const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
+
+  useEffect(() => {
+    const handleNavigate = (e: any) => {
+      if (e.detail?.tab) {
+        setCurrentTab(e.detail.tab);
+      }
+    };
+    window.addEventListener('orchestra:navigate', handleNavigate);
+    window.addEventListener('orchestra:test_keypad', () => setCurrentTab('terminal'));
+    return () => {
+      window.removeEventListener('orchestra:navigate', handleNavigate);
+      window.removeEventListener('orchestra:test_keypad', () => setCurrentTab('terminal'));
+    };
+  }, []);
 
   const renderPage = () => {
     switch (currentTab) {
