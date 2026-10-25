@@ -79,16 +79,17 @@ export const FacultyDashboardPage: React.FC = () => {
     const handleThresholdsUpdated = (data: any) => {
       if (data.roster) setRoster(data.roster);
       if (data.stats) setStats(data.stats);
-      if (sessionData?.session) {
-        setSessionData((prev: any) => ({
+      setSessionData((prev: any) => {
+        if (!prev?.session) return prev;
+        return {
           ...prev,
           session: {
             ...prev.session,
             lateThresholdMins: data.lateThresholdMins,
             cutThresholdMins: data.cutThresholdMins,
           },
-        }));
-      }
+        };
+      });
     };
 
     socket.on('session:started', handleSessionStarted);
@@ -102,7 +103,7 @@ export const FacultyDashboardPage: React.FC = () => {
       socket.off('attendance:updated', handleAttendanceUpdated);
       socket.off('thresholds:updated', handleThresholdsUpdated);
     };
-  }, [socket, fetchActiveSession, sessionData]);
+  }, [socket, fetchActiveSession]);
 
   const handleUpdateThresholds = async (late: number, cut: number) => {
     if (!sessionData?.session?.id) return;

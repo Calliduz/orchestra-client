@@ -1,7 +1,7 @@
 // Browser Web Audio API sound synthesis for hardware terminal simulation
 class SoundEngine {
   private ctx: AudioContext | null = null;
-  public enabled: boolean = true;
+  public enabled: boolean = typeof window !== 'undefined' ? localStorage.getItem('orchestra_sound_enabled') !== 'false' : true;
 
   private init() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -13,6 +13,20 @@ class SoundEngine {
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
+  }
+
+  setEnabled(val: boolean) {
+    this.enabled = val;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('orchestra_sound_enabled', String(val));
+      window.dispatchEvent(new CustomEvent('orchestra:sound_toggled', { detail: { enabled: val } }));
+    }
+  }
+
+  toggle(): boolean {
+    const next = !this.enabled;
+    this.setEnabled(next);
+    return next;
   }
 
   playKeyChirp() {
@@ -28,6 +42,12 @@ class SoundEngine {
       gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.025);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      osc.onended = () => {
+        try {
+          osc.disconnect();
+          gain.disconnect();
+        } catch {}
+      };
       osc.start();
       osc.stop(this.ctx.currentTime + 0.025);
     } catch {}
@@ -48,6 +68,12 @@ class SoundEngine {
         gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.09 + 0.18);
         osc.connect(gain);
         gain.connect(this.ctx!.destination);
+        osc.onended = () => {
+          try {
+            osc.disconnect();
+            gain.disconnect();
+          } catch {}
+        };
         osc.start(now + i * 0.09);
         osc.stop(now + i * 0.09 + 0.18);
       });
@@ -67,6 +93,12 @@ class SoundEngine {
       gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.22);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      osc.onended = () => {
+        try {
+          osc.disconnect();
+          gain.disconnect();
+        } catch {}
+      };
       osc.start();
       osc.stop(this.ctx.currentTime + 0.22);
     } catch {}

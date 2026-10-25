@@ -15,7 +15,8 @@ export const TerminalMonitorPage: React.FC = () => {
   const [oledSubtext, setOledSubtext] = useState<string>('TERM-CL304 [STANDBY]');
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
   const [simLog, setSimLog] = useState<string[]>([]);
-  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
+  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(() => !sounds.enabled);
+  const cooldownIntervalRef = React.useRef<number | null>(null);
 
   // Virtual Keypad State Machine
   const [isOtpMode, setIsOtpMode] = useState<boolean>(false);
@@ -40,8 +41,22 @@ export const TerminalMonitorPage: React.FC = () => {
       }
     };
 
+    const handleSoundToggle = (e: any) => {
+      if (typeof e.detail?.enabled === 'boolean') {
+        setIsAudioMuted(!e.detail.enabled);
+      }
+    };
+
     window.addEventListener('orchestra:test_keypad', handleKeypadBridge);
-    return () => window.removeEventListener('orchestra:test_keypad', handleKeypadBridge);
+    window.addEventListener('orchestra:sound_toggled', handleSoundToggle);
+    return () => {
+      window.removeEventListener('orchestra:test_keypad', handleKeypadBridge);
+      window.removeEventListener('orchestra:sound_toggled', handleSoundToggle);
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+        cooldownIntervalRef.current = null;
+      }
+    };
   }, [terminalId]);
 
   const loadKeypadOtp = (pin: string) => {
@@ -55,9 +70,9 @@ export const TerminalMonitorPage: React.FC = () => {
   };
 
   const toggleAudio = () => {
-    const next = !isAudioMuted;
-    setIsAudioMuted(next);
-    sounds.enabled = !next;
+    const nextMuted = isAudioMuted;
+    sounds.setEnabled(nextMuted);
+    setIsAudioMuted(!nextMuted);
   };
 
   const fetchTerminalStatus = async () => {
@@ -273,14 +288,21 @@ export const TerminalMonitorPage: React.FC = () => {
   };
 
   const triggerCooldown = () => {
+    if (cooldownIntervalRef.current) {
+      clearInterval(cooldownIntervalRef.current);
+      cooldownIntervalRef.current = null;
+    }
     setCooldownRemaining(3.0);
     const start = Date.now();
-    const interval = setInterval(() => {
+    cooldownIntervalRef.current = window.setInterval(() => {
       const elapsed = (Date.now() - start) / 1000;
       const left = Math.max(0, 3.0 - elapsed);
       setCooldownRemaining(left);
       if (left <= 0) {
-        clearInterval(interval);
+        if (cooldownIntervalRef.current) {
+          clearInterval(cooldownIntervalRef.current);
+          cooldownIntervalRef.current = null;
+        }
         setOledMessage('ACTIVE SESSION\nREADY FOR CARD SCAN');
         setOledSubtext('ORCHESTRA EDGE TERMINAL');
       }

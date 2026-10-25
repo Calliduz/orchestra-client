@@ -11,6 +11,8 @@ import { StudentOtpPage } from './pages/StudentOtpPage.js';
 import { TerminalMonitorPage } from './pages/TerminalMonitorPage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
 
+import { ErrorBoundary } from './components/ui/ErrorBoundary.js';
+
 export const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
 
@@ -55,9 +57,11 @@ export const AppContent: React.FC = () => {
         onSelectTab={(tab) => setCurrentTab(tab)}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content Area Protected by ErrorBoundary */}
       <main id="main-content" className="flex-grow focus:outline-none">
-        {renderPage()}
+        <ErrorBoundary>
+          {renderPage()}
+        </ErrorBoundary>
       </main>
 
       {/* Floating Scroll Back to Top Button */}

@@ -6,7 +6,8 @@ export const BackToTop: React.FC = () => {
 
   useEffect(() => {
     const toggleVisibility = () => {
-      setIsVisible(window.scrollY > 300);
+      const shouldShow = window.scrollY > 300;
+      setIsVisible((prev) => (prev !== shouldShow ? shouldShow : prev));
     };
 
     window.addEventListener('scroll', toggleVisibility, { passive: true });

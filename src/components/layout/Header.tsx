@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Terminal, KeyRound, Activity } from 'lucide-react';
+import { Moon, Sun, Terminal, KeyRound, Activity, Volume2, VolumeX } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { CopyButton } from '../ui/CopyButton.js';
@@ -19,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { theme, toggleTheme } = useTheme();
   const { isConnected, terminalId } = useSocket();
   const [currentTime, setCurrentTime] = useState<string>('');
+  const [isMuted, setIsMuted] = useState<boolean>(() => !sounds.enabled);
 
   useEffect(() => {
     const updateClock = () => {
@@ -27,8 +28,24 @@ export const Header: React.FC<HeaderProps> = ({
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
-    return () => clearInterval(interval);
+
+    const handleSoundToggle = (e: any) => {
+      if (typeof e.detail?.enabled === 'boolean') {
+        setIsMuted(!e.detail.enabled);
+      }
+    };
+    window.addEventListener('orchestra:sound_toggled', handleSoundToggle);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('orchestra:sound_toggled', handleSoundToggle);
+    };
   }, []);
+
+  const handleToggleSound = () => {
+    const next = sounds.toggle();
+    setIsMuted(!next);
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-hud-bg/85 backdrop-blur-xl border-b border-hud-border">
@@ -122,6 +139,19 @@ export const Header: React.FC<HeaderProps> = ({
               />
               <span className="font-semibold text-hud-text">{isConnected ? 'Online' : 'Reconnecting'}</span>
             </div>
+
+            <button
+              onClick={handleToggleSound}
+              aria-label={isMuted ? 'Unmute hardware piezo chimes' : 'Mute hardware piezo chimes'}
+              title={isMuted ? 'Sound Muted (Click to enable)' : 'Sound Enabled (Click to mute)'}
+              className={`p-2 border rounded-xl shadow-sm transition-colors ${
+                isMuted
+                  ? 'border-rose-300 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/40'
+                  : 'border-hud-border/70 bg-hud-surface text-hud-secondary hover:text-hud-text hover:bg-hud-hover'
+              }`}
+            >
+              {isMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />}
+            </button>
 
             <button
               onClick={toggleTheme}
