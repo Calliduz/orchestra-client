@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Database, Network, ShieldCheck } from 'lucide-react';
+import { Cpu, Database, Network } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -8,7 +8,11 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-hud-text font-medium text-xs tracking-wider">
-              <ShieldCheck className="w-4 h-4 text-sky-400" />
+              <img
+                src="/orchestra-plain-bgrmvd-vectorized.svg"
+                alt="ORCHESTRA Official Logo"
+                className="w-4 h-4 object-contain"
+              />
               <span className="font-sans font-extrabold tracking-wide">ORCHESTRA Framework</span>
               <span className="text-hud-muted font-mono">•</span>
               <span className="text-hud-secondary font-body font-normal text-xs">

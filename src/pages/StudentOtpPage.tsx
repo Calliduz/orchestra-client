@@ -351,8 +351,12 @@ export const StudentOtpPage: React.FC = () => {
               </div>
             ) : (
               <div className="py-6 px-4 space-y-5">
-                <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shadow-glow-cyan/20">
-                  <Shield className="w-6 h-6" />
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center p-2.5 shadow-xs transition-transform hover:scale-105">
+                  <img
+                    src="/orchestra-plain-bgrmvd-vectorized.svg"
+                    alt="ORCHESTRA Official Logo"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div className="text-center space-y-1">
                   <h4 className="font-sans font-bold text-sm text-hud-text">

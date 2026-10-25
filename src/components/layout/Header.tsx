@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Moon, Sun, Terminal, KeyRound, Activity } from 'lucide-react';
+import { Moon, Sun, Terminal, KeyRound, Activity } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { CopyButton } from '../ui/CopyButton.js';
@@ -34,17 +34,21 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 w-full bg-hud-bg/85 backdrop-blur-xl border-b border-hud-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Brand Identity with Academic Authority */}
+          {/* Brand Identity with Official Vector Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-sky-500/10 border border-sky-500/25 flex items-center justify-center text-sky-400 rounded-xl shadow-glow-cyan/20">
-              <Shield className="w-5 h-5 text-sky-400" />
+            <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center rounded-xl shadow-xs overflow-hidden p-1.5 transition-transform hover:scale-105">
+              <img
+                src="/orchestra-plain-bgrmvd-vectorized.svg"
+                alt="ORCHESTRA Official Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-sans font-extrabold text-base tracking-wider text-hud-text">
                   ORCHESTRA
                 </span>
-                <span className="text-[10px] font-sans font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-sans font-bold uppercase tracking-wider bg-sky-500/15 text-sky-600 dark:text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded-full">
                   ACADEMIC SIGNAL
                 </span>
               </div>
