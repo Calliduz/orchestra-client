@@ -130,23 +130,38 @@ export const KpiGrid: React.FC<KpiGridProps> = ({ stats }) => {
       </div>
 
       {/* Segmented Distribution Progress Bar */}
-      <div className="space-y-2 pt-1">
-        <div className="w-full h-2.5 bg-hud-elevated/70 flex overflow-hidden rounded-full">
-          <div style={{ width: `${presentPercent}%` }} className="h-full bg-emerald-500 transition-all duration-300" title={`Present: ${stats.present}`} />
-          <div style={{ width: `${latePercent}%` }} className="h-full bg-amber-500 transition-all duration-300" title={`Late: ${stats.late}`} />
-          <div style={{ width: `${cutPercent}%` }} className="h-full bg-rose-500/70 transition-all duration-300" title={`Cut: ${stats.cut}`} />
-          <div style={{ width: `${excusedPercent}%` }} className="h-full bg-slate-400 transition-all duration-300" title={`Excused: ${stats.excused}`} />
-          <div style={{ width: `${absentPercent}%` }} className="h-full bg-rose-500 transition-all duration-300" title={`Absent: ${stats.absent}`} />
+      <div className="space-y-2.5 pt-1">
+        <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 flex overflow-hidden rounded-full p-0.5 border border-slate-200/80 dark:border-slate-700/80 shadow-inner">
+          {attendedCount === 0 ? (
+            <div className="w-full h-full bg-slate-200/70 dark:bg-slate-700/40 rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-sans font-semibold text-slate-500 dark:text-slate-400">
+                Awaiting student ingress interrogation...
+              </span>
+            </div>
+          ) : (
+            <>
+              <div style={{ width: `${presentPercent}%` }} className="h-full bg-emerald-500 rounded-l-full transition-all duration-500" title={`Present: ${stats.present}`} />
+              <div style={{ width: `${latePercent}%` }} className="h-full bg-amber-500 transition-all duration-500" title={`Late: ${stats.late}`} />
+              <div style={{ width: `${cutPercent}%` }} className="h-full bg-rose-500/80 transition-all duration-500" title={`Cut: ${stats.cut}`} />
+              <div style={{ width: `${excusedPercent}%` }} className="h-full bg-sky-500 transition-all duration-500" title={`Excused: ${stats.excused}`} />
+              <div style={{ width: `${absentPercent}%` }} className="h-full bg-slate-300 dark:bg-slate-700 rounded-r-full transition-all duration-500" title={`Absent: ${stats.absent}`} />
+            </>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-hud-secondary gap-2">
-          <div>
-            Verified Headcount: <strong className="text-white font-medium">{attendedCount}</strong> of {stats.totalEnrolled} students present
+          <div className="font-sans">
+            Verified Headcount:{' '}
+            <strong className="text-slate-900 dark:text-white font-extrabold font-mono text-sm">
+              {attendedCount}
+            </strong>{' '}
+            of <span className="font-mono font-semibold">{stats.totalEnrolled}</span> students inducted
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-xs">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Present</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Late</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Cut / Absent</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Excused</span>
+          <div className="flex flex-wrap items-center gap-3.5 text-xs font-medium">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" /> Present ({stats.present})</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm" /> Late ({stats.late})</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm" /> Cut ({stats.cut})</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sky-500 shadow-sm" /> Excused ({stats.excused})</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-400 shadow-sm" /> Absent ({stats.absent})</span>
           </div>
         </div>
       </div>

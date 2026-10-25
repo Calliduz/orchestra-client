@@ -151,21 +151,21 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
         {/* Right: Operational Controls & Session Clock */}
         <div className="flex flex-wrap items-center gap-4">
           {/* Clean Session Clock */}
-          <div className="flex items-center gap-4 bg-hud-elevated border border-hud-border px-4 py-3 rounded-xl shadow-sm">
-            <div className="flex flex-col items-center justify-center pr-3 border-r border-hud-border">
+          <div className="flex items-center gap-4 bg-hud-elevated/70 border border-hud-border/80 px-4 py-3 rounded-2xl shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+            <div className="flex flex-col items-center justify-center pr-3.5 border-r border-hud-border/70">
               <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
                 Session Clock
               </span>
-              <span className="font-mono text-xl sm:text-2xl font-bold text-emerald-600 num-tabular tracking-wider">
+              <span className="font-mono text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 num-tabular tracking-wider drop-shadow-sm">
                 {elapsedTime}
               </span>
             </div>
             <div className="flex flex-col gap-0.5 text-[11px] text-hud-secondary">
-              <span className="flex items-center gap-1 text-emerald-700 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
                 {isLocked ? 'Standby Ingress' : 'Auto-Ingress Active'}
               </span>
-              <span className="text-hud-muted font-mono text-[10px]">915.2 MHz • -42 dBm</span>
+              <span className="text-hud-muted font-mono text-[10px] tracking-tight">13.56 MHz HF • ISO 14443A</span>
             </div>
           </div>
 

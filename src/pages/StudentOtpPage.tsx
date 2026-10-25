@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound, Clock, Key, AlertCircle } from 'lucide-react';
+import { KeyRound, Clock, Key, AlertCircle, Shield } from 'lucide-react';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { CopyButton } from '../components/ui/CopyButton.js';
@@ -16,6 +16,14 @@ interface OtpData {
   roomNumber: string;
   terminalId: string;
 }
+
+const STUDENT_PRESETS = [
+  { id: '2023-0001-CCS', name: 'Agbada, Justine Jay', initials: 'JA' },
+  { id: '2023-0002-CCS', name: 'Altichie, Rjhay', initials: 'RA' },
+  { id: '2023-0003-CCS', name: 'Cabunoc, Rey', initials: 'RC' },
+  { id: '2023-0004-CCS', name: 'Dalupang, John Mark', initials: 'JD' },
+  { id: '2023-0005-CCS', name: 'Malate, Christian Dave', initials: 'CM' },
+];
 
 export const StudentOtpPage: React.FC = () => {
   const [identifier, setIdentifier] = useState('');
@@ -128,19 +136,39 @@ export const StudentOtpPage: React.FC = () => {
                   placeholder="e.g. 2023-0001-CCS or altichie.rjhay@student.orchestra.edu"
                   className="w-full px-4 py-2.5 border border-hud-border/80 bg-hud-elevated/70 text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl placeholder:text-hud-muted transition-colors shadow-tactile font-mono text-xs"
                 />
-                <div className="flex flex-wrap items-center gap-2 text-xs text-hud-secondary mt-2.5 font-mono">
-                  <span className="text-hud-muted text-[11px]">PRESETS:</span>
-                  <button type="button" onClick={() => setIdentifier('2023-0001-CCS')} className="text-sky-400 hover:text-sky-300 hover:underline">
-                    2023-0001-CCS (Agbada)
-                  </button>
-                  <span className="text-hud-muted">•</span>
-                  <button type="button" onClick={() => setIdentifier('2023-0002-CCS')} className="text-sky-400 hover:text-sky-300 hover:underline">
-                    2023-0002-CCS (Altichie)
-                  </button>
-                  <span className="text-hud-muted">•</span>
-                  <button type="button" onClick={() => setIdentifier('2023-0003-CCS')} className="text-sky-400 hover:text-sky-300 hover:underline">
-                    2023-0003-CCS (Cabunoc)
-                  </button>
+                <div className="space-y-2 mt-3">
+                  <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
+                    Enrolled Student Presets:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-body">
+                    {STUDENT_PRESETS.map((p) => {
+                      const isSelected = identifier === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setIdentifier(p.id)}
+                          className={`flex items-center gap-2.5 p-2 rounded-xl text-left border transition-all ${
+                            isSelected
+                              ? 'border-sky-500 bg-sky-500/10 text-sky-400 shadow-sm'
+                              : 'border-hud-border/70 bg-hud-elevated/40 hover:bg-hud-hover text-hud-secondary hover:text-hud-text'
+                          }`}
+                        >
+                          <span className="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {p.initials}
+                          </span>
+                          <div className="truncate">
+                            <div className="font-semibold text-xs leading-none text-hud-text truncate">
+                              {p.name}
+                            </div>
+                            <div className="font-mono text-[10px] text-hud-muted mt-0.5">
+                              {p.id}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -217,19 +245,19 @@ export const StudentOtpPage: React.FC = () => {
           >
             {otpData ? (
               <div className="space-y-4 font-mono text-center">
-                {/* 6-Digit PIN Vault Box with Radiant Luminous Halo */}
+                {/* 6-Digit PIN Vault Box with High Contrast and Radiant Luminous Halo */}
                 <div
                   className={`p-6 border rounded-2xl transition-all shadow-sm ${
                     isExpired
                       ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400'
-                      : 'bg-sky-50 border-sky-300 text-sky-800 dark:bg-sky-500/15 dark:border-sky-400/40 dark:text-sky-300 dark:shadow-glow-cyan/25'
+                      : 'bg-sky-50 border-sky-300 text-sky-900 dark:bg-sky-500/15 dark:border-sky-400/40 dark:text-sky-300 dark:shadow-glow-cyan/25'
                   }`}
                 >
                   <div className="text-[11px] font-sans font-bold uppercase tracking-wider mb-2 text-slate-500 dark:text-hud-secondary">
                     {isExpired ? 'EXPIRED OTP TOKEN' : 'ACTIVE INGRESS PIN'}
                   </div>
 
-                  <div className="text-4xl sm:text-5xl font-mono font-extrabold tracking-widest my-2 num-tabular select-all text-white">
+                  <div className="text-4xl sm:text-5xl font-mono font-extrabold tracking-widest my-2 num-tabular select-all text-slate-900 dark:text-white">
                     {otpData.otp}
                   </div>
 
@@ -285,11 +313,39 @@ export const StudentOtpPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="py-12 px-4 text-center text-hud-muted font-mono space-y-3">
-                <Key className="w-8 h-8 mx-auto text-hud-border" />
-                <p className="text-xs">
-                  No active OTP requested. Enter your Student ID on the left to generate a 60-second hardware entry PIN.
-                </p>
+              <div className="py-6 px-4 space-y-5">
+                <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shadow-glow-cyan/20">
+                  <Shield className="w-6 h-6" />
+                </div>
+                <div className="text-center space-y-1">
+                  <h4 className="font-sans font-bold text-sm text-hud-text">
+                    Hardware Ingress Guard Active
+                  </h4>
+                  <p className="text-xs text-hud-secondary font-body">
+                    Select an enrolled student preset on the left or enter a Student ID to mint a single-use 60-second induction token.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 pt-3 border-t border-hud-border/60 text-xs font-body text-hud-secondary">
+                  <div className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 shrink-0" />
+                    <span>
+                      <strong className="text-hud-text">60-Second TTL Nonce:</strong> Automatically decays and expires after 60 seconds to defeat token reuse.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                    <span>
+                      <strong className="text-hud-text">Single-Use Consumption:</strong> The token is burned immediately upon successful terminal ingress.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                    <span>
+                      <strong className="text-hud-text">3-Strike Lockout:</strong> Keypad locks for 180s on 3 consecutive invalid PIN entries.
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </Card>

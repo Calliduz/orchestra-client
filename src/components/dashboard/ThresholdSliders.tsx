@@ -11,6 +11,12 @@ interface ThresholdSlidersProps {
   disabled?: boolean;
 }
 
+const POLICY_PRESETS = [
+  { id: 'strict', label: 'Strict Lab', late: 10, cut: 30, desc: '10m / 30m' },
+  { id: 'standard', label: 'Standard', late: 15, cut: 45, desc: '15m / 45m' },
+  { id: 'grace', label: 'Rain / Grace', late: 25, cut: 60, desc: '25m / 60m' },
+];
+
 export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
   sessionId,
   initialLate,
@@ -101,6 +107,37 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
             <span className="text-amber-400 font-semibold">{lateThreshold}m (Late)</span>
             <span className="text-rose-400 font-semibold">{cutThreshold}m (Cut)</span>
             <span className="text-hud-muted">60m+</span>
+          </div>
+        </div>
+
+        {/* 1-Click Policy Presets */}
+        <div className="space-y-2">
+          <div className="text-[11px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
+            Quick Policy Presets
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {POLICY_PRESETS.map((preset) => {
+              const isSelected = lateThreshold === preset.late && cutThreshold === preset.cut;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    setLateThreshold(preset.late);
+                    setCutThreshold(preset.cut);
+                  }}
+                  className={`p-2 rounded-xl text-left border transition-all ${
+                    isSelected
+                      ? 'border-sky-500 bg-sky-500/10 text-sky-400 shadow-sm'
+                      : 'border-hud-border/70 bg-hud-elevated/50 hover:bg-hud-hover text-hud-secondary hover:text-hud-text'
+                  } disabled:opacity-40`}
+                >
+                  <div className="font-bold text-xs">{preset.label}</div>
+                  <div className="text-[10px] font-mono opacity-80">{preset.desc}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
