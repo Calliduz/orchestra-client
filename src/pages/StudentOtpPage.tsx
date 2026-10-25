@@ -142,7 +142,7 @@ export const StudentOtpPage: React.FC = () => {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="e.g. 2023-0001-CCS or altichie.rjhay@student.orchestra.edu"
-                  className="w-full px-4 py-2.5 border border-hud-border/80 bg-hud-elevated/70 text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl placeholder:text-hud-muted transition-colors shadow-tactile font-mono text-xs"
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-xl placeholder:text-slate-400 transition-colors shadow-tactile font-mono text-xs"
                 />
                 <div className="space-y-2 mt-3">
                   <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
@@ -157,18 +157,21 @@ export const StudentOtpPage: React.FC = () => {
                           className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
                             isSelected
                               ? 'border-sky-500 bg-sky-500/10 text-sky-400 shadow-sm'
-                              : 'border-hud-border/70 bg-hud-elevated/40 hover:bg-hud-hover text-hud-secondary hover:text-hud-text'
+                              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-hud-secondary hover:text-hud-text'
                           }`}
                         >
                           <div
-                            onClick={() => setIdentifier(p.id)}
+                            onClick={() => {
+                              setIdentifier(p.id);
+                              sounds.playKeyChirp();
+                            }}
                             className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
                           >
                             <span className="w-7 h-7 rounded-full bg-sky-500/20 text-sky-400 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
                               {p.initials}
                             </span>
                             <div className="truncate">
-                              <div className="font-semibold text-xs leading-none text-hud-text truncate">
+                              <div className="font-semibold text-xs leading-none text-slate-900 dark:text-white truncate">
                                 {p.name}
                               </div>
                               <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400 mt-1">
@@ -180,7 +183,7 @@ export const StudentOtpPage: React.FC = () => {
                             type="button"
                             onClick={() => requestOtpForId(p.id)}
                             title="1-Click Mint OTP PIN"
-                            className="p-1.5 ml-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-600 text-sky-500 dark:text-sky-400 hover:text-white transition-all shrink-0 text-[10px] font-bold flex items-center gap-1 border border-sky-500/25"
+                            className="p-1.5 ml-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-600 text-sky-500 dark:text-sky-400 hover:text-white transition-all shrink-0 text-[10px] font-bold flex items-center gap-1 border border-sky-500/25 active:scale-95"
                           >
                             <Zap className="w-3 h-3 text-amber-400" />
                             <span>Mint</span>
@@ -193,7 +196,7 @@ export const StudentOtpPage: React.FC = () => {
               </div>
 
               {error && (
-                <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 rounded-xl shadow-sm">
+                <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 text-xs flex items-center gap-2 rounded-xl shadow-xs">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -218,38 +221,38 @@ export const StudentOtpPage: React.FC = () => {
             subtitle="Physical entry guide for the classroom 4x4 matrix unit"
           >
             <div className="space-y-3 font-body text-xs text-hud-secondary">
-              <div className="flex items-start gap-3.5 p-3.5 bg-hud-elevated/50 border border-hud-border/70 rounded-xl shadow-tactile">
+              <div className="flex items-start gap-3.5 p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-tactile">
                 <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-400 font-bold flex items-center justify-center shrink-0 font-mono text-sm shadow-sm">
                   #
                 </div>
                 <div>
-                  <div className="text-hud-text font-bold text-sm">1. Enter OTP Mode</div>
+                  <div className="text-slate-900 dark:text-white font-bold text-sm">1. Enter OTP Mode</div>
                   <div className="text-xs text-hud-secondary mt-0.5 leading-relaxed">
-                    Press <strong className="text-sky-400 font-mono">#</strong> on the physical 4x4 keypad. The SSD1306 OLED displays <code>[ ENTER OTP ]</code>.
+                    Press <strong className="text-sky-500 dark:text-sky-400 font-mono">#</strong> on the physical 4x4 keypad. The SSD1306 OLED displays <code>[ ENTER OTP ]</code>.
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3.5 bg-hud-elevated/50 border border-hud-border/70 rounded-xl shadow-tactile">
-                <div className="w-7 h-7 rounded-lg bg-hud-elevated border border-hud-border text-hud-text font-bold flex items-center justify-center shrink-0 font-mono text-xs shadow-sm">
+              <div className="flex items-start gap-3.5 p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-tactile">
+                <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-bold flex items-center justify-center shrink-0 font-mono text-xs shadow-sm">
                   123
                 </div>
                 <div>
-                  <div className="text-hud-text font-bold text-sm">2. Key In 6 Digits</div>
+                  <div className="text-slate-900 dark:text-white font-bold text-sm">2. Key In 6 Digits</div>
                   <div className="text-xs text-hud-secondary mt-0.5 leading-relaxed">
-                    Enter your 6-digit PIN. Each keypress echoes on the OLED. Press <strong className="text-amber-400 font-mono">*</strong> to backspace or clear.
+                    Enter your 6-digit PIN. Each keypress echoes on the OLED. Press <strong className="text-amber-500 dark:text-amber-400 font-mono">*</strong> to backspace or clear.
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3.5 bg-hud-elevated/50 border border-hud-border/70 rounded-xl shadow-tactile">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center shrink-0 font-mono text-sm shadow-sm">
+              <div className="flex items-start gap-3.5 p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-tactile">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 font-bold flex items-center justify-center shrink-0 font-mono text-sm shadow-sm">
                   #
                 </div>
                 <div>
-                  <div className="text-hud-text font-bold text-sm">3. Submit &amp; Verify</div>
+                  <div className="text-slate-900 dark:text-white font-bold text-sm">3. Submit &amp; Verify</div>
                   <div className="text-xs text-hud-secondary mt-0.5 leading-relaxed">
-                    Press <strong className="text-emerald-400 font-mono">#</strong> again to dispatch verification. Successful ingress triggers piezobuzzer chime + green status LED.
+                    Press <strong className="text-emerald-500 dark:text-emerald-400 font-mono">#</strong> again to dispatch verification. Successful ingress triggers piezobuzzer chime + green status LED.
                   </div>
                 </div>
               </div>
@@ -301,18 +304,18 @@ export const StudentOtpPage: React.FC = () => {
                 </div>
 
                 {/* Decaying Bar Timer */}
-                <div className="bg-hud-elevated/50 border border-hud-border/70 p-3.5 text-xs rounded-xl shadow-tactile">
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-3.5 text-xs rounded-xl shadow-tactile">
                   <div className="flex items-center justify-between text-hud-secondary text-xs mb-2">
                     <span className="flex items-center gap-1.5 font-medium">
-                      <Clock className="w-3.5 h-3.5 text-amber-400" />
+                      <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                       <span>TIME REMAINING:</span>
                     </span>
-                    <span className="font-bold text-hud-text font-mono num-tabular">
+                    <span className="font-bold text-slate-900 dark:text-white font-mono num-tabular">
                       {secondsRemaining}s
                     </span>
                   </div>
 
-                  <div className="w-full h-2 bg-hud-elevated overflow-hidden rounded-full shadow-inner">
+                  <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 overflow-hidden rounded-full shadow-inner">
                     <div
                       style={{ width: `${(secondsRemaining / 60) * 100}%` }}
                       className={`h-full transition-all duration-1000 ${
@@ -327,22 +330,22 @@ export const StudentOtpPage: React.FC = () => {
                 </div>
 
                 {/* Student Manifest Context */}
-                <div className="text-left text-xs space-y-2 text-hud-secondary bg-hud-elevated/40 border border-hud-border/70 p-4 rounded-xl shadow-tactile font-body">
-                  <div className="flex justify-between border-b border-hud-subtle pb-1.5">
+                <div className="text-left text-xs space-y-2 text-hud-secondary bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-4 rounded-xl shadow-tactile font-body">
+                  <div className="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1.5">
                     <span className="text-hud-muted">STUDENT:</span>
-                    <span className="text-hud-text font-bold">{otpData.studentName}</span>
+                    <span className="text-slate-900 dark:text-white font-bold">{otpData.studentName}</span>
                   </div>
-                  <div className="flex justify-between border-b border-hud-subtle pb-1.5">
+                  <div className="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1.5">
                     <span className="text-hud-muted">STUDENT ID:</span>
-                    <span className="text-hud-text font-mono font-semibold">{otpData.studentId}</span>
+                    <span className="text-slate-900 dark:text-white font-mono font-semibold">{otpData.studentId}</span>
                   </div>
-                  <div className="flex justify-between border-b border-hud-subtle pb-1.5">
+                  <div className="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1.5">
                     <span className="text-hud-muted">SECTION:</span>
-                    <span className="text-sky-400 font-bold font-mono">{otpData.sectionCode}</span>
+                    <span className="text-sky-600 dark:text-sky-400 font-bold font-mono">{otpData.sectionCode}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-hud-muted">TERMINAL NODE:</span>
-                    <span className="text-hud-text font-mono">{otpData.terminalId}</span>
+                    <span className="text-slate-900 dark:text-white font-mono">{otpData.terminalId}</span>
                   </div>
                 </div>
               </div>

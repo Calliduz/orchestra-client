@@ -399,12 +399,15 @@ export const TerminalMonitorPage: React.FC = () => {
             title="SSD1306 0.96&quot; I2C OLED Screen Mirror (128x64)"
             subtitle="Pixel-mapped hardware rendering matching the physical classroom display"
           >
-            <div className="flex flex-col items-center justify-center p-6 bg-hud-elevated/40 border border-hud-border/70 rounded-2xl shadow-tactile">
+            <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-tactile">
               {/* Graphic Screen Enclosure with Tactile Bezel */}
               <div className="w-full max-w-sm aspect-[128/64] bg-slate-950 border-2 border-slate-700/80 p-3.5 flex flex-col justify-between relative overflow-hidden font-mono shadow-[inset_0_0_30px_rgba(0,0,0,0.95)] rounded-xl">
                 {/* OLED Header */}
                 <div className="flex items-center justify-between text-[10px] text-sky-400 font-bold border-b border-sky-500/25 pb-1">
-                  <span>ORCHESTRA IoT</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+                    <span>ORCHESTRA IoT</span>
+                  </div>
                   <span>{terminalId}</span>
                 </div>
 
@@ -435,7 +438,7 @@ export const TerminalMonitorPage: React.FC = () => {
                     className={`w-3 h-3 rounded-full transition-all ${
                       !terminalStatus?.isLocked && cooldownRemaining === 0
                         ? 'bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.9)]'
-                        : 'bg-hud-elevated border border-hud-border'
+                        : 'bg-slate-300 dark:bg-slate-700 border border-slate-400 dark:border-slate-600'
                     }`}
                   />
                   <span>GPIO 2 [GREEN]</span>
@@ -445,7 +448,7 @@ export const TerminalMonitorPage: React.FC = () => {
                     className={`w-3 h-3 rounded-full transition-all ${
                       terminalStatus?.isLocked
                         ? 'bg-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.9)]'
-                        : 'bg-hud-elevated border border-hud-border'
+                        : 'bg-slate-300 dark:bg-slate-700 border border-slate-400 dark:border-slate-600'
                     }`}
                   />
                   <span>GPIO 4 [RED]</span>
@@ -455,7 +458,7 @@ export const TerminalMonitorPage: React.FC = () => {
                     className={`w-3 h-3 rounded-full transition-all ${
                       cooldownRemaining > 0
                         ? 'bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.9)]'
-                        : 'bg-hud-elevated border border-hud-border'
+                        : 'bg-slate-300 dark:bg-slate-700 border border-slate-400 dark:border-slate-600'
                     }`}
                   />
                   <span>GPIO 15 [BUZZER]</span>
@@ -473,8 +476,8 @@ export const TerminalMonitorPage: React.FC = () => {
                 <span
                   className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
                     isOtpMode
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                      : 'bg-hud-elevated text-hud-muted border border-hud-border'
+                      ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   {isOtpMode ? `OTP MODE (${keypadBuffer.length}/6)` : 'STANDBY'}
@@ -484,7 +487,7 @@ export const TerminalMonitorPage: React.FC = () => {
           >
             <div className="flex flex-col sm:flex-row items-center gap-6 p-2 font-mono">
               {/* 4x4 Tactile Key Grid */}
-              <div className="grid grid-cols-4 gap-2.5 p-3.5 bg-hud-elevated/70 border border-hud-border/80 rounded-2xl shadow-tactile shrink-0">
+              <div className="grid grid-cols-4 gap-2.5 p-3.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-tactile shrink-0">
                 {KEYPAD_ROWS.map((row, rIdx) =>
                   row.map((k) => {
                     const isHash = k === '#';
@@ -501,12 +504,12 @@ export const TerminalMonitorPage: React.FC = () => {
                           isHash
                             ? isOtpMode && keypadBuffer.length === 6
                               ? 'bg-emerald-500 text-slate-950 font-black shadow-glow-emerald animate-pulse'
-                              : 'bg-sky-500/20 text-sky-400 border border-sky-500/40 hover:bg-sky-500/30'
+                              : 'bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/40 hover:bg-sky-500/30'
                             : isStar
-                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25'
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25'
                             : isLetter
-                            ? 'bg-hud-surface/90 text-sky-300 border border-hud-border/80 hover:bg-hud-hover'
-                            : 'bg-hud-surface text-hud-text border border-hud-border hover:bg-hud-hover hover:border-sky-500/40'
+                            ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50'
+                            : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-sky-400'
                         }`}
                       >
                         {k}
@@ -518,27 +521,27 @@ export const TerminalMonitorPage: React.FC = () => {
 
               {/* Instructions & Keypad Buffer Status */}
               <div className="space-y-3 text-xs font-body text-hud-secondary w-full">
-                <div className="p-3 bg-hud-elevated/40 border border-hud-border/70 rounded-xl space-y-1.5 font-mono">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl space-y-1.5 font-mono">
                   <div className="flex justify-between text-[11px] text-hud-muted">
                     <span>BUFFER REGISTER:</span>
-                    <span className="text-sky-400 font-bold">{keypadBuffer.length}/6 DIGITS</span>
+                    <span className="text-sky-600 dark:text-sky-400 font-bold">{keypadBuffer.length}/6 DIGITS</span>
                   </div>
-                  <div className="text-lg tracking-widest font-extrabold text-hud-text bg-hud-bg/80 px-3 py-1.5 rounded-lg border border-hud-border/60 text-center select-all">
+                  <div className="text-lg tracking-widest font-extrabold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 text-center select-all">
                     {keypadBuffer ? keypadBuffer.padEnd(6, '·') : '······'}
                   </div>
                 </div>
 
                 <div className="space-y-1 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-sky-400 bg-sky-500/15 px-1.5 py-0.5 rounded text-[11px]">#</span>
+                    <span className="font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-500/15 px-1.5 py-0.5 rounded text-[11px]">#</span>
                     <span>Toggle OTP mode / Submit 6 digits</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded text-[11px]">*</span>
+                    <span className="font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded text-[11px]">*</span>
                     <span>Backspace digit / Cancel OTP mode</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-hud-text bg-hud-elevated px-1.5 py-0.5 rounded text-[11px]">A-D</span>
+                    <span className="font-mono font-bold text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[11px]">A-D</span>
                     <span>Hardware telemetry &amp; node diagnostics</span>
                   </div>
                 </div>
@@ -563,26 +566,26 @@ export const TerminalMonitorPage: React.FC = () => {
                     key={b.uid}
                     className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
                       isMaster
-                        ? 'bg-sky-500/10 border-sky-500/40 text-sky-400 shadow-sm'
+                        ? 'bg-sky-500/10 border-sky-500/40 text-sky-600 dark:text-sky-300 shadow-sm'
                         : isForeign
-                        ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-                        : 'bg-hud-elevated/40 border-hud-border/70 hover:border-sky-500/40 text-hud-text'
+                        ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                        : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 hover:border-sky-400 text-hud-text'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                           isMaster
-                            ? 'bg-sky-500/20 text-sky-400 border-sky-500/30'
+                            ? 'bg-sky-500/20 text-sky-600 dark:text-sky-400 border-sky-500/30'
                             : isForeign
-                            ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
-                            : 'bg-hud-surface text-slate-400 border-hud-border/80'
+                            ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                            : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
                         }`}
                       >
                         <Radio className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <div className="font-bold text-xs truncate leading-tight text-hud-text">
+                        <div className="font-bold text-xs truncate leading-tight text-slate-900 dark:text-white">
                           {b.name}
                         </div>
                         <div className="font-mono text-[10px] text-hud-muted mt-0.5 flex items-center gap-1.5">
@@ -612,7 +615,7 @@ export const TerminalMonitorPage: React.FC = () => {
                           ? 'bg-sky-600 hover:bg-sky-500 text-white'
                           : isForeign
                           ? 'bg-rose-600 hover:bg-rose-500 text-white'
-                          : 'bg-hud-surface hover:bg-hud-hover border border-hud-border/80 text-sky-600 dark:text-sky-400'
+                          : 'bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-sky-600 dark:text-sky-400'
                       }`}
                     >
                       TAP
@@ -621,8 +624,8 @@ export const TerminalMonitorPage: React.FC = () => {
                 );
               })}
 
-              <div className="p-3.5 bg-hud-elevated/70 border border-hud-border/70 text-xs text-hud-secondary space-y-1.5 rounded-xl shadow-tactile font-body mt-3">
-                <div className="text-sky-400 font-bold uppercase tracking-wider text-[11px] font-sans">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-xs text-hud-secondary space-y-1.5 rounded-xl shadow-tactile font-body mt-3">
+                <div className="text-sky-600 dark:text-sky-400 font-bold uppercase tracking-wider text-[11px] font-sans">
                   HARDWARE PACING INTERLOCK
                 </div>
                 <p className="leading-relaxed">

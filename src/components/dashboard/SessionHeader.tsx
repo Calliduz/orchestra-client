@@ -97,6 +97,10 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
 
   return (
     <div className="w-full rounded-2xl bg-hud-surface text-hud-text p-6 shadow-sm border border-hud-border relative overflow-hidden">
+      {/* Subtle Ambient Radial Mesh Glows */}
+      <div className="absolute -right-24 -top-24 w-96 h-96 bg-sky-500/5 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         {/* Left: Section Specs & Academic Telemetry Status */}
         <div className="space-y-3">
@@ -104,8 +108,8 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
             <span
               className={`px-3 py-1 rounded-full font-sans text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm ${
                 isLocked
-                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60'
+                  : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60'
               }`}
             >
               <span
@@ -124,9 +128,9 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
             </span>
 
             <span className="text-xs font-medium text-hud-secondary flex items-center gap-1">
-              <Cpu className="w-3.5 h-3.5 text-sky-600" />
-              Node: <strong className="text-sky-600 font-mono font-semibold">{terminalId}</strong>
-              <CopyButton text={terminalId} label="" className="p-0 ml-0.5 text-hud-muted hover:text-sky-600" />
+              <Cpu className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+              Node: <strong className="text-sky-600 dark:text-sky-400 font-mono font-semibold">{terminalId}</strong>
+              <CopyButton text={terminalId} label="" className="p-0 ml-0.5 text-hud-muted hover:text-sky-600 dark:hover:text-sky-400" />
             </span>
           </div>
 
@@ -151,8 +155,8 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
         {/* Right: Operational Controls & Session Clock */}
         <div className="flex flex-wrap items-center gap-4">
           {/* Clean Session Clock */}
-          <div className="flex items-center gap-4 bg-hud-elevated/70 border border-hud-border/80 px-4 py-3 rounded-2xl shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-all">
-            <div className="flex flex-col items-center justify-center pr-3.5 border-r border-hud-border/70">
+          <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 px-4 py-3 rounded-2xl shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+            <div className="flex flex-col items-center justify-center pr-3.5 border-r border-slate-200 dark:border-slate-700">
               <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
                 Session Clock
               </span>
@@ -187,7 +191,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={() => handleDownload('pdf')}
-                  leftIcon={<FileText className="w-3.5 h-3.5 text-sky-600" />}
+                  leftIcon={<FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />}
                 >
                   PDF
                 </Button>
@@ -196,7 +200,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={() => handleDownload('csv')}
-                  leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />}
+                  leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
                 >
                   CSV
                 </Button>
@@ -225,13 +229,13 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
         onConfirm={handleConfirmClose}
         isLoading={isClosing}
       >
-        <div className="space-y-3 text-sm text-hud-secondary">
+        <div className="space-y-3 text-sm text-hud-secondary font-body">
           <p>
             You are about to close the active attendance ingress for section{' '}
             <strong className="text-hud-text">{session?.sectionCode || sectionCode}</strong> on terminal{' '}
-            <strong className="text-emerald-400 font-mono">{terminalId}</strong>.
+            <strong className="text-emerald-500 dark:text-emerald-400 font-mono">{terminalId}</strong>.
           </p>
-          <div className="p-3 bg-hud-elevated/60 border border-hud-border/70 rounded-xl text-xs space-y-1">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 rounded-xl text-xs space-y-1.5">
             <div className="text-hud-text font-semibold">Immediate Automated Outcomes:</div>
             <ul className="list-disc pl-4 space-y-0.5 text-hud-secondary">
               <li>Terminal hardware returns to <code>LOCKED</code> standby state.</li>

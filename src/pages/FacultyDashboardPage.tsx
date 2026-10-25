@@ -9,6 +9,7 @@ import { OverrideModal } from '../components/dashboard/OverrideModal.js';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { API_V1_URL } from '../config/api.js';
+import { sounds } from '../utils/audio.js';
 
 export const FacultyDashboardPage: React.FC = () => {
   const { socket, terminalId } = useSocket();
@@ -145,6 +146,7 @@ export const FacultyDashboardPage: React.FC = () => {
     try {
       setIsLoggingIn(true);
       setAuthError(null);
+      sounds.playKeyChirp();
       const res = await fetch(`${API_V1_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -154,7 +156,9 @@ export const FacultyDashboardPage: React.FC = () => {
       if (!res.ok) throw new Error(data.message || 'Authentication rejected');
       setAuthToken(data.data.token);
       localStorage.setItem('orchestra-faculty-token', data.data.token);
+      sounds.playSuccessChime();
     } catch (err: any) {
+      sounds.playErrorBuzz();
       setAuthError(err.message);
     } finally {
       setIsLoggingIn(false);
@@ -203,8 +207,9 @@ export const FacultyDashboardPage: React.FC = () => {
           <Button
             size="sm"
             variant="primary"
-            className="bg-[#0D1C2F] hover:bg-[#1E293B] text-white border-0 shadow-sm shrink-0 font-bold"
+            className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white border-0 shadow-sm shrink-0 font-bold active:scale-95 transition-all"
             onClick={async () => {
+              sounds.playKeyChirp();
               await fetch(`${API_V1_URL}/hardware/tap`, {
                 method: 'POST',
                 headers: {
@@ -213,6 +218,7 @@ export const FacultyDashboardPage: React.FC = () => {
                 },
                 body: JSON.stringify({ terminalId, rfidUid: 'A1B2C3D4' }),
               });
+              sounds.playSuccessChime();
               fetchActiveSession();
             }}
             leftIcon={<Unlock className="w-4 h-4 text-amber-300" />}
@@ -311,15 +317,28 @@ export const FacultyDashboardPage: React.FC = () => {
             ) : (
               <form onSubmit={handleLogin} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-xs font-semibold text-hud-secondary mb-1.5 font-body">
-                    Institutional Email
-                  </label>
+                  <div className="flex items-center justify-between text-xs mb-1.5 font-body">
+                    <label className="font-semibold text-hud-secondary">
+                      Institutional Email
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFacultyEmail('faculty@orchestra.edu');
+                        setFacultyPassword('Password123!');
+                        sounds.playKeyChirp();
+                      }}
+                      className="text-[11px] text-sky-600 dark:text-sky-400 hover:underline font-semibold"
+                    >
+                      ⚡ Demo Fill
+                    </button>
+                  </div>
                   <input
                     type="email"
                     value={facultyEmail}
                     onChange={(e) => setFacultyEmail(e.target.value)}
                     required
-                    className="w-full px-3.5 py-2 text-xs border border-hud-border bg-hud-elevated/70 text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl transition-colors font-body shadow-tactile"
+                    className="w-full px-3.5 py-2 text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-xl transition-colors font-body shadow-tactile"
                   />
                 </div>
 
@@ -333,7 +352,7 @@ export const FacultyDashboardPage: React.FC = () => {
                       value={facultyPassword}
                       onChange={(e) => setFacultyPassword(e.target.value)}
                       required
-                      className="w-full px-3.5 py-2 text-xs border border-hud-border bg-hud-elevated/70 text-hud-text focus:outline-none focus:ring-1 focus:ring-sky-500 rounded-xl pr-10 transition-colors font-body shadow-tactile"
+                      className="w-full px-3.5 py-2 text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-xl pr-10 transition-colors font-body shadow-tactile"
                     />
                     <button
                       type="button"
@@ -346,7 +365,7 @@ export const FacultyDashboardPage: React.FC = () => {
                 </div>
 
                 {authError && (
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-xl shadow-sm">
+                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 text-xs rounded-xl shadow-xs">
                     {authError}
                   </div>
                 )}

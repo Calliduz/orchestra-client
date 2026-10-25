@@ -3,6 +3,7 @@ import { Shield, Moon, Sun, Terminal, KeyRound, Activity } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { CopyButton } from '../ui/CopyButton.js';
+import { sounds } from '../../utils/audio.js';
 
 interface HeaderProps {
   currentTab: string;
@@ -54,13 +55,16 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Clean Segmented Navigation Tabs */}
-          <nav className="flex items-center p-1 bg-hud-elevated border border-hud-border/70 rounded-2xl shadow-sm">
+          <nav className="flex items-center p-1 bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-inner">
             <button
-              onClick={() => onSelectTab('dashboard')}
+              onClick={() => {
+                onSelectTab('dashboard');
+                sounds.playKeyChirp();
+              }}
               className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'dashboard'
-                  ? 'bg-sky-600 text-white shadow-sm font-bold'
-                  : 'text-hud-secondary hover:text-hud-text hover:bg-hud-hover'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
               }`}
             >
               <Activity className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
@@ -68,11 +72,14 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
-              onClick={() => onSelectTab('otp')}
+              onClick={() => {
+                onSelectTab('otp');
+                sounds.playKeyChirp();
+              }}
               className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'otp'
-                  ? 'bg-sky-600 text-white shadow-sm font-bold'
-                  : 'text-hud-secondary hover:text-hud-text hover:bg-hud-hover'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
               }`}
             >
               <KeyRound className="w-4 h-4 text-amber-500 dark:text-amber-400" />
@@ -80,14 +87,17 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
-              onClick={() => onSelectTab('terminal')}
+              onClick={() => {
+                onSelectTab('terminal');
+                sounds.playKeyChirp();
+              }}
               className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'terminal'
-                  ? 'bg-sky-600 text-white shadow-sm font-bold'
-                  : 'text-hud-secondary hover:text-hud-text hover:bg-hud-hover'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
               }`}
             >
-              <Terminal className="w-4 h-4 text-sky-600 dark:text-sky-300" />
+              <Terminal className="w-4 h-4 text-sky-500 dark:text-sky-400" />
               <span>Edge Diagnostics</span>
             </button>
           </nav>
