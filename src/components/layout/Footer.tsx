@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
               <img
                 src="/orchestra-plain-bgrmvd-vectorized.svg"
                 alt="ORCHESTRA Official Logo"
-                className="w-4 h-4 object-contain"
+                className="w-5 h-5 object-contain"
               />
               <span className="font-sans font-extrabold tracking-wide">ORCHESTRA Framework</span>
               <span className="text-hud-muted font-mono">•</span>

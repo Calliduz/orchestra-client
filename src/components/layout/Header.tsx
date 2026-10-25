@@ -36,11 +36,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-16">
           {/* Brand Identity with Official Vector Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center rounded-xl shadow-xs overflow-hidden p-1.5 transition-transform hover:scale-105">
+            <div className="w-11 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center rounded-xl shadow-xs overflow-hidden p-1 transition-transform hover:scale-105 shrink-0">
               <img
                 src="/orchestra-plain-bgrmvd-vectorized.svg"
                 alt="ORCHESTRA Official Logo"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain scale-105"
               />
             </div>
             <div>

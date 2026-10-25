@@ -351,7 +351,7 @@ export const StudentOtpPage: React.FC = () => {
               </div>
             ) : (
               <div className="py-6 px-4 space-y-5">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center p-2.5 shadow-xs transition-transform hover:scale-105">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center p-1.5 shadow-xs transition-transform hover:scale-105">
                   <img
                     src="/orchestra-plain-bgrmvd-vectorized.svg"
                     alt="ORCHESTRA Official Logo"
