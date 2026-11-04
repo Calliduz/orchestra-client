@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Terminal, KeyRound, Activity, Volume2, VolumeX } from 'lucide-react';
+import { Moon, Sun, Terminal, KeyRound, Activity, Volume2, VolumeX, CreditCard } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { CopyButton } from '../ui/CopyButton.js';
@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onSelectTab('dashboard');
                 sounds.playKeyChirp();
               }}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'dashboard'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
                   : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
@@ -94,10 +94,25 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => {
+                onSelectTab('enrollment');
+                sounds.playKeyChirp();
+              }}
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+                currentTab === 'enrollment'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+              }`}
+            >
+              <CreditCard className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+              <span>Badge Enrollment</span>
+            </button>
+
+            <button
+              onClick={() => {
                 onSelectTab('otp');
                 sounds.playKeyChirp();
               }}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'otp'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
                   : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
@@ -112,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onSelectTab('terminal');
                 sounds.playKeyChirp();
               }}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'terminal'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
                   : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'

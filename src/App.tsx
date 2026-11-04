@@ -7,6 +7,7 @@ import { Header } from './components/layout/Header.js';
 import { Footer } from './components/layout/Footer.js';
 import { BackToTop } from './components/layout/BackToTop.js';
 import { FacultyDashboardPage } from './pages/FacultyDashboardPage.js';
+import { CardEnrollmentPage } from './pages/CardEnrollmentPage.js';
 import { StudentOtpPage } from './pages/StudentOtpPage.js';
 import { TerminalMonitorPage } from './pages/TerminalMonitorPage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
@@ -34,6 +35,8 @@ export const AppContent: React.FC = () => {
     switch (currentTab) {
       case 'dashboard':
         return <FacultyDashboardPage />;
+      case 'enrollment':
+        return <CardEnrollmentPage />;
       case 'otp':
         return <StudentOtpPage />;
       case 'terminal':
