@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('en-US', { hour12: false }));
+      setCurrentTime(now.toLocaleTimeString('en-US', { hour12: true }));
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-16">
           {/* Brand Identity with Official Vector Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center rounded-xl shadow-xs overflow-hidden p-1 transition-transform hover:scale-105 shrink-0">
+            <div className="w-11 h-11 bg-slate-900 border border-slate-700/80 flex items-center justify-center rounded-xl shadow-xs overflow-hidden p-1 transition-transform hover:scale-105 shrink-0">
               <img
                 src="/orchestra-plain-bgrmvd-vectorized.svg"
                 alt="ORCHESTRA Official Logo"
@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="font-sans font-extrabold text-base tracking-wider text-hud-text">
                   ORCHESTRA
                 </span>
-                <span className="text-[10px] font-sans font-bold uppercase tracking-wider bg-sky-500/15 text-sky-600 dark:text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-sans font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded-full">
                   ACADEMIC SIGNAL
                 </span>
               </div>
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Clean Segmented Navigation Tabs */}
-          <nav className="flex items-center p-1 bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-inner">
+          <nav className="flex items-center p-1 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-inner">
             <button
               onClick={() => {
                 onSelectTab('dashboard');
@@ -84,11 +84,11 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'dashboard'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
-                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40'
               }`}
             >
-              <Activity className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+              <Activity className="w-4 h-4 text-emerald-400" />
               <span>Faculty Console</span>
             </button>
 
@@ -99,11 +99,11 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'enrollment'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
-                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40'
               }`}
             >
-              <CreditCard className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+              <CreditCard className="w-4 h-4 text-purple-400" />
               <span>Badge Enrollment</span>
             </button>
 
@@ -114,11 +114,11 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'otp'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
-                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40'
               }`}
             >
-              <KeyRound className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+              <KeyRound className="w-4 h-4 text-amber-400" />
               <span>Keypad OTP</span>
             </button>
 
@@ -129,8 +129,8 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                 currentTab === 'terminal'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700 font-bold'
-                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-700 font-bold'
+                  : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40'
               }`}
             >
               <Terminal className="w-4 h-4 text-sky-500 dark:text-sky-400" />

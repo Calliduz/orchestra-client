@@ -138,8 +138,8 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
                   key={preset.id}
                   className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
                     isSelected
-                      ? 'border-sky-500 bg-sky-500/10 text-sky-600 dark:text-sky-300 shadow-xs'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-hud-secondary hover:text-hud-text'
+                      ? 'border-sky-500/30 bg-sky-500/10 text-sky-300'
+                      : 'border-white/[0.05] bg-slate-900/30 hover:bg-slate-800/40 text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   <button
@@ -175,12 +175,12 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
         {/* Clean Stacked Sliders with Tactile Containers */}
         <div className="space-y-4">
           {/* Late Slider */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-tactile space-y-2">
+          <div className="bg-slate-900/30 p-4 border border-white/[0.05] rounded-xl space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+              <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">
                 Late Grace Window
               </span>
-              <span className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-3 py-0.5 font-bold font-mono num-tabular rounded-full text-xs shadow-sm">
+              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-0.5 font-bold font-mono num-tabular rounded-full text-xs">
                 {lateThreshold} mins
               </span>
             </div>
@@ -196,20 +196,20 @@ export const ThresholdSliders: React.FC<ThresholdSlidersProps> = ({
               }}
               className="w-full cursor-pointer disabled:opacity-30"
             />
-            <div className="flex justify-between text-xs text-hud-muted font-mono">
+            <div className="flex justify-between text-xs text-slate-500 font-mono">
               <span>01 min</span>
-              <span className="text-slate-500 dark:text-slate-400 font-body">0 to {lateThreshold}m = Present</span>
+              <span className="text-slate-400 font-body">0 to {lateThreshold}m = Present</span>
               <span>45 mins</span>
             </div>
           </div>
 
           {/* Cut Slider */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-tactile space-y-2">
+          <div className="bg-slate-900/30 p-4 border border-white/[0.05] rounded-xl space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-rose-600 dark:text-rose-400 font-bold text-xs uppercase tracking-wider">
+              <span className="text-rose-400 font-bold text-xs uppercase tracking-wider">
                 Cut-off Threshold
               </span>
-              <span className="bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 px-3 py-0.5 font-bold font-mono num-tabular rounded-full text-xs shadow-sm">
+              <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-3 py-0.5 font-bold font-mono num-tabular rounded-full text-xs">
                 {cutThreshold} mins
               </span>
             </div>

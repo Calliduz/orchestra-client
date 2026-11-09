@@ -76,9 +76,9 @@ const STATUS_OPTIONS: {
     desc: 'Unverified / No ingress recorded',
     icon: UserX,
     colorActive: 'slate',
-    borderActive: 'border-slate-500 dark:border-slate-400',
-    bgActive: 'bg-slate-100 dark:bg-slate-800/80',
-    textActive: 'text-slate-800 dark:text-slate-200',
+    borderActive: 'border-slate-500',
+    bgActive: 'bg-slate-800',
+    textActive: 'text-slate-200',
   },
 ];
 
@@ -156,12 +156,12 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
     >
       <div className="space-y-4 font-body text-xs">
         {/* Student Summary Card */}
-        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between rounded-xl shadow-tactile">
+        <div className="p-3.5 bg-slate-900/80 border border-slate-700/80 flex items-center justify-between rounded-xl shadow-tactile">
           <div>
-            <div className="font-bold text-slate-900 dark:text-white text-sm font-sans">
+            <div className="font-bold text-white text-sm font-sans">
               {student.fullName}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+            <div className="text-xs text-slate-400 font-mono mt-0.5">
               ID: {student.studentNumber} · {student.email}
             </div>
           </div>
@@ -172,7 +172,7 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
 
         {/* Interactive Status Card Grid */}
         <div>
-          <label className="block text-[11px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 mb-2 font-sans">
+          <label className="block text-[11px] uppercase font-bold tracking-wider text-slate-400 mb-2 font-sans">
             Target Status Classification
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -187,7 +187,7 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
                   className={`p-2.5 rounded-xl border text-left flex items-start gap-2.5 transition-all shadow-xs ${
                     isSelected
                       ? `${opt.borderActive} ${opt.bgActive} ring-2 ring-sky-500/30`
-                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                      : 'border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300'
                   }`}
                 >
                   <div
@@ -235,12 +235,12 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="e.g. University Clinic Medical Referral"
-            className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-body text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none rounded-xl placeholder:text-slate-400 transition-colors shadow-tactile"
+            className="w-full px-3.5 py-2.5 border border-slate-700 bg-slate-900/90 text-slate-100 font-body text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none rounded-xl placeholder:text-slate-500 transition-colors shadow-tactile"
           />
 
           {/* 1-Click Quick Justification Chips */}
           <div className="mt-2.5 space-y-1.5">
-            <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400">
               Quick Justification Presets:
             </span>
             <div className="flex gap-1.5 flex-wrap">
@@ -249,7 +249,7 @@ export const OverrideModal: React.FC<OverrideModalProps> = ({
                   key={preset}
                   type="button"
                   onClick={() => handleSelectPresetReason(preset)}
-                  className="px-2.5 py-1 text-[11px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:border-sky-400 hover:text-sky-600 dark:hover:text-sky-400 text-slate-600 dark:text-slate-300 rounded-lg shadow-2xs transition-colors"
+                  className="px-2.5 py-1 text-[11px] border border-slate-700 bg-slate-900/80 hover:border-sky-400 hover:text-sky-300 text-slate-300 rounded-lg shadow-2xs transition-colors"
                 >
                   +{preset}
                 </button>

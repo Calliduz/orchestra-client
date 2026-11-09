@@ -31,15 +31,15 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      'bg-sky-600 hover:bg-sky-500 active:scale-[0.98] text-white font-bold shadow-md shadow-sky-600/25 border border-sky-400/30',
+      'bg-sky-600 hover:bg-sky-500 active:scale-[0.98] text-white font-bold shadow-md shadow-sky-600/20 border border-sky-400/20',
     secondary:
-      'bg-hud-elevated hover:bg-hud-hover active:scale-[0.98] text-hud-text border border-hud-border hover:border-slate-300 dark:hover:border-slate-600 shadow-sm',
+      'bg-slate-800/40 hover:bg-slate-800 active:scale-[0.98] text-slate-200 hover:text-white border border-white/[0.08] hover:border-white/[0.15] shadow-xs',
     danger:
-      'bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-700 dark:text-rose-400 font-semibold border border-rose-300 dark:border-rose-500/30 transition-colors shadow-xs',
+      'bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-400 font-semibold border border-rose-500/20 hover:border-rose-500 transition-colors shadow-xs',
     outline:
-      'bg-transparent hover:bg-hud-elevated text-hud-secondary hover:text-hud-text border border-hud-border hover:border-slate-300 dark:hover:border-slate-600 shadow-xs',
+      'bg-transparent hover:bg-slate-800/50 text-slate-400 hover:text-slate-200 border border-white/[0.08] hover:border-white/[0.15] shadow-xs',
     ghost:
-      'bg-transparent hover:bg-hud-hover text-hud-secondary hover:text-hud-text border-0',
+      'bg-transparent hover:bg-white/[0.04] text-slate-400 hover:text-slate-200 border-0',
   };
 
   return (

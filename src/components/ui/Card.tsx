@@ -22,21 +22,21 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   return (
     <div
-      className={`bg-hud-surface border border-hud-border text-hud-text relative rounded-2xl shadow-tactile transition-shadow hover:shadow-md ${className}`}
+      className={`bg-slate-900/60 border border-white/[0.06] text-hud-text relative rounded-2xl shadow-xl backdrop-blur-sm transition-all ${className}`}
     >
       {(title || action || badge) && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-hud-border/70 bg-hud-elevated/30 rounded-t-2xl gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-white/[0.05] rounded-t-2xl gap-2">
           <div>
             {title && (
               <div className="flex items-center gap-2.5">
-                <h3 className="font-sans font-bold text-sm tracking-tight text-hud-text">
+                <h3 className="font-sans font-bold text-sm tracking-tight text-white">
                   {title}
                 </h3>
                 {badge && <div>{badge}</div>}
               </div>
             )}
             {subtitle && (
-              <p className="text-xs text-hud-secondary mt-0.5 font-body">
+              <p className="text-xs text-slate-400 mt-0.5 font-body">
                 {subtitle}
               </p>
             )}

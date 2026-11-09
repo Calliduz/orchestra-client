@@ -1,86 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.js';
 import { SocketProvider } from './context/SocketContext.js';
-import { SkipLink } from './components/layout/SkipLink.js';
-import { ScrollProgress } from './components/layout/ScrollProgress.js';
-import { Header } from './components/layout/Header.js';
-import { Footer } from './components/layout/Footer.js';
-import { BackToTop } from './components/layout/BackToTop.js';
-import { FacultyDashboardPage } from './pages/FacultyDashboardPage.js';
-import { CardEnrollmentPage } from './pages/CardEnrollmentPage.js';
+import { AuthProvider, useAuth } from './context/AuthContext.js';
+import { ProtectedRoute } from './components/layout/ProtectedRoute.js';
+import { AdminLayout } from './components/layout/AdminLayout.js';
+import { FacultyLayout } from './components/layout/FacultyLayout.js';
+
+// Auth & Public Pages
+import { LoginPage } from './pages/LoginPage.js';
 import { StudentOtpPage } from './pages/StudentOtpPage.js';
-import { TerminalMonitorPage } from './pages/TerminalMonitorPage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
 
-import { ErrorBoundary } from './components/ui/ErrorBoundary.js';
+// Admin Pages
+import { AdminUsersPage } from './pages/admin/AdminUsersPage.js';
+import { AdminSectionsPage } from './pages/admin/AdminSectionsPage.js';
+import { AdminEnrollmentsPage } from './pages/admin/AdminEnrollmentsPage.js';
+import { CardEnrollmentPage } from './pages/CardEnrollmentPage.js';
+import { TerminalMonitorPage } from './pages/TerminalMonitorPage.js';
 
-export const AppContent: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<string>('dashboard');
+// Faculty Pages
+import { FacultyClassroomsPage } from './pages/faculty/FacultyClassroomsPage.js';
+import { FacultyDashboardPage } from './pages/FacultyDashboardPage.js';
+import { FacultyReportsPage } from './pages/faculty/FacultyReportsPage.js';
+import { FacultyAnalyticsPage } from './pages/faculty/FacultyAnalyticsPage.js';
+import { FacultyStudentsPage } from './pages/faculty/FacultyStudentsPage.js';
 
-  useEffect(() => {
-    const handleNavigate = (e: any) => {
-      if (e.detail?.tab) {
-        setCurrentTab(e.detail.tab);
-      }
-    };
-    window.addEventListener('orchestra:navigate', handleNavigate);
-    window.addEventListener('orchestra:test_keypad', () => setCurrentTab('terminal'));
-    return () => {
-      window.removeEventListener('orchestra:navigate', handleNavigate);
-      window.removeEventListener('orchestra:test_keypad', () => setCurrentTab('terminal'));
-    };
-  }, []);
+// Root redirect based on active session and user role
+const RootRedirect: React.FC = () => {
+  const { isAuthenticated, user, isLoading } = useAuth();
 
-  const renderPage = () => {
-    switch (currentTab) {
-      case 'dashboard':
-        return <FacultyDashboardPage />;
-      case 'enrollment':
-        return <CardEnrollmentPage />;
-      case 'otp':
-        return <StudentOtpPage />;
-      case 'terminal':
-        return <TerminalMonitorPage />;
-      default:
-        return <NotFoundPage onNavigate={(tab) => setCurrentTab(tab)} />;
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono text-xs">
+        INITIALIZING ORCHESTRA...
+      </div>
+    );
+  }
 
-  return (
-    <div className="min-h-screen flex flex-col bg-hud-bg text-hud-text selection:bg-sky-500/30 selection:text-white font-body antialiased">
-      {/* Accessibility Skip Link */}
-      <SkipLink />
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
 
-      {/* Viewport Scroll Progress Bar */}
-      <ScrollProgress />
+  if (user.role === 'ADMIN') {
+    return <Navigate to="/admin/users" replace />;
+  }
 
-      {/* Sticky Header */}
-      <Header
-        currentTab={currentTab}
-        onSelectTab={(tab) => setCurrentTab(tab)}
-      />
-
-      {/* Main Content Area Protected by ErrorBoundary */}
-      <main id="main-content" className="flex-grow focus:outline-none">
-        <ErrorBoundary>
-          {renderPage()}
-        </ErrorBoundary>
-      </main>
-
-      {/* Floating Scroll Back to Top Button */}
-      <BackToTop />
-
-      {/* Clean Institutional Footer */}
-      <Footer />
-    </div>
-  );
+  return <Navigate to="/faculty" replace />;
 };
 
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <SocketProvider>
-        <AppContent />
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Root Entry */}
+              <Route path="/" element={<RootRedirect />} />
+
+              {/* Public & Auth Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/otp" element={<StudentOtpPage />} />
+
+              {/* Admin Portal (Protected: ADMIN only) */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/admin/users" replace />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="sections" element={<AdminSectionsPage />} />
+                <Route path="enrollments" element={<AdminEnrollmentsPage />} />
+                <Route path="cards" element={<CardEnrollmentPage />} />
+                <Route path="terminal" element={<TerminalMonitorPage />} />
+              </Route>
+
+              {/* Faculty Portal (Protected: FACULTY or ADMIN) */}
+              <Route
+                path="/faculty"
+                element={
+                  <ProtectedRoute allowedRoles={['FACULTY', 'ADMIN']}>
+                    <FacultyLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<FacultyClassroomsPage />} />
+                <Route path="live" element={<FacultyDashboardPage />} />
+                <Route path="reports" element={<FacultyReportsPage />} />
+                <Route path="analytics" element={<FacultyAnalyticsPage />} />
+                <Route path="students" element={<FacultyStudentsPage />} />
+              </Route>
+
+              {/* 404 Catch-All */}
+              <Route path="*" element={<NotFoundPage onNavigate={() => {}} />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </SocketProvider>
     </ThemeProvider>
   );

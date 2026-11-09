@@ -4,7 +4,57 @@
 
 @layer base {
   :root {
-    /* Google Stitch Academic Signal Clean Light Palette (Default) */
+    /* ORCHESTRA Cyber-Slate Dark Palette (Default) */
+    --hud-bg: #030712;
+    --hud-surface: #0B1120;
+    --hud-elevated: rgba(255, 255, 255, 0.03);
+    --hud-hover: rgba(255, 255, 255, 0.06);
+    --hud-border: rgba(255, 255, 255, 0.06);
+    --hud-subtle: rgba(255, 255, 255, 0.02);
+
+    /* High-contrast Typography */
+    --hud-text: #F8FAFC;
+    --hud-secondary: #94A3B8;
+    --hud-muted: #64748B;
+
+    /* Session Banner */
+    --hud-hero-bg: #0B1120;
+    --hud-hero-text: #FFFFFF;
+    --hud-hero-muted: #94A3B8;
+
+    /* Signal Sky Accent */
+    --hud-cyan: #0284C7;
+    --hud-cyan-bright: #38BDF8;
+    --hud-cyan-bg: rgba(2, 132, 199, 0.12);
+    --hud-cyan-border: rgba(2, 132, 199, 0.2);
+
+    /* Verified Scan / Present Accent (Emerald) */
+    --hud-lime: #10B981;
+    --hud-lime-dim: #059669;
+    --hud-lime-bg: rgba(16, 185, 129, 0.12);
+    --hud-lime-border: rgba(16, 185, 129, 0.2);
+
+    /* Tardy / Grace Window Accent (Amber) */
+    --hud-amber: #F59E0B;
+    --hud-amber-bg: rgba(245, 158, 11, 0.12);
+    --hud-amber-border: rgba(245, 158, 11, 0.2);
+
+    /* Cut / Absent / High Risk Accent (Red) */
+    --hud-rose: #EF4444;
+    --hud-rose-bg: rgba(239, 68, 68, 0.12);
+    --hud-rose-border: rgba(239, 68, 68, 0.2);
+
+    /* Neutral Slate Utilities */
+    --hud-slate: #94A3B8;
+    --hud-slate-bg: rgba(148, 163, 184, 0.1);
+    --hud-slate-border: rgba(255, 255, 255, 0.06);
+
+    --hud-slider-track: #1F2937;
+    --hud-slider-thumb-border: #374151;
+  }
+
+  html.light {
+    /* Optional Light Theme Override */
     --hud-bg: #F8FAFC;
     --hud-surface: #FFFFFF;
     --hud-elevated: #F1F5F9;
@@ -12,39 +62,32 @@
     --hud-border: #E2E8F0;
     --hud-subtle: #F1F5F9;
 
-    /* High-contrast Typography */
     --hud-text: #0F172A;
     --hud-secondary: #475569;
     --hud-muted: #94A3B8;
 
-    /* Session Banner */
     --hud-hero-bg: #FFFFFF;
     --hud-hero-text: #0F172A;
     --hud-hero-muted: #475569;
 
-    /* Signal Sky Accent */
     --hud-cyan: #006398;
     --hud-cyan-bright: #0284C7;
     --hud-cyan-bg: #EFF6FF;
     --hud-cyan-border: #BAE6FD;
 
-    /* Verified Scan / Present Accent (Emerald) */
     --hud-lime: #009668;
     --hud-lime-dim: #005236;
     --hud-lime-bg: #ECFDF5;
     --hud-lime-border: #A7F3D0;
 
-    /* Tardy / Grace Window Accent (Amber) */
     --hud-amber: #B45309;
     --hud-amber-bg: #FFFBEB;
     --hud-amber-border: #FDE68A;
 
-    /* Cut / Absent / High Risk Accent (Red) */
     --hud-rose: #BA1A1A;
     --hud-rose-bg: #FEF2F2;
     --hud-rose-border: #FECACA;
 
-    /* Neutral Slate Utilities */
     --hud-slate: #475569;
     --hud-slate-bg: #F1F5F9;
     --hud-slate-border: #E2E8F0;
@@ -54,19 +97,19 @@
   }
 
   html.dark {
-    /* Stitch Slate Dark Alternate */
-    --hud-bg: #0F172A;
-    --hud-surface: #1E293B;
-    --hud-elevated: #334155;
-    --hud-hover: #475569;
-    --hud-border: #334155;
-    --hud-subtle: #1E293B;
+    /* Explicit Dark Theme matches :root */
+    --hud-bg: #020617;
+    --hud-surface: #0F172A;
+    --hud-elevated: #1E293B;
+    --hud-hover: #334155;
+    --hud-border: #1E293B;
+    --hud-subtle: #0F172A;
 
     --hud-text: #F8FAFC;
     --hud-secondary: #94A3B8;
     --hud-muted: #64748B;
 
-    --hud-hero-bg: #1E293B;
+    --hud-hero-bg: #0F172A;
     --hud-hero-text: #FFFFFF;
     --hud-hero-muted: #94A3B8;
 

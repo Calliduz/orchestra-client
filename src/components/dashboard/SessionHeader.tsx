@@ -89,7 +89,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
     }
   };
 
-  const handleDownload = (type: 'pdf' | 'csv') => {
+  const handleDownload = (type: 'pdf' | 'csv' | 'xlsx') => {
     if (!session) return;
     const url = `${API_V1_URL}/sessions/${session.id}/export/${type}`;
     window.open(url, '_blank');
@@ -106,45 +106,45 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <span
-              className={`px-3 py-1 rounded-full font-sans text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm ${
+              className={`px-3 py-1 rounded-full font-sans text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                 isLocked
-                  ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60'
-                  : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60'
+                  ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
+                  : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
               }`}
             >
               <span
-                className={`w-2 h-2 rounded-full ${
-                  isLocked ? 'bg-amber-500' : 'bg-emerald-500 animate-ping'
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isLocked ? 'bg-amber-400' : 'bg-emerald-400 animate-ping'
                 }`}
               />
               {isLocked ? 'Hardware Session Locked' : 'Live Academic Session'}
             </span>
 
-            <span className="text-hud-muted font-sans text-xs hidden sm:inline">•</span>
+            <span className="text-slate-600 font-sans text-xs hidden sm:inline">•</span>
 
-            <span className="text-xs font-medium text-hud-secondary flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-hud-muted" />
-              Room: <strong className="text-hud-text">{session?.roomNumber || roomNumber}</strong>
+            <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-slate-500" />
+              Room: <strong className="text-slate-200 font-medium">{session?.roomNumber || roomNumber}</strong>
             </span>
 
-            <span className="text-xs font-medium text-hud-secondary flex items-center gap-1">
-              <Cpu className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-              Node: <strong className="text-sky-600 dark:text-sky-400 font-mono font-semibold">{terminalId}</strong>
-              <CopyButton text={terminalId} label="" className="p-0 ml-0.5 text-hud-muted hover:text-sky-600 dark:hover:text-sky-400" />
+            <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
+              <Cpu className="w-3.5 h-3.5 text-sky-400" />
+              Node: <strong className="text-sky-400 font-mono font-medium">{terminalId}</strong>
+              <CopyButton text={terminalId} label="" className="p-0 ml-0.5 text-slate-500 hover:text-sky-400" />
             </span>
           </div>
 
-          <h1 className="font-sans font-extrabold text-2xl sm:text-3xl text-hud-text tracking-tight">
+          <h1 className="font-sans font-extrabold text-2xl sm:text-3xl text-white tracking-tight">
             {session?.sectionCode || sectionCode}{' '}
-            <span className="text-hud-muted font-normal">·</span>{' '}
+            <span className="text-slate-600 font-normal">·</span>{' '}
             {session?.courseName || courseName}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-hud-secondary font-body">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 font-body">
             {session?.facultyName && (
               <span className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-hud-muted" />
-                Instructor: <strong className="text-hud-text">{session.facultyName}</strong>
+                <User className="w-3.5 h-3.5 text-slate-500" />
+                Instructor: <strong className="text-slate-200 font-medium">{session.facultyName}</strong>
               </span>
             )}
             <span>•</span>
@@ -155,21 +155,21 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
         {/* Right: Operational Controls & Session Clock */}
         <div className="flex flex-wrap items-center gap-4">
           {/* Clean Session Clock */}
-          <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 px-4 py-3 rounded-2xl shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-all">
-            <div className="flex flex-col items-center justify-center pr-3.5 border-r border-slate-200 dark:border-slate-700">
-              <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
+          <div className="flex items-center gap-4 bg-slate-900/40 border border-white/[0.06] px-4 py-2.5 rounded-xl shadow-xs transition-all hover:border-white/[0.1]">
+            <div className="flex flex-col items-center justify-center pr-3.5 border-r border-white/[0.06]">
+              <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400">
                 Session Clock
               </span>
-              <span className="font-mono text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 num-tabular tracking-wider drop-shadow-sm">
+              <span className="font-mono text-xl sm:text-2xl font-extrabold text-emerald-400 num-tabular tracking-wider">
                 {elapsedTime}
               </span>
             </div>
-            <div className="flex flex-col gap-0.5 text-[11px] text-hud-secondary">
-              <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
+            <div className="flex flex-col gap-0.5 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {isLocked ? 'Standby Ingress' : 'Auto-Ingress Active'}
               </span>
-              <span className="text-hud-muted font-mono text-[10px] tracking-tight">13.56 MHz HF • ISO 14443A</span>
+              <span className="text-slate-500 font-mono text-[10px] tracking-tight">13.56 MHz HF • ISO 14443A</span>
             </div>
           </div>
 
@@ -190,6 +190,15 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
                 <Button
                   variant="secondary"
                   size="sm"
+                  onClick={() => handleDownload('xlsx')}
+                  leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />}
+                >
+                  Excel
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handleDownload('pdf')}
                   leftIcon={<FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />}
                 >
@@ -200,7 +209,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={() => handleDownload('csv')}
-                  leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                  leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />}
                 >
                   CSV
                 </Button>
@@ -235,7 +244,7 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
             <strong className="text-hud-text">{session?.sectionCode || sectionCode}</strong> on terminal{' '}
             <strong className="text-emerald-500 dark:text-emerald-400 font-mono">{terminalId}</strong>.
           </p>
-          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 rounded-xl text-xs space-y-1.5">
+          <div className="p-3.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-xs space-y-1.5">
             <div className="text-hud-text font-semibold">Immediate Automated Outcomes:</div>
             <ul className="list-disc pl-4 space-y-0.5 text-hud-secondary">
               <li>Terminal hardware returns to <code>LOCKED</code> standby state.</li>
