@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FileText, Download, Mail, Filter, Calendar, RefreshCw, CheckCircle2, AlertCircle, FileSpreadsheet, Send, X } from 'lucide-react';
-import { Card } from '../../components/ui/Card.js';
+import {
+  FileText,
+  Download,
+  Mail,
+  Filter,
+  Calendar,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  FileSpreadsheet,
+  Send,
+  X,
+  Layers,
+  Clock,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
 import { API_V1_URL } from '../../config/api.js';
@@ -180,6 +194,10 @@ export const FacultyReportsPage: React.FC = () => {
     }
   };
 
+  const totalLogsCount = sessions.reduce((acc, s) => acc + (s._count?.attendanceLogs || 0), 0);
+  const closedCount = sessions.filter((s) => s.status === 'CLOSED').length;
+  const liveCount = sessions.filter((s) => s.status === 'OPEN').length;
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
@@ -187,28 +205,58 @@ export const FacultyReportsPage: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-blue-400" />
-            <span>Attendance Reports & Archives</span>
+            <span>Attendance Reports &amp; Archives</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             Export official PDF, Excel (.xlsx), and CSV attendance rosters, filter by date, or dispatch via email.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchSessions} disabled={isLoading} className="gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchSessions}
+          disabled={isLoading}
+          className="gap-2 border-white/[0.08] hover:bg-white/[0.04]"
+        >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span>Refresh Reports</span>
         </Button>
       </div>
 
+      {/* Quick Summary Metrics Ribbon */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm">
+          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold">Matched Sessions</div>
+          <div className="text-2xl font-extrabold text-white font-mono mt-1">{sessions.length}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Filter results</div>
+        </div>
+        <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm">
+          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold">Total Verified Taps</div>
+          <div className="text-2xl font-extrabold text-emerald-400 font-mono mt-1">{totalLogsCount}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Ingress entries</div>
+        </div>
+        <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm">
+          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold">Closed &amp; Finalized</div>
+          <div className="text-2xl font-extrabold text-sky-400 font-mono mt-1">{closedCount}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Archived manifests</div>
+        </div>
+        <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm">
+          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold">Live / Ongoing</div>
+          <div className="text-2xl font-extrabold text-amber-400 font-mono mt-1">{liveCount}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Currently active</div>
+        </div>
+      </div>
+
       {/* Date & Section Filter Card */}
-      <Card className="p-4">
-        <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+      <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm">
+        <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
           <div>
             <label className="block text-[11px] font-mono text-slate-400 mb-1">From Date</label>
             <input
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white"
+              className="w-full bg-slate-950/70 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
             />
           </div>
 
@@ -218,7 +266,7 @@ export const FacultyReportsPage: React.FC = () => {
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white"
+              className="w-full bg-slate-950/70 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
             />
           </div>
 
@@ -227,7 +275,7 @@ export const FacultyReportsPage: React.FC = () => {
             <select
               value={selectedSectionId}
               onChange={(e) => setSelectedSectionId(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white"
+              className="w-full bg-slate-950/70 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
             >
               <option value="">All My Sections</option>
               {sections.map((s) => (
@@ -243,33 +291,44 @@ export const FacultyReportsPage: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white"
+              className="w-full bg-slate-950/70 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
             >
               <option value="">All Statuses</option>
-              <option value="CLOSED">Closed & Finalized</option>
+              <option value="CLOSED">Closed &amp; Finalized</option>
               <option value="OPEN">Live / Active</option>
             </select>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button type="submit" size="sm" variant="primary" className="flex-1 gap-1.5 bg-blue-600 hover:bg-blue-500">
+            <Button
+              type="submit"
+              size="sm"
+              variant="primary"
+              className="flex-1 gap-1.5 bg-blue-600 hover:bg-blue-500 shadow-sm shadow-blue-500/20"
+            >
               <Filter className="w-3.5 h-3.5" />
               <span>Apply</span>
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={resetFilters}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={resetFilters}
+              className="border-white/[0.08] hover:bg-white/[0.04]"
+            >
               Reset
             </Button>
           </div>
         </form>
-      </Card>
+      </div>
 
-      {/* Reports Table */}
-      <Card className="overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between text-xs">
+      {/* Reports Table Card */}
+      <div className="rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm overflow-hidden">
+        <div className="p-4 border-b border-white/[0.05] flex items-center justify-between text-xs">
           <div className="font-mono text-slate-400">
             Total Matched Sessions: <strong className="text-white">{sessions.length}</strong>
           </div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-[11px] text-slate-400 font-mono">
             * All times formatted in standard 12-hour AM/PM format
           </div>
         </div>
@@ -277,19 +336,19 @@ export const FacultyReportsPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400 font-mono text-[11px] uppercase">
-                <th className="py-3 px-4">Date & 12-Hour Time</th>
-                <th className="py-3 px-4">Course & Section</th>
-                <th className="py-3 px-4">Room & Terminal</th>
+              <tr className="border-b border-white/[0.05] bg-slate-900/80 text-slate-400 font-mono text-[11px] uppercase tracking-wider">
+                <th className="py-3 px-4">Date &amp; 12-Hour Time</th>
+                <th className="py-3 px-4">Course &amp; Section</th>
+                <th className="py-3 px-4">Room &amp; Terminal</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Tally</th>
-                <th className="py-3 px-4 text-right">Export & Dispatch</th>
+                <th className="py-3 px-4 text-right">Export &amp; Dispatch</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-white/[0.04]">
               {sessions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-10 text-center text-slate-500">
                     No sessions found matching current filter parameters
                   </td>
                 </tr>
@@ -297,56 +356,60 @@ export const FacultyReportsPage: React.FC = () => {
                 sessions.map((sess) => {
                   const startTime12H = format12HourTime(sess.startTime);
                   const endTime12H = format12HourTime(sess.endTime);
-                  const isClosed = sess.status === 'CLOSED';
 
                   return (
-                    <tr key={sess.id} className="hover:bg-slate-900/40 transition">
+                    <tr key={sess.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="py-3 px-4">
                         <div className="font-medium text-slate-200">
                           {formatSessionDate(sess.startTime)}
                         </div>
-                        <div className="text-[11px] text-slate-400 font-mono">
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">
                           {startTime12H} &ndash; {endTime12H}
                         </div>
                       </td>
 
                       <td className="py-3 px-4">
-                        <span className="font-mono text-xs font-bold text-blue-400">
+                        <span className="font-mono text-xs font-bold text-blue-400 px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
                           {sess.section.sectionCode}
                         </span>
-                        <div className="text-[11px] text-slate-400 truncate max-w-xs">
+                        <div className="text-[11px] text-slate-400 truncate max-w-xs mt-1">
                           {sess.section.courseName}
                         </div>
                       </td>
 
                       <td className="py-3 px-4 font-mono text-slate-300">
-                        <div>{sess.section.roomNumber}</div>
+                        <div className="font-medium text-white">{sess.section.roomNumber}</div>
                         <div className="text-[10px] text-slate-500">{sess.terminalId}</div>
                       </td>
 
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-block font-mono text-[10px] px-2 py-0.5 rounded font-semibold border ${
+                          className={`inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
                             sess.status === 'CLOSED'
-                              ? 'bg-slate-800 text-slate-300 border-slate-700'
+                              ? 'bg-slate-800 text-slate-300 border-white/[0.08]'
                               : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 animate-pulse'
                           }`}
                         >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              sess.status === 'CLOSED' ? 'bg-slate-400' : 'bg-emerald-400'
+                            }`}
+                          />
                           {sess.status}
                         </span>
                       </td>
 
                       <td className="py-3 px-4 font-mono text-slate-300">
-                        <span className="font-bold text-white">{sess._count.attendanceLogs}</span>{' '}
+                        <span className="font-bold text-white text-sm">{sess._count.attendanceLogs}</span>{' '}
                         <span className="text-slate-500 text-[11px]">Logged</span>
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1.5">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
                           {/* Excel Export Button */}
                           <button
                             onClick={() => downloadReport(sess.id, 'xlsx')}
-                            className="p-1.5 hover:bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 border border-emerald-500/20 rounded transition flex items-center gap-1 text-[11px] font-mono"
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
                             title="Download Excel Spreadsheet (.xlsx)"
                           >
                             <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -356,7 +419,7 @@ export const FacultyReportsPage: React.FC = () => {
                           {/* PDF Export Button */}
                           <button
                             onClick={() => downloadReport(sess.id, 'pdf')}
-                            className="p-1.5 hover:bg-rose-500/10 text-rose-400 hover:text-rose-300 border border-rose-500/20 rounded transition flex items-center gap-1 text-[11px] font-mono"
+                            className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
                             title="Download Official PDF Master Report"
                           >
                             <FileText className="w-3.5 h-3.5" />
@@ -366,16 +429,17 @@ export const FacultyReportsPage: React.FC = () => {
                           {/* CSV Export Button */}
                           <button
                             onClick={() => downloadReport(sess.id, 'csv')}
-                            className="p-1.5 hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 border border-blue-500/20 rounded transition flex items-center gap-1 text-[11px] font-mono"
+                            className="px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
                             title="Download Raw CSV"
                           >
+                            <Download className="w-3.5 h-3.5" />
                             <span>CSV</span>
                           </button>
 
                           {/* Email Report Button */}
                           <button
                             onClick={() => openEmailModal(sess.id)}
-                            className="p-1.5 hover:bg-purple-500/10 text-purple-400 hover:text-purple-300 border border-purple-500/20 rounded transition flex items-center gap-1 text-[11px] font-mono"
+                            className="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
                             title="Send Report via Email"
                           >
                             <Mail className="w-3.5 h-3.5" />
@@ -390,10 +454,14 @@ export const FacultyReportsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
 
       {/* Email Report Modal */}
-      <Modal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} title="Dispatch Attendance Report via Email">
+      <Modal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        title="Dispatch Attendance Report via Email"
+      >
         <form onSubmit={handleSendEmail} className="space-y-4">
           <p className="text-xs text-slate-300">
             Send the finalized attendance roster with attached PDF, Excel (.xlsx), and CSV files to your institutional
@@ -425,12 +493,18 @@ export const FacultyReportsPage: React.FC = () => {
               value={recipientEmail}
               onChange={(e) => setRecipientEmail(e.target.value)}
               placeholder="faculty@qcu.edu.ph"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"
+              className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50"
             />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/[0.06]">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsEmailModalOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEmailModalOpen(false)}
+              className="border-white/[0.08]"
+            >
               Cancel
             </Button>
             <Button
@@ -438,7 +512,7 @@ export const FacultyReportsPage: React.FC = () => {
               variant="primary"
               size="sm"
               disabled={isSendingEmail}
-              className="gap-2 bg-purple-600 hover:bg-purple-500"
+              className="gap-2 bg-purple-600 hover:bg-purple-500 shadow-sm shadow-purple-500/20"
             >
               {isSendingEmail ? (
                 <>
@@ -458,4 +532,3 @@ export const FacultyReportsPage: React.FC = () => {
     </div>
   );
 };
-
