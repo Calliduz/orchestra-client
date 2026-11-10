@@ -21,6 +21,7 @@ import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
 import { API_V1_URL } from '../../config/api.js';
 import { useAuth } from '../../context/AuthContext.js';
+import { useToast } from '../../context/ToastContext.js';
 
 interface SectionOption {
   id: string;
@@ -89,6 +90,7 @@ const CustomCheckbox: React.FC<{
 
 export const AdminEnrollmentsPage: React.FC = () => {
   const { token } = useAuth();
+  const { toast } = useToast();
   const [sections, setSections] = useState<SectionOption[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState<string>('');
   const [roster, setRoster] = useState<EnrolledStudentItem[]>([]);
@@ -204,11 +206,14 @@ export const AdminEnrollmentsPage: React.FC = () => {
         throw new Error(json.message || 'Failed to bulk enroll students');
       }
 
+      const enrolledCount = selectedEnrollIds.size;
       setIsEnrollModalOpen(false);
       setSelectedEnrollIds(new Set());
       fetchRoster(selectedSectionId);
+      toast.success('Enrollment Complete', `Successfully enrolled ${enrolledCount} student(s) into ${activeSection?.sectionCode || 'section'}.`);
     } catch (err: any) {
       setModalError(err.message);
+      toast.error('Enrollment Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -218,6 +223,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
   const handleConfirmSingleUnenroll = async () => {
     if (!unenrollTarget || !selectedSectionId) return;
     setIsUnenrolling(true);
+    const targetStudentName = `${unenrollTarget.student.firstName} ${unenrollTarget.student.lastName}`;
     try {
       const res = await fetch(`${API_V1_URL}/enrollments/${unenrollTarget.student.id}/${selectedSectionId}`, {
         method: 'DELETE',
@@ -237,8 +243,9 @@ export const AdminEnrollmentsPage: React.FC = () => {
         return next;
       });
       fetchRoster(selectedSectionId);
+      toast.success('Student Unenrolled', `${targetStudentName} removed from ${activeSection?.sectionCode || 'section'}.`);
     } catch (err: any) {
-      alert(err.message);
+      toast.error('Unenroll Failed', err.message);
     } finally {
       setIsUnenrolling(false);
     }
@@ -248,6 +255,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
   const handleConfirmMassUnenroll = async () => {
     if (selectedRosterIds.size === 0 || !selectedSectionId) return;
     setIsMassUnenrolling(true);
+    const removedCount = selectedRosterIds.size;
     try {
       const res = await fetch(`${API_V1_URL}/enrollments/bulk-unenroll`, {
         method: 'POST',
@@ -269,8 +277,9 @@ export const AdminEnrollmentsPage: React.FC = () => {
       setIsMassUnenrollModalOpen(false);
       setSelectedRosterIds(new Set());
       fetchRoster(selectedSectionId);
+      toast.success('Mass Unenroll Complete', `Removed ${removedCount} student(s) from ${activeSection?.sectionCode || 'section'}.`);
     } catch (err: any) {
-      alert(err.message);
+      toast.error('Mass Unenroll Failed', err.message);
     } finally {
       setIsMassUnenrolling(false);
     }
@@ -359,7 +368,10 @@ export const AdminEnrollmentsPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchRoster(selectedSectionId)}
+            onClick={() => {
+              fetchRoster(selectedSectionId);
+              toast.info('Roster Synced', `Roster updated for ${activeSection?.sectionCode || 'section'}.`);
+            }}
             disabled={isLoading}
             leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
             className="h-9 px-3.5 border-white/[0.08] hover:border-white/[0.15]"

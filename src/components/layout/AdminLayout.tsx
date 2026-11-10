@@ -3,14 +3,17 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Users, BookOpen, UserPlus, CreditCard, Terminal, LogOut, Shield, ChevronRight, GraduationCap, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
+import { useToast } from '../../context/ToastContext.js';
 
 export const AdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const { isConnected, terminalId } = useSocket();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+    toast.info('Signed Out', 'You have been logged out of Orchestra.');
     navigate('/login');
   };
 

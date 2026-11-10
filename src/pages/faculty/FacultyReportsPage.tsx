@@ -20,6 +20,7 @@ import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
 import { API_V1_URL } from '../../config/api.js';
 import { useAuth } from '../../context/AuthContext.js';
+import { useToast } from '../../context/ToastContext.js';
 
 interface SessionReportItem {
   id: string;
@@ -48,6 +49,7 @@ interface SectionOption {
 
 export const FacultyReportsPage: React.FC = () => {
   const { user, token } = useAuth();
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
   const [sessions, setSessions] = useState<SessionReportItem[]>([]);
@@ -148,6 +150,7 @@ export const FacultyReportsPage: React.FC = () => {
 
   // Downloads
   const downloadReport = (sessionId: string, format: 'pdf' | 'csv' | 'xlsx') => {
+    toast.info('Export Initiated', `Generating ${format.toUpperCase()} attendance report...`);
     window.open(`${API_V1_URL}/sessions/${sessionId}/export/${format}`, '_blank');
   };
 
@@ -184,11 +187,13 @@ export const FacultyReportsPage: React.FC = () => {
         type: 'success',
         text: `Attendance report successfully sent to ${recipientEmail}!`,
       });
+      toast.success('Report Dispatched', `Attendance audit email sent to ${recipientEmail}.`);
       setTimeout(() => {
         setIsEmailModalOpen(false);
       }, 1500);
     } catch (err: any) {
       setEmailStatusMsg({ type: 'error', text: err.message });
+      toast.error('Dispatch Failed', err.message);
     } finally {
       setIsSendingEmail(false);
     }
@@ -214,12 +219,15 @@ export const FacultyReportsPage: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={fetchSessions}
+          onClick={() => {
+            fetchSessions();
+            toast.info('Reports Refreshed', 'Session audit archives synchronized.');
+          }}
           disabled={isLoading}
-          className="gap-2 border-white/[0.08] hover:bg-white/[0.04]"
+          leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+          className="h-9 px-3.5 border-white/[0.08] hover:bg-white/[0.04]"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh Reports</span>
+          Refresh Reports
         </Button>
       </div>
 

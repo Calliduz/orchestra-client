@@ -4,6 +4,7 @@ import { KeyRound, Clock, Key, AlertCircle, Shield, Terminal, Zap, ArrowLeft } f
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { CopyButton } from '../components/ui/CopyButton.js';
+import { useToast } from '../context/ToastContext.js';
 import { API_V1_URL } from '../config/api.js';
 import { sounds } from '../utils/audio.js';
 
@@ -29,6 +30,7 @@ const STUDENT_PRESETS = [
 
 export const StudentOtpPage: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [identifier, setIdentifier] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [otpData, setOtpData] = useState<OtpData | null>(null);
@@ -83,9 +85,11 @@ export const StudentOtpPage: React.FC = () => {
       setOtpData(data.data);
       setSecondsRemaining(data.data.expiresInSeconds || 60);
       sounds.playSuccessChime();
+      toast.success('Keypad PIN Generated', `PIN: ${data.data.otp} (Valid for 60s)`);
     } catch (err: any) {
       setError(err.message || 'Communication failed');
       sounds.playErrorBuzz();
+      toast.error('PIN Request Failed', err.message);
     } finally {
       setIsLoading(false);
     }

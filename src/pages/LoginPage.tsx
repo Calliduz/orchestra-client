@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Shield, KeyRound, Mail, ArrowRight, UserCheck, AlertCircle, Sparkles, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
+import { useToast } from '../context/ToastContext.js';
 import { API_V1_URL } from '../config/api.js';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,6 +36,7 @@ export const LoginPage: React.FC = () => {
 
       const { token, user } = data.data;
       login(token, user);
+      toast.success('Welcome Back', `Authenticated as ${user.firstName} ${user.lastName} (${user.role}).`);
 
       // Role-safe destination routing
       const from = (location.state as any)?.from?.pathname;

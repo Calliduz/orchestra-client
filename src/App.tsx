@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.js';
 import { SocketProvider } from './context/SocketContext.js';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
+import { ToastProvider } from './context/ToastContext.js';
 import { ProtectedRoute } from './components/layout/ProtectedRoute.js';
 import { AdminLayout } from './components/layout/AdminLayout.js';
 import { FacultyLayout } from './components/layout/FacultyLayout.js';
@@ -52,10 +53,11 @@ const RootRedirect: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <SocketProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
+      <ToastProvider>
+        <SocketProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <Routes>
               {/* Root Entry */}
               <Route path="/" element={<RootRedirect />} />
 
@@ -102,8 +104,9 @@ export const App: React.FC = () => {
           </BrowserRouter>
         </AuthProvider>
       </SocketProvider>
-    </ThemeProvider>
-  );
+    </ToastProvider>
+  </ThemeProvider>
+);
 };
 
 export default App;

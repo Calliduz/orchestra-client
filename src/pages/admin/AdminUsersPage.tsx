@@ -7,6 +7,7 @@ import { Modal } from '../../components/ui/Modal.js';
 import { API_V1_URL } from '../../config/api.js';
 import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
+import { useToast } from '../../context/ToastContext.js';
 import { sounds } from '../../utils/audio.js';
 
 interface UserItem {
@@ -28,6 +29,7 @@ interface UserItem {
 export const AdminUsersPage: React.FC = () => {
   const { token } = useAuth();
   const { socket, isConnected, terminalId } = useSocket();
+  const { toast } = useToast();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -76,6 +78,7 @@ export const AdminUsersPage: React.FC = () => {
           holderName: event.cardHolder?.name,
         });
         sounds.playKeyChirp();
+        toast.info('RFID Tag Captured', `Live badge 0x${event.rfidUid} populated from terminal.`);
       }
     };
 
@@ -231,8 +234,10 @@ export const AdminUsersPage: React.FC = () => {
       setIsAddModalOpen(false);
       stopHardwareEnrollment();
       fetchUsers();
+      toast.success('User Created', `Successfully registered ${formData.firstName} ${formData.lastName}.`);
     } catch (err: any) {
       setFormError(err.message);
+      toast.error('Registration Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -275,8 +280,10 @@ export const AdminUsersPage: React.FC = () => {
       setIsEditModalOpen(false);
       stopHardwareEnrollment();
       fetchUsers();
+      toast.success('User Updated', `Updated profile for ${formData.firstName} ${formData.lastName}.`);
     } catch (err: any) {
       setFormError(err.message);
+      toast.error('Update Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -299,8 +306,9 @@ export const AdminUsersPage: React.FC = () => {
 
       setIsDeleteModalOpen(false);
       fetchUsers();
+      toast.success('User Deleted', `Removed ${selectedUser.firstName} ${selectedUser.lastName} from directory.`);
     } catch (err: any) {
-      alert(err.message);
+      toast.error('Deletion Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -323,7 +331,10 @@ export const AdminUsersPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchUsers}
+            onClick={() => {
+              fetchUsers();
+              toast.info('Directory Refreshed', 'User directory synchronized with database.');
+            }}
             disabled={isLoading}
             leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
             className="h-9 px-3.5 border-white/[0.08] hover:border-white/[0.15]"

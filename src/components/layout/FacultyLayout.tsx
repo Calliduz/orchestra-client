@@ -3,10 +3,12 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutGrid, Radio, FileText, BarChart3, Users, LogOut, GraduationCap, ChevronRight, Shield, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
+import { useToast } from '../../context/ToastContext.js';
 
 export const FacultyLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const { isConnected, terminalId, socket } = useSocket();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [hasActiveSession, setHasActiveSession] = useState(false);
 
@@ -24,6 +26,7 @@ export const FacultyLayout: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    toast.info('Signed Out', 'You have been logged out of Orchestra.');
     navigate('/login');
   };
 

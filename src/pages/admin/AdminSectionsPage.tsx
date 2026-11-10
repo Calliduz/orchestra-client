@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
 import { API_V1_URL } from '../../config/api.js';
 import { useAuth } from '../../context/AuthContext.js';
+import { useToast } from '../../context/ToastContext.js';
 
 interface SectionItem {
   id: string;
@@ -36,6 +37,7 @@ interface FacultyOption {
 
 export const AdminSectionsPage: React.FC = () => {
   const { token } = useAuth();
+  const { toast } = useToast();
   const [sections, setSections] = useState<SectionItem[]>([]);
   const [facultyList, setFacultyList] = useState<FacultyOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -146,8 +148,10 @@ export const AdminSectionsPage: React.FC = () => {
 
       setIsAddModalOpen(false);
       fetchSections();
+      toast.success('Section Created', `Successfully configured ${formData.sectionCode} (${formData.courseName}).`);
     } catch (err: any) {
       setFormError(err.message);
+      toast.error('Creation Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -176,8 +180,10 @@ export const AdminSectionsPage: React.FC = () => {
 
       setIsEditModalOpen(false);
       fetchSections();
+      toast.success('Section Updated', `Saved settings for ${formData.sectionCode}.`);
     } catch (err: any) {
       setFormError(err.message);
+      toast.error('Update Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -200,8 +206,9 @@ export const AdminSectionsPage: React.FC = () => {
 
       setIsDeleteModalOpen(false);
       fetchSections();
+      toast.success('Section Deleted', `Removed ${selectedSection.sectionCode} from database.`);
     } catch (err: any) {
-      alert(err.message);
+      toast.error('Deletion Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -220,14 +227,28 @@ export const AdminSectionsPage: React.FC = () => {
             Configure course sections, assign designated faculty instructors, and calibrate punctuality grace thresholds
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={fetchSections} disabled={isLoading} className="gap-2">
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              fetchSections();
+              toast.info('Sections Synced', 'Course section roster updated.');
+            }}
+            disabled={isLoading}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+            className="h-9 px-3.5 border-white/[0.08] hover:border-white/[0.15]"
+          >
+            Refresh
           </Button>
-          <Button variant="primary" size="sm" onClick={openAddModal} className="gap-2 bg-purple-600 hover:bg-purple-500">
-            <Plus className="w-4 h-4" />
-            <span>Create New Section</span>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={openAddModal}
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="h-9 px-3.5 bg-purple-600 hover:bg-purple-500 border border-purple-400/30 shadow-md shadow-purple-600/20"
+          >
+            Create New Section
           </Button>
         </div>
       </div>

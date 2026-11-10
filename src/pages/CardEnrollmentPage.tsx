@@ -18,6 +18,7 @@ import { CopyButton } from '../components/ui/CopyButton.js';
 import { Modal } from '../components/ui/Modal.js';
 import { useSocket } from '../context/SocketContext.js';
 import { useAuth } from '../context/AuthContext.js';
+import { useToast } from '../context/ToastContext.js';
 import { API_V1_URL } from '../config/api.js';
 import { sounds } from '../utils/audio.js';
 
@@ -49,6 +50,7 @@ interface ScannedCardEvent {
 export const CardEnrollmentPage: React.FC = () => {
   const { socket, isConnected, terminalId } = useSocket();
   const { token } = useAuth();
+  const { toast } = useToast();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -195,15 +197,18 @@ export const CardEnrollmentPage: React.FC = () => {
       if (json.success) {
         sounds.playSuccessChime();
         setStatusMessage({ text: json.message, type: 'success' });
+        toast.success('Badge Assigned', `RFID 0x${rfidUid.trim()} assigned successfully.`);
         handleCloseEdit();
         await fetchUsers();
       } else {
         sounds.playErrorBuzz();
         setStatusMessage({ text: json.message || 'Failed to assign card', type: 'error' });
+        toast.error('Assignment Failed', json.message);
       }
     } catch (err: any) {
       sounds.playErrorBuzz();
       setStatusMessage({ text: err.message || 'Error assigning RFID card', type: 'error' });
+      toast.error('Assignment Error', err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -224,10 +229,14 @@ export const CardEnrollmentPage: React.FC = () => {
       if (json.success) {
         sounds.playSuccessChime();
         setStatusMessage({ text: json.message, type: 'success' });
+        toast.success('Badge Revoked', `Removed badge from ${user.firstName} ${user.lastName}.`);
         await fetchUsers();
+      } else {
+        toast.error('Revoke Failed', json.message);
       }
     } catch (err: any) {
       console.error('Error removing RFID badge:', err);
+      toast.error('Revoke Failed', err.message);
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Lock, Unlock, Eye, EyeOff, LogIn, CheckCircle2, User, Cpu, AlertTriangle } from 'lucide-react';
 import { useSocket } from '../context/SocketContext.js';
 import { useAuth } from '../context/AuthContext.js';
+import { useToast } from '../context/ToastContext.js';
 import { SessionHeader } from '../components/dashboard/SessionHeader.js';
 import { KpiGrid } from '../components/dashboard/KpiGrid.js';
 import { ThresholdSliders } from '../components/dashboard/ThresholdSliders.js';
@@ -15,6 +16,7 @@ import { sounds } from '../utils/audio.js';
 export const FacultyDashboardPage: React.FC = () => {
   const { socket, terminalId } = useSocket();
   const { user, token } = useAuth();
+  const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -52,9 +54,11 @@ export const FacultyDashboardPage: React.FC = () => {
       if (!res.ok) throw new Error(json.message);
       sounds.playSuccessChime();
       fetchActiveSession();
+      toast.success('Session Initialized', `Classroom ingress opened for ${sessionData?.section?.sectionCode || 'section'}.`);
     } catch (err: any) {
       sounds.playErrorBuzz();
       setActionError(err.message);
+      toast.error('Session Initialization Failed', err.message);
     } finally {
       setIsStartingSession(false);
     }
@@ -143,9 +147,11 @@ export const FacultyDashboardPage: React.FC = () => {
       if (!res.ok) throw new Error(json.message);
       sounds.playSuccessChime();
       fetchActiveSession();
+      toast.success('Punctuality Policy Applied', `Updated thresholds: ${late}m grace, ${cut}m cut-off.`);
     } catch (err: any) {
       sounds.playErrorBuzz();
       setActionError(err.message);
+      toast.error('Policy Update Failed', err.message);
     }
   };
 
@@ -165,9 +171,11 @@ export const FacultyDashboardPage: React.FC = () => {
       if (!res.ok) throw new Error(json.message);
       sounds.playSuccessChime();
       fetchActiveSession();
+      toast.success('Attendance Overridden', `Status manual override applied: ${status}.`);
     } catch (err: any) {
       sounds.playErrorBuzz();
       setActionError(err.message);
+      toast.error('Override Failed', err.message);
       throw err;
     }
   };
@@ -186,10 +194,11 @@ export const FacultyDashboardPage: React.FC = () => {
       if (!res.ok) throw new Error(json.message);
       sounds.playSuccessChime();
       fetchActiveSession();
+      toast.info('Session Terminated', 'Doorway terminal locked. Manifest archived and reports generated.');
     } catch (err: any) {
       sounds.playErrorBuzz();
       setActionError(err.message);
-      alert(err.message);
+      toast.error('Session Termination Failed', err.message);
     }
   };
 
