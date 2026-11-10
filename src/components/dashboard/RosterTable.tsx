@@ -133,12 +133,14 @@ export const RosterTable: React.FC<RosterTableProps> = ({
             ) : (
               filteredRoster.map((student, idx) => {
                 const timeFormatted = student.tapTimestamp
-                  ? new Date(student.tapTimestamp).toLocaleTimeString('en-US', {
-                      hour12: true,
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      second: '2-digit',
-                    })
+                  ? new Date(student.tapTimestamp)
+                      .toLocaleTimeString('en-US', {
+                        hour12: true,
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })
+                      .replace(/[\s\u202F]+/g, ' ')
                   : null;
 
                 const initials = `${student.firstName[0] || ''}${student.lastName[0] || ''}`.toUpperCase();

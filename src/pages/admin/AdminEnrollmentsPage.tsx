@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   UserPlus,
   BookOpen,
@@ -89,6 +90,8 @@ const CustomCheckbox: React.FC<{
 );
 
 export const AdminEnrollmentsPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const urlSectionId = searchParams.get('sectionId');
   const { token } = useAuth();
   const { toast } = useToast();
   const [sections, setSections] = useState<SectionOption[]>([]);
@@ -135,7 +138,8 @@ export const AdminEnrollmentsPage: React.FC = () => {
       const json = await res.json();
       if (json.success && json.data.length > 0) {
         setSections(json.data);
-        setSelectedSectionId(json.data[0].id);
+        const hasUrlSection = urlSectionId && json.data.some((s: SectionOption) => s.id === urlSectionId);
+        setSelectedSectionId(hasUrlSection ? (urlSectionId as string) : json.data[0].id);
       }
     } catch (err) {
       console.error('Failed to fetch sections:', err);
@@ -542,10 +546,17 @@ export const AdminEnrollmentsPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 font-mono text-slate-500 align-middle">{idx + 1}</td>
                       <td className="py-3 px-4 align-middle">
-                        <div className="font-medium text-slate-200">
-                          {item.student.lastName}, {item.student.firstName}
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-xs shrink-0">
+                            {item.student.firstName?.[0] || '?'}{item.student.lastName?.[0] || ''}
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-200">
+                              {item.student.lastName}, {item.student.firstName}
+                            </div>
+                            <div className="text-[11px] text-slate-400">{item.student.email}</div>
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-400">{item.student.email}</div>
                       </td>
                       <td className="py-3 px-4 font-mono text-slate-300 align-middle">
                         {item.student.studentId || <span className="text-slate-600">—</span>}

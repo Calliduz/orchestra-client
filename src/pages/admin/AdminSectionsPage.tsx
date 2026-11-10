@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Edit2, Trash2, Clock, Users, RefreshCw, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Plus, Edit2, Trash2, Clock, Users, RefreshCw, AlertCircle, Search, ArrowRight } from 'lucide-react';
 import { Card } from '../../components/ui/Card.js';
 import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
@@ -36,11 +37,26 @@ interface FacultyOption {
 }
 
 export const AdminSectionsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { token } = useAuth();
   const { toast } = useToast();
   const [sections, setSections] = useState<SectionItem[]>([]);
   const [facultyList, setFacultyList] = useState<FacultyOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredSections = sections.filter((sec: SectionItem) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      sec.sectionCode?.toLowerCase().includes(q) ||
+      sec.courseName?.toLowerCase().includes(q) ||
+      sec.faculty?.firstName?.toLowerCase().includes(q) ||
+      sec.faculty?.lastName?.toLowerCase().includes(q) ||
+      sec.roomNumber?.toLowerCase().includes(q) ||
+      sec.terminalId?.toLowerCase().includes(q)
+    );
+  });
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -253,69 +269,113 @@ export const AdminSectionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Sections Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sections.map((sec) => (
-          <div key={sec.id} className="p-5 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm flex flex-col justify-between hover:border-white/[0.12] transition shadow-xs">
-            <div>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div>
-                  <span className="font-mono text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-lg">
-                    {sec.sectionCode}
-                  </span>
-                  <h3 className="text-sm font-semibold text-white mt-2 leading-snug">{sec.courseName}</h3>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => openEditModal(sec)}
-                    className="p-1.5 hover:bg-white/[0.05] text-slate-400 hover:text-slate-200 rounded-lg transition"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedSection(sec);
-                      setIsDeleteModalOpen(true);
-                    }}
-                    className="p-1.5 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 rounded-lg transition"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2 text-xs text-slate-300">
-                <div className="flex items-center justify-between py-1 border-b border-white/[0.05]">
-                  <span className="text-slate-400">Assigned Instructor:</span>
-                  <span className="font-medium text-slate-200">
-                    Prof. {sec.faculty.firstName} {sec.faculty.lastName}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-1 border-b border-white/[0.05]">
-                  <span className="text-slate-400">Location & Node:</span>
-                  <span className="font-mono text-slate-200">
-                    {sec.roomNumber} ({sec.terminalId})
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-1 border-b border-white/[0.05]">
-                  <span className="text-slate-400">Grace Windows:</span>
-                  <span className="font-mono text-slate-200">
-                    Late: {sec.defaultLateThresholdMins}m &bull; Cut: {sec.defaultCutThresholdMins}m
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 pt-3 border-t border-white/[0.05] flex items-center justify-between text-xs text-slate-400">
-              <div className="flex items-center gap-1.5 font-mono">
-                <Users className="w-3.5 h-3.5 text-slate-400" />
-                <span>{sec._count.enrollments} Enrolled Students</span>
-              </div>
-              <span className="font-mono text-[11px] text-slate-400">{sec._count.sessions} Sessions</span>
-            </div>
-          </div>
-        ))}
+      {/* Search & Filter Ribbon */}
+      <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-slate-400">Sections Directory:</span>
+          <span className="px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 font-mono text-xs font-bold">
+            {sections.length} Configured
+          </span>
+          {searchQuery && (
+            <span className="text-xs text-slate-400 font-mono">
+              ({filteredSections.length} matched)
+            </span>
+          )}
+        </div>
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search code, course, faculty, or room..."
+            className="w-full bg-slate-950 border border-white/[0.08] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500/40"
+          />
+        </div>
       </div>
+
+      {/* Sections Grid */}
+      {filteredSections.length === 0 ? (
+        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-white/[0.05] text-slate-500 text-xs">
+          {sections.length === 0
+            ? 'No course sections configured. Click "Create New Section" above to register one.'
+            : `No course sections match "${searchQuery}".`}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredSections.map((sec) => (
+            <div
+              key={sec.id}
+              className="p-5 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm flex flex-col justify-between hover:border-white/[0.12] transition shadow-xs group"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <span className="font-mono text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-lg">
+                      {sec.sectionCode}
+                    </span>
+                    <h3 className="text-sm font-semibold text-white mt-2 leading-snug">{sec.courseName}</h3>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => openEditModal(sec)}
+                      className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-slate-400 hover:text-slate-200 transition"
+                      title="Edit Section Settings"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedSection(sec);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="p-1.5 rounded-lg bg-rose-500/5 hover:bg-rose-500/15 border border-rose-500/10 hover:border-rose-500/30 text-rose-400 hover:text-rose-300 transition"
+                      title="Delete Section"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2 text-xs text-slate-300">
+                  <div className="flex items-center justify-between py-1 border-b border-white/[0.05]">
+                    <span className="text-slate-400">Assigned Instructor:</span>
+                    <span className="font-medium text-slate-200">
+                      Prof. {sec.faculty.firstName} {sec.faculty.lastName}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-white/[0.05]">
+                    <span className="text-slate-400">Location & Node:</span>
+                    <span className="font-mono text-slate-200">
+                      {sec.roomNumber} ({sec.terminalId})
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-white/[0.05]">
+                    <span className="text-slate-400">Grace Windows:</span>
+                    <span className="font-mono text-slate-200">
+                      Late: {sec.defaultLateThresholdMins}m &bull; Cut: {sec.defaultCutThresholdMins}m
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-white/[0.05] flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 font-mono text-xs text-slate-400">
+                  <Users className="w-3.5 h-3.5 text-purple-400" />
+                  <span>{sec._count.enrollments} Enrolled</span>
+                </div>
+                <button
+                  onClick={() => navigate(`/admin/enrollments?sectionId=${sec.id}`)}
+                  className="px-2.5 py-1 rounded-lg bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 hover:border-purple-500/40 text-purple-300 hover:text-white transition flex items-center gap-1 text-[11px] font-medium"
+                >
+                  <span>Manage Roster</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Section Modal */}
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Create Course Section" hideFooter>

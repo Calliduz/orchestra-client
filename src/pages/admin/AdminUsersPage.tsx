@@ -357,19 +357,32 @@ export const AdminUsersPage: React.FC = () => {
       <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0">
-            {(['ALL', 'STUDENT', 'FACULTY', 'ADMIN'] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRoleFilter(r)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                  roleFilter === r
-                    ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'
-                }`}
-              >
-                {r === 'ALL' ? 'All Roles' : `${r.charAt(0) + r.slice(1).toLowerCase()}s`}
-              </button>
-            ))}
+            {(['ALL', 'STUDENT', 'FACULTY', 'ADMIN'] as const).map((r) => {
+              const count =
+                r === 'ALL'
+                  ? users.length
+                  : users.filter((u) => u.role === r).length;
+              return (
+                <button
+                  key={r}
+                  onClick={() => setRoleFilter(r)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 shrink-0 ${
+                    roleFilter === r
+                      ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30 shadow-xs'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <span>
+                    {r === 'ALL'
+                      ? 'All Roles'
+                      : r === 'FACULTY'
+                      ? 'Faculty'
+                      : `${r.charAt(0) + r.slice(1).toLowerCase()}s`}
+                  </span>
+                  <span className="text-[10px] font-mono opacity-60">({count})</span>
+                </button>
+              );
+            })}
           </div>
 
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full md:w-80">
@@ -415,10 +428,25 @@ export const AdminUsersPage: React.FC = () => {
                 users.map((u) => (
                   <tr key={u.id} className="hover:bg-white/[0.02] transition">
                     <td className="py-3 px-4 align-middle">
-                      <div className="font-medium text-slate-200">
-                        {u.firstName} {u.lastName}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border ${
+                            u.role === 'ADMIN'
+                              ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                              : u.role === 'FACULTY'
+                              ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                              : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                          }`}
+                        >
+                          {u.firstName?.[0] || '?'}{u.lastName?.[0] || ''}
+                        </div>
+                        <div>
+                          <div className="font-medium text-slate-200">
+                            {u.firstName} {u.lastName}
+                          </div>
+                          <div className="text-[11px] text-slate-400">{u.email}</div>
+                        </div>
                       </div>
-                      <div className="text-[11px] text-slate-400">{u.email}</div>
                     </td>
                     <td className="py-3 px-4 align-middle">
                       <span
@@ -447,17 +475,18 @@ export const AdminUsersPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-slate-400 align-middle">{u.department || 'CCS'}</td>
                     <td className="py-3 px-4 text-right align-middle">
-                      <div className="inline-flex items-center gap-1">
+                      <div className="inline-flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => openEditModal(u)}
-                          className="p-1.5 hover:bg-white/[0.05] text-slate-400 hover:text-slate-200 rounded-lg transition"
+                          className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] text-slate-300 hover:text-white transition flex items-center gap-1 text-[11px]"
                           title="Edit User"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Edit2 className="w-3 h-3 text-slate-400" />
+                          <span>Edit</span>
                         </button>
                         <button
                           onClick={() => openDeleteModal(u)}
-                          className="p-1.5 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 rounded-lg transition"
+                          className="p-1.5 rounded-lg bg-rose-500/5 hover:bg-rose-500/15 border border-rose-500/10 hover:border-rose-500/30 text-rose-400 hover:text-rose-300 transition"
                           title="Delete User"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -533,10 +562,12 @@ export const AdminUsersPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Student / Employee ID</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                {formData.role === 'STUDENT' ? 'Student ID Number *' : 'Institutional / Faculty ID *'}
+              </label>
               <input
                 type="text"
-                placeholder="2023-0001-CCS"
+                placeholder={formData.role === 'STUDENT' ? '2023-0001-CCS' : 'FAC-2026-001'}
                 value={formData.studentId}
                 onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
                 className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-purple-500/40"
@@ -707,9 +738,12 @@ export const AdminUsersPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Student / Employee ID</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                {formData.role === 'STUDENT' ? 'Student ID Number *' : 'Institutional / Faculty ID *'}
+              </label>
               <input
                 type="text"
+                placeholder={formData.role === 'STUDENT' ? '2023-0001-CCS' : 'FAC-2026-001'}
                 value={formData.studentId}
                 onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
                 className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-purple-500/40"

@@ -413,44 +413,44 @@ export const FacultyReportsPage: React.FC = () => {
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1.5 justify-end">
+                        <div className="inline-flex items-center gap-1 justify-end p-1 rounded-xl bg-slate-950/70 border border-white/[0.08] shadow-xs">
                           {/* Excel Export Button */}
                           <button
                             onClick={() => downloadReport(sess.id, 'xlsx')}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
+                            className="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 transition-all text-[11px] font-mono font-medium flex items-center gap-1 active:scale-95"
                             title="Download Excel Spreadsheet (.xlsx)"
                           >
-                            <FileSpreadsheet className="w-3.5 h-3.5" />
+                            <FileSpreadsheet className="w-3 h-3 text-emerald-400" />
                             <span>XLSX</span>
                           </button>
 
                           {/* PDF Export Button */}
                           <button
                             onClick={() => downloadReport(sess.id, 'pdf')}
-                            className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
+                            className="px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-all text-[11px] font-mono font-medium flex items-center gap-1 active:scale-95"
                             title="Download Official PDF Master Report"
                           >
-                            <FileText className="w-3.5 h-3.5" />
+                            <FileText className="w-3 h-3 text-rose-400" />
                             <span>PDF</span>
                           </button>
 
                           {/* CSV Export Button */}
                           <button
                             onClick={() => downloadReport(sess.id, 'csv')}
-                            className="px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
+                            className="px-2 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/20 transition-all text-[11px] font-mono font-medium flex items-center gap-1 active:scale-95"
                             title="Download Raw CSV"
                           >
-                            <Download className="w-3.5 h-3.5" />
+                            <Download className="w-3 h-3 text-sky-400" />
                             <span>CSV</span>
                           </button>
 
                           {/* Email Report Button */}
                           <button
                             onClick={() => openEmailModal(sess.id)}
-                            className="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/25 transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
+                            className="px-2 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 transition-all text-[11px] font-mono font-medium flex items-center gap-1 active:scale-95"
                             title="Send Report via Email"
                           >
-                            <Mail className="w-3.5 h-3.5" />
+                            <Mail className="w-3 h-3 text-purple-400" />
                             <span>Email</span>
                           </button>
                         </div>
