@@ -209,13 +209,18 @@ export const AdminUsersPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      const payload = {
+        ...formData,
+        password: formData.role === 'STUDENT' ? (formData.password || 'StudentPass123!') : formData.password,
+      };
+
       const res = await fetch(`${API_V1_URL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -446,7 +451,7 @@ export const AdminUsersPage: React.FC = () => {
       </div>
 
       {/* Add User Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={closeModals} title="Register New User">
+      <Modal isOpen={isAddModalOpen} onClose={closeModals} title="Register New User" hideFooter>
         <form onSubmit={handleCreateUser} className="space-y-4">
           {formError && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
@@ -568,7 +573,7 @@ export const AdminUsersPage: React.FC = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {formData.role === 'STUDENT' ? (
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">RFID UID (Hex)</label>
               <input
@@ -578,18 +583,35 @@ export const AdminUsersPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, rfidUid: e.target.value.toUpperCase() })}
                 className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white font-mono uppercase focus:outline-none focus:ring-1 focus:ring-purple-500/40"
               />
+              <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span>Students authenticate exclusively via physical RFID card tap or Keypad PIN (no password needed).</span>
+              </p>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Initial Password *</label>
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-500/40"
-              />
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">RFID UID (Hex)</label>
+                <input
+                  type="text"
+                  placeholder="Awaiting physical tap..."
+                  value={formData.rfidUid}
+                  onChange={(e) => setFormData({ ...formData, rfidUid: e.target.value.toUpperCase() })}
+                  className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white font-mono uppercase focus:outline-none focus:ring-1 focus:ring-purple-500/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Initial Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-500/40"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/[0.06]">
             <Button type="button" variant="outline" size="sm" onClick={closeModals}>
@@ -603,7 +625,7 @@ export const AdminUsersPage: React.FC = () => {
       </Modal>
 
       {/* Edit User Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={closeModals} title="Edit User Profile">
+      <Modal isOpen={isEditModalOpen} onClose={closeModals} title="Edit User Profile" hideFooter>
         <form onSubmit={handleUpdateUser} className="space-y-4">
           {formError && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
@@ -759,7 +781,7 @@ export const AdminUsersPage: React.FC = () => {
       </Modal>
 
       {/* Delete User Confirmation */}
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Deletion">
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Deletion" hideFooter>
         <div className="space-y-4">
           <p className="text-xs text-slate-300">
             Are you sure you want to permanently delete{' '}
