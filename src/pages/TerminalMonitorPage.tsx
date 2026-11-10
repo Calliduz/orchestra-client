@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, Radio, Shield, Zap, RefreshCw, Keyboard, Play, CheckCircle2, AlertTriangle, Terminal, Volume2, VolumeX } from 'lucide-react';
+import { Cpu, Radio, Shield, Zap, RefreshCw, Keyboard, Play, CheckCircle2, AlertTriangle, Terminal, Volume2, VolumeX, WifiOff, HardDrive, UploadCloud } from 'lucide-react';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { Badge } from '../components/ui/Badge.js';
@@ -10,6 +10,7 @@ import { sounds } from '../utils/audio.js';
 export const TerminalMonitorPage: React.FC = () => {
   const { terminalId } = useSocket();
   const [terminalStatus, setTerminalStatus] = useState<any>(null);
+  const [authorizedFaculty, setAuthorizedFaculty] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [oledMessage, setOledMessage] = useState<string>('LOCKED\nSCAN MASTER BADGE');
   const [oledSubtext, setOledSubtext] = useState<string>('TERM-CL304 [STANDBY]');
@@ -17,6 +18,11 @@ export const TerminalMonitorPage: React.FC = () => {
   const [simLog, setSimLog] = useState<string[]>([]);
   const [isAudioMuted, setIsAudioMuted] = useState<boolean>(() => !sounds.enabled);
   const cooldownIntervalRef = React.useRef<number | null>(null);
+
+  // Offline Simulation State & Local Queue
+  const [isOfflineSimMode, setIsOfflineSimMode] = useState<boolean>(false);
+  const [offlineQueue, setOfflineQueue] = useState<any[]>([]);
+  const [isSyncingOffline, setIsSyncingOffline] = useState<boolean>(false);
 
   // Virtual Keypad State Machine
   const [isOtpMode, setIsOtpMode] = useState<boolean>(false);
@@ -81,6 +87,9 @@ export const TerminalMonitorPage: React.FC = () => {
       const res = await fetch(`${API_V1_URL}/hardware/status/${terminalId}`);
       const json = await res.json();
       setTerminalStatus(json);
+      if (json.authorizedFaculty) {
+        setAuthorizedFaculty(json.authorizedFaculty);
+      }
 
       if (!isOtpMode) {
         if (json.isLocked) {
@@ -98,10 +107,109 @@ export const TerminalMonitorPage: React.FC = () => {
     }
   };
 
+  const flushOfflineQueue = async () => {
+    if (offlineQueue.length === 0) return;
+    try {
+      setIsSyncingOffline(true);
+      addSimLog(`>> [OFFLINE_SYNC_TX] Uploading ${offlineQueue.length} buffered taps to /hardware/offline-sync...`);
+      setOledMessage('UPLOADING LOGS\nPLEASE WAIT...');
+      setOledSubtext('BATCH SYNC IN PROGRESS');
+
+      const res = await fetch(`${API_V1_URL}/hardware/offline-sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': 'ORCHESTRA_ESP32_SECURE_TOKEN_2026',
+        },
+        body: JSON.stringify({
+          terminalId,
+          sessionAction: 'CONTINUE',
+          records: offlineQueue,
+        }),
+      });
+      const json = await res.json();
+      addSimLog(`<< [HTTP ${res.status}] OFFLINE_SYNC_OK: ${json.message}`);
+      sounds.playSuccessChime();
+      setOledMessage(`[ SYNC COMPLETE ]\nUPLOADED: ${json.syncedCount || offlineQueue.length} TAPS`);
+      setOledSubtext('CLOUD SYNCED OK');
+      setOfflineQueue([]);
+      fetchTerminalStatus();
+    } catch (err: any) {
+      sounds.playErrorBuzz();
+      addSimLog(`!! [SYNC FAILED] ${err.message}`);
+    } finally {
+      setIsSyncingOffline(false);
+    }
+  };
+
   const simulateTap = async (rfidUid: string, label: string) => {
     if (cooldownRemaining > 0) {
       addSimLog(`[PACING INTERLOCK] Reader hold active: ${cooldownRemaining.toFixed(1)}s remaining.`);
       sounds.playErrorBuzz();
+      return;
+    }
+
+    // -------------------------------------------------------------
+    // OFFLINE RESILIENCY SIMULATION MODE
+    // -------------------------------------------------------------
+    if (isOfflineSimMode) {
+      const isProf =
+        authorizedFaculty.some((f) => f.rfidUid?.toUpperCase() === rfidUid.toUpperCase()) ||
+        rfidUid.toUpperCase() === '892B2E8E' ||
+        rfidUid.toUpperCase() === '71394417' ||
+        rfidUid.toUpperCase() === '99AA88BB';
+
+      if (isProf) {
+        const nextLocked = !terminalStatus?.isLocked;
+        setTerminalStatus((prev: any) => ({ ...prev, isLocked: nextLocked }));
+        sounds.playSuccessChime();
+        setOledMessage(
+          nextLocked
+            ? '[ OFFLINE SESSION ]\nSESSION LOCKED'
+            : '[ OFFLINE SESSION ]\nSESSION UNLOCKED'
+        );
+        setOledSubtext(nextLocked ? 'QUEUED FOR SYNC' : 'READY FOR INGRESS');
+        addSimLog(
+          `>> [OFFLINE_TRUST] Authorized Professor 0x${rfidUid} (${label}) tapped. Toggled offline session: ${
+            nextLocked ? 'LOCKED' : 'OPEN'
+          }.`
+        );
+        return;
+      }
+
+      if (terminalStatus?.isLocked) {
+        sounds.playErrorBuzz();
+        setOledMessage('TERMINAL LOCKED\nACCESS REJECTED');
+        setOledSubtext('SCAN PROF BADGE');
+        addSimLog(`>> [OFFLINE_REJECT] Card 0x${rfidUid} tapped while terminal is locked offline.`);
+        return;
+      }
+
+      // Check anti-passback in offline queue
+      if (offlineQueue.some((q) => q.rfidUid.toUpperCase() === rfidUid.toUpperCase())) {
+        sounds.playErrorBuzz();
+        setOledMessage('ANTI-PASSBACK\nALREADY LOGGED');
+        setOledSubtext('IN OFFLINE CACHE');
+        addSimLog(`>> [OFFLINE_ANTI_PASSBACK] Card 0x${rfidUid} already buffered in local queue!`);
+        return;
+      }
+
+      // Buffer tap in offline queue
+      const tapRecord = {
+        rfidUid,
+        label,
+        timestamp: new Date().toISOString(),
+        authMethod: 'RFID_TAP',
+      };
+      const updatedQueue = [...offlineQueue, tapRecord];
+      setOfflineQueue(updatedQueue);
+      sounds.playSuccessChime();
+      setOledMessage(`[ OFFLINE SAVED ]\n0x${rfidUid}`);
+      setOledSubtext(`QUEUE #${updatedQueue.length} PENDING`);
+      addSimLog(
+        `>> [OFFLINE_BUFFER] Tap for 0x${rfidUid} (${label}) saved to local NVS queue (#${updatedQueue.length}).`
+      );
+      triggerCooldown();
       return;
     }
 
@@ -653,6 +761,100 @@ export const TerminalMonitorPage: React.FC = () => {
                 <p className="leading-relaxed">
                   Enforces a deterministic 3000ms non-blocking cooldown via embedded <code>millis()</code> between consecutive student scans to disrupt rapid batch-swiping.
                 </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Offline Resiliency & Local Professor Cache Card */}
+          <Card
+            title="Offline Resiliency & Professor UID Cache"
+            subtitle="Embedded NVS persistence during network outage (Paper Architecture)"
+          >
+            <div className="space-y-3 font-body text-xs">
+              {/* Mode Toggle & Queue Status */}
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-white/[0.08] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2.5 h-2.5 rounded-full ${isOfflineSimMode ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+                  <span className="font-mono text-xs font-semibold text-white">
+                    {isOfflineSimMode ? 'SIMULATING NETWORK OUTAGE' : 'ONLINE LINK ACTIVE'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !isOfflineSimMode;
+                    setIsOfflineSimMode(next);
+                    addSimLog(
+                      next
+                        ? '>> [NETWORK_SIM] Wi-Fi Link severed. Operating in OFFLINE RESILIENCY mode.'
+                        : '>> [NETWORK_SIM] Wi-Fi Link restored. Operating in ONLINE mode.'
+                    );
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition flex items-center gap-1.5 border ${
+                    isOfflineSimMode
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                      : 'bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 border-white/[0.1]'
+                  }`}
+                >
+                  <WifiOff className="w-3 h-3" />
+                  <span>{isOfflineSimMode ? 'Restore Wi-Fi' : 'Simulate Wi-Fi Drop'}</span>
+                </button>
+              </div>
+
+              {/* Local Professor UIDs Cache */}
+              <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[11px] text-purple-300 font-bold uppercase flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Local Professor UIDs (NVS Mirrored)</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-purple-400">
+                    {authorizedFaculty.length || 3} Cached
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {(authorizedFaculty.length > 0
+                    ? authorizedFaculty
+                    : [
+                        { rfidUid: '892B2E8E', name: 'Karlito Macadat', role: 'FACULTY' },
+                        { rfidUid: '71394417', name: 'Justine Jay Agbada', role: 'FACULTY' },
+                        { rfidUid: '99AA88BB', name: 'System Administrator', role: 'ADMIN' },
+                      ]
+                  ).map((fac: any) => (
+                    <div
+                      key={fac.rfidUid}
+                      className="flex items-center justify-between py-1 border-b border-white/[0.03] text-[11px]"
+                    >
+                      <span className="text-slate-300">{fac.name}</span>
+                      <span className="font-mono text-purple-300 bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20">
+                        0x{fac.rfidUid}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  Allows faculty to unlock/lock sessions on the doorway terminal even when cloud network is completely unavailable.
+                </p>
+              </div>
+
+              {/* Offline Queue & Flush Button */}
+              <div className="p-3 rounded-xl bg-slate-900/60 border border-white/[0.06] flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-[11px] text-slate-400">Buffered Offline Taps:</div>
+                  <div className="font-mono text-sm font-bold text-white">
+                    {offlineQueue.length} record{offlineQueue.length === 1 ? '' : 's'} queued
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  disabled={offlineQueue.length === 0 || isSyncingOffline}
+                  onClick={flushOfflineQueue}
+                  leftIcon={<UploadCloud className={`w-3.5 h-3.5 ${isSyncingOffline ? 'animate-spin' : ''}`} />}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px]"
+                >
+                  {isSyncingOffline ? 'Syncing...' : 'Batch Sync to Cloud'}
+                </Button>
               </div>
             </div>
           </Card>
