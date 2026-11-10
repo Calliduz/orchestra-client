@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Radio, UserCheck, Search, Shield, RefreshCw, CheckCircle2, AlertCircle, Trash2, ArrowRight, UserPlus, Sparkles } from 'lucide-react';
-import { Card } from '../components/ui/Card.js';
+import {
+  CreditCard,
+  Radio,
+  UserCheck,
+  Search,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  Trash2,
+  Sparkles,
+  Wifi,
+  SquareTerminal,
+  XCircle,
+} from 'lucide-react';
 import { Button } from '../components/ui/Button.js';
-import { Badge } from '../components/ui/Badge.js';
 import { CopyButton } from '../components/ui/CopyButton.js';
 import { Modal } from '../components/ui/Modal.js';
 import { useSocket } from '../context/SocketContext.js';
@@ -26,6 +37,7 @@ interface ScannedCardEvent {
   terminalId: string;
   timestamp: string;
   isRegistered: boolean;
+  targetRole?: string;
   cardHolder?: {
     id?: string;
     name: string;
@@ -41,7 +53,15 @@ export const CardEnrollmentPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'FACULTY' | 'STUDENT'>('ALL');
-  const [lastScanned, setLastScanned] = useState<ScannedCardEvent | null>(null);
+
+  // Live Hardware Enrollment State
+  const [isEnrollmentActive, setIsEnrollmentActive] = useState<boolean>(false);
+  const [enrollmentTarget, setEnrollmentTarget] = useState<{ role: string; name?: string } | null>(null);
+  const [liveCapturedTag, setLiveCapturedTag] = useState<{
+    uid: string;
+    isRegistered: boolean;
+    holderName?: string;
+  } | null>(null);
 
   // Modal binding state
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
@@ -52,19 +72,23 @@ export const CardEnrollmentPage: React.FC = () => {
   useEffect(() => {
     document.title = 'ORCHESTRA | RFID Badge Enrollment';
     fetchUsers();
-    fetchLastScanned();
 
     if (!socket) return;
 
     // Listen for live physical card scans
     const handleCardScanned = (event: ScannedCardEvent) => {
-      console.log('📡 [LIVE RFID INTERCEPT]', event);
-      setLastScanned(event);
+      setLiveCapturedTag({
+        uid: event.rfidUid,
+        isRegistered: event.isRegistered,
+        holderName: event.cardHolder?.name,
+      });
       setTargetUid(event.rfidUid);
       sounds.playKeyChirp();
 
       setStatusMessage({
-        text: `New Tag Intercepted: 0x${event.rfidUid} ${event.isRegistered ? `(Already mapped to ${event.cardHolder?.name})` : '(Ready for assignment)'}`,
+        text: `Live Tag Intercepted: 0x${event.rfidUid} ${
+          event.isRegistered ? `(Already mapped to ${event.cardHolder?.name})` : '(Ready for assignment)'
+        }`,
         type: event.isRegistered ? 'error' : 'success',
       });
     };
@@ -75,6 +99,51 @@ export const CardEnrollmentPage: React.FC = () => {
       socket.off('card:scanned', handleCardScanned);
     };
   }, [socket]);
+
+  // Clean up enrollment mode on unmount
+  useEffect(() => {
+    return () => {
+      stopHardwareEnrollment();
+    };
+  }, []);
+
+  const startHardwareEnrollment = async (role: string, name?: string) => {
+    try {
+      setIsEnrollmentActive(true);
+      setEnrollmentTarget({ role, name });
+      await fetch(`${API_V1_URL}/hardware/enrollment/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          terminalId,
+          targetRole: role,
+          targetName: name || undefined,
+        }),
+      });
+    } catch (err) {
+      console.warn('Failed to start hardware enrollment mode:', err);
+    }
+  };
+
+  const stopHardwareEnrollment = async () => {
+    try {
+      setIsEnrollmentActive(false);
+      setEnrollmentTarget(null);
+      await fetch(`${API_V1_URL}/hardware/enrollment/stop`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ terminalId }),
+      });
+    } catch (err) {
+      console.warn('Failed to stop hardware enrollment mode:', err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -91,18 +160,22 @@ export const CardEnrollmentPage: React.FC = () => {
     }
   };
 
-  const fetchLastScanned = async () => {
-    try {
-      const res = await fetch(`${API_V1_URL}/hardware/last-scanned`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        setLastScanned(json.data);
-        if (!targetUid) {
-          setTargetUid(json.data.rfidUid);
-        }
-      }
-    } catch (err) {
-      // Non-critical ping
+  const handleOpenEdit = (user: UserItem) => {
+    setSelectedUser(user);
+    setTargetUid(user.rfidUid || '');
+    startHardwareEnrollment(user.role, `${user.firstName} ${user.lastName}`);
+  };
+
+  const handleCloseEdit = () => {
+    setSelectedUser(null);
+    stopHardwareEnrollment();
+  };
+
+  const handleToggleTerminalScan = () => {
+    if (isEnrollmentActive) {
+      stopHardwareEnrollment();
+    } else {
+      startHardwareEnrollment('STUDENT', 'General Registration');
     }
   };
 
@@ -122,7 +195,7 @@ export const CardEnrollmentPage: React.FC = () => {
       if (json.success) {
         sounds.playSuccessChime();
         setStatusMessage({ text: json.message, type: 'success' });
-        setSelectedUser(null);
+        handleCloseEdit();
         await fetchUsers();
       } else {
         sounds.playErrorBuzz();
@@ -180,7 +253,9 @@ export const CardEnrollmentPage: React.FC = () => {
             <span className="truncate">RFID Badge Enrollment &amp; Provisioning Matrix</span>
           </h1>
           <p className="text-xs text-slate-400 font-body mt-1">
-            Intercept live physical card taps from terminal <span className="font-mono text-sky-400 font-semibold">{terminalId}</span> and provision credentials directly into PostgreSQL.
+            Capture live physical card taps from terminal{' '}
+            <span className="font-mono text-sky-400 font-semibold">{terminalId}</span> and provision credentials directly into
+            PostgreSQL.
           </p>
         </div>
 
@@ -189,7 +264,6 @@ export const CardEnrollmentPage: React.FC = () => {
           size="sm"
           onClick={() => {
             fetchUsers();
-            fetchLastScanned();
             sounds.playKeyChirp();
           }}
           disabled={isLoading}
@@ -201,33 +275,74 @@ export const CardEnrollmentPage: React.FC = () => {
       </div>
 
       {/* Live Physical Intercept Banner */}
-      <div className="bg-slate-900/60 border border-white/[0.06] rounded-2xl p-4 sm:p-5 backdrop-blur-sm shadow-xs">
+      <div
+        className={`rounded-2xl p-4 sm:p-5 backdrop-blur-sm border transition-all duration-300 ${
+          isEnrollmentActive
+            ? 'bg-amber-950/20 border-amber-500/30 shadow-lg shadow-amber-500/5'
+            : 'bg-slate-900/60 border-white/[0.06] shadow-xs'
+        }`}
+      >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="p-2.5 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-400 shrink-0">
-              <Radio className="w-5 h-5 animate-pulse" />
+            <div
+              className={`p-2.5 rounded-xl border shrink-0 ${
+                isEnrollmentActive
+                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-400 animate-pulse'
+                  : 'bg-sky-500/10 border-sky-500/20 text-sky-400'
+              }`}
+            >
+              <Radio className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-sky-400">
-                  Live Hardware Intercept
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className={`text-xs font-mono font-bold uppercase tracking-wider ${
+                    isEnrollmentActive ? 'text-amber-400' : 'text-sky-400'
+                  }`}
+                >
+                  {isEnrollmentActive ? 'Hardware Enrollment Session Active' : 'Live Hardware Intercept'}
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  {isConnected ? 'LISTENING TO TERMINAL' : 'CONNECTING...'}
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                    isEnrollmentActive
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      : isConnected
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-slate-800 text-slate-400 border-white/[0.06]'
+                  }`}
+                >
+                  {isEnrollmentActive
+                    ? `TARGET: ${enrollmentTarget?.role || 'STUDENT'}`
+                    : isConnected
+                    ? 'LISTENING TO TERMINAL'
+                    : 'CONNECTING...'}
                 </span>
               </div>
 
-              {lastScanned ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-400">Last Scanned Card:</span>
-                  <span className="font-mono text-sm font-extrabold text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-white/[0.08] tracking-widest">
-                    0x{lastScanned.rfidUid}
+              {isEnrollmentActive ? (
+                <div className="mt-1.5 flex items-center gap-2 text-xs text-amber-300/90 font-mono">
+                  <SquareTerminal className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>
+                    Terminal OLED: [ ADMIN ENROLL ] ROLE: NEW {enrollmentTarget?.role || 'STUDENT'} &bull; &gt;&gt; TAP NEW BADGE &lt;&lt;
                   </span>
-                  <CopyButton text={lastScanned.rfidUid} />
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 font-body mt-1">
+                  Tap any physical card or fob on your ESP32 terminal to immediately capture its UID here, or edit any user below.
+                </p>
+              )}
 
-                  {lastScanned.isRegistered && lastScanned.cardHolder ? (
+              {liveCapturedTag && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-slate-400">Captured Card:</span>
+                  <span className="font-mono text-sm font-extrabold text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-white/[0.08] tracking-widest">
+                    0x{liveCapturedTag.uid}
+                  </span>
+                  <CopyButton text={liveCapturedTag.uid} />
+
+                  {liveCapturedTag.isRegistered && liveCapturedTag.holderName ? (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      Mapped to {lastScanned.cardHolder.name} ({lastScanned.cardHolder.role})
+                      Mapped to {liveCapturedTag.holderName}
                     </span>
                   ) : (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
@@ -235,22 +350,37 @@ export const CardEnrollmentPage: React.FC = () => {
                     </span>
                   )}
                 </div>
-              ) : (
-                <p className="text-xs text-slate-400 font-body mt-1">
-                  Tap any physical card or fob on your ESP32 terminal to immediately capture its UID here.
-                </p>
               )}
             </div>
           </div>
 
-          {/* Quick Manual / Scanned UID Input */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Quick Terminal Scan Control & Manual UID Input */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button
+              variant={isEnrollmentActive ? 'danger' : 'outline'}
+              size="sm"
+              onClick={handleToggleTerminalScan}
+              className="text-xs gap-1.5 font-mono"
+            >
+              {isEnrollmentActive ? (
+                <>
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>Stop Hardware Scan</span>
+                </>
+              ) : (
+                <>
+                  <SquareTerminal className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Activate Terminal Scan</span>
+                </>
+              )}
+            </Button>
+
             <input
               type="text"
-              placeholder="Enter or Tap UID (e.g. 892B2E8E)"
+              placeholder="Enter or Tap UID..."
               value={targetUid}
               onChange={(e) => setTargetUid(e.target.value.toUpperCase())}
-              className="w-56 px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-xl border border-white/[0.08] bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+              className="w-48 px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-xl border border-white/[0.08] bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
             />
           </div>
         </div>
@@ -328,8 +458,7 @@ export const CardEnrollmentPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-white/[0.03]">
               {filteredUsers.map((u) => {
-                const isSelected = selectedUser?.id === u.id;
-                const isCurrentTagHolder = lastScanned?.rfidUid && u.rfidUid === lastScanned.rfidUid;
+                const isCurrentTagHolder = liveCapturedTag?.uid && u.rfidUid === liveCapturedTag.uid;
 
                 return (
                   <tr
@@ -380,12 +509,12 @@ export const CardEnrollmentPage: React.FC = () => {
 
                     <td className="py-3 px-4 text-right align-middle">
                       <div className="flex items-center justify-end gap-1.5">
-                        {targetUid && (
+                        {targetUid && targetUid !== u.rfidUid && (
                           <Button
                             variant="primary"
                             size="sm"
                             onClick={() => handleAssignCard(u.id, targetUid)}
-                            disabled={isSubmitting || u.rfidUid === targetUid}
+                            disabled={isSubmitting}
                             className="text-[11px] px-2.5 py-1 flex items-center gap-1"
                             title={`Assign current UID (0x${targetUid}) to this user`}
                           >
@@ -397,10 +526,7 @@ export const CardEnrollmentPage: React.FC = () => {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => {
-                            setSelectedUser(u);
-                            setTargetUid(u.rfidUid || lastScanned?.rfidUid || '');
-                          }}
+                          onClick={() => handleOpenEdit(u)}
                           className="text-[11px] px-2.5 py-1"
                         >
                           <span>Edit</span>
@@ -433,14 +559,36 @@ export const CardEnrollmentPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Manual / Edit Modal */}
+      {/* Manual / Edit Modal with Live Hardware Enrollment Beacon & hideFooter */}
       {selectedUser && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedUser(null)}
-          title={`Edit RFID Assignment: ${selectedUser.firstName} ${selectedUser.lastName}`}
+          onClose={handleCloseEdit}
+          title={`Provision RFID Badge: ${selectedUser.firstName} ${selectedUser.lastName}`}
+          hideFooter
         >
           <div className="space-y-4">
+            {/* Live Hardware Enrollment Indicator */}
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+                <SquareTerminal className="w-4 h-4 animate-pulse" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-amber-300 font-mono">
+                    LIVE HARDWARE ENROLLMENT ACTIVE
+                  </span>
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                </div>
+                <div className="text-[11px] text-amber-200/80 mt-1 leading-relaxed">
+                  Terminal <strong className="font-mono text-white">{terminalId}</strong> is scanning for live physical cards.
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-1 bg-slate-950/60 px-2 py-1 rounded border border-white/[0.05]">
+                  OLED Display: [ ADMIN ENROLL ] ROLE: NEW {selectedUser.role} &bull; &gt;&gt; TAP NEW BADGE &lt;&lt;
+                </div>
+              </div>
+            </div>
+
             <div className="p-3 bg-slate-950 rounded-xl border border-white/[0.06] text-xs space-y-1">
               <div>
                 <span className="text-slate-400 font-mono">Role:</span>{' '}
@@ -452,7 +600,9 @@ export const CardEnrollmentPage: React.FC = () => {
               </div>
               <div>
                 <span className="text-slate-400 font-mono">Current Badge:</span>{' '}
-                <span className="font-mono text-slate-200">{selectedUser.rfidUid ? `0x${selectedUser.rfidUid}` : 'None'}</span>
+                <span className="font-mono text-slate-200">
+                  {selectedUser.rfidUid ? `0x${selectedUser.rfidUid}` : 'None'}
+                </span>
               </div>
             </div>
 
@@ -468,7 +618,7 @@ export const CardEnrollmentPage: React.FC = () => {
                 className="w-full px-3 py-2 text-sm font-mono font-bold uppercase rounded-xl border border-white/[0.08] bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500/40"
               />
               <p className="text-[11px] text-slate-400">
-                Tip: You can also tap the physical card directly on your ESP32 reader to auto-fill this field.
+                Tap card on terminal {terminalId} to auto-fill, or enter manually.
               </p>
             </div>
 
@@ -476,7 +626,7 @@ export const CardEnrollmentPage: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setSelectedUser(null)}
+                onClick={handleCloseEdit}
               >
                 Cancel
               </Button>

@@ -297,7 +297,7 @@ export const AdminSectionsPage: React.FC = () => {
       </div>
 
       {/* Add Section Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Create Course Section">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Create Course Section" hideFooter>
         <form onSubmit={handleCreateSection} className="space-y-4">
           {formError && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
@@ -409,7 +409,7 @@ export const AdminSectionsPage: React.FC = () => {
       </Modal>
 
       {/* Edit Section Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Section Configuration">
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Section Configuration" hideFooter>
         <form onSubmit={handleUpdateSection} className="space-y-4">
           {formError && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
@@ -514,7 +514,7 @@ export const AdminSectionsPage: React.FC = () => {
       </Modal>
 
       {/* Delete Section Modal */}
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Course Section">
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Course Section" hideFooter>
         <div className="space-y-4">
           <p className="text-xs text-slate-300">
             Are you sure you want to delete <strong className="text-white">{selectedSection?.sectionCode}</strong>?

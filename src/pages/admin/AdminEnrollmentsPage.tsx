@@ -342,7 +342,12 @@ export const AdminEnrollmentsPage: React.FC = () => {
       </div>
 
       {/* Enroll Student Modal */}
-      <Modal isOpen={isEnrollModalOpen} onClose={() => setIsEnrollModalOpen(false)} title="Enroll Student into Section">
+      <Modal
+        isOpen={isEnrollModalOpen}
+        onClose={() => setIsEnrollModalOpen(false)}
+        title="Enroll Student into Section"
+        hideFooter
+      >
         <form onSubmit={handleEnrollSubmit} className="space-y-4">
           {modalError && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
