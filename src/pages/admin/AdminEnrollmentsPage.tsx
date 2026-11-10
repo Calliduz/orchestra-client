@@ -14,6 +14,7 @@ import {
   Square,
   UserMinus,
   AlertTriangle,
+  Check,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card.js';
 import { Button } from '../../components/ui/Button.js';
@@ -56,6 +57,35 @@ interface AvailableStudent {
   email: string;
   rfidUid: string | null;
 }
+
+const CustomCheckbox: React.FC<{
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: () => void;
+  title?: string;
+}> = ({ checked, indeterminate, onChange, title }) => (
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      onChange();
+    }}
+    title={title}
+    className={`w-4 h-4 rounded border flex items-center justify-center transition-all duration-150 focus:outline-none shrink-0 ${
+      checked
+        ? 'bg-purple-600 border-purple-500 text-white shadow-xs shadow-purple-600/30'
+        : indeterminate
+        ? 'bg-purple-950/60 border-purple-400 text-purple-300'
+        : 'bg-slate-950/80 border-white/20 hover:border-white/40 text-transparent'
+    }`}
+  >
+    {checked ? (
+      <Check className="w-3 h-3 stroke-[3]" />
+    ) : indeterminate ? (
+      <span className="w-2 h-0.5 bg-purple-300 rounded-full" />
+    ) : null}
+  </button>
+);
 
 export const AdminEnrollmentsPage: React.FC = () => {
   const { token } = useAuth();
@@ -325,26 +355,26 @@ export const AdminEnrollmentsPage: React.FC = () => {
             Manage student rosters per classroom. Only students enrolled here can tap in to check attendance.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => fetchRoster(selectedSectionId)}
             disabled={isLoading}
-            className="gap-2"
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+            className="h-9 px-3.5 border-white/[0.08] hover:border-white/[0.15]"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Refresh Roster</span>
+            Refresh Roster
           </Button>
           <Button
             variant="primary"
             size="sm"
             onClick={openEnrollModal}
             disabled={!selectedSectionId}
-            className="gap-2 bg-purple-600 hover:bg-purple-500"
+            leftIcon={<UserPlus className="w-3.5 h-3.5" />}
+            className="h-9 px-3.5 bg-purple-600 hover:bg-purple-500 border border-purple-400/30 shadow-md shadow-purple-600/20"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Enroll Students</span>
+            Enroll Students
           </Button>
         </div>
       </div>
@@ -388,14 +418,14 @@ export const AdminEnrollmentsPage: React.FC = () => {
       </div>
 
       {/* Roster Search & Mass Action Bar */}
-      <div className="rounded-2xl bg-slate-900/60 border border-white/[0.06] overflow-hidden">
+      <div className="rounded-2xl bg-slate-900/60 border border-white/[0.06] overflow-hidden backdrop-blur-sm">
         {/* Mass Selection Ribbon if 1+ items selected */}
         {selectedRosterIds.size > 0 && (
-          <div className="p-3 bg-purple-950/40 border-b border-purple-500/30 flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
+          <div className="p-3 bg-gradient-to-r from-purple-950/60 via-slate-900/80 to-purple-950/60 border-b border-purple-500/30 flex items-center justify-between gap-3 text-xs animate-in fade-in duration-150">
+            <div className="flex items-center gap-2.5">
               <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
               <span className="font-mono text-purple-300 font-bold">
-                {selectedRosterIds.size} student{selectedRosterIds.size > 1 ? 's' : ''} selected
+                {selectedRosterIds.size} of {roster.length} student{selectedRosterIds.size > 1 ? 's' : ''} selected
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -403,7 +433,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedRosterIds(new Set())}
-                className="text-[11px] py-1 h-7 border-white/[0.08]"
+                className="text-[11px] py-1 h-7 border-white/[0.08] hover:border-white/20"
               >
                 Deselect All
               </Button>
@@ -411,25 +441,43 @@ export const AdminEnrollmentsPage: React.FC = () => {
                 variant="danger"
                 size="sm"
                 onClick={() => setIsMassUnenrollModalOpen(true)}
-                className="text-[11px] py-1 h-7 gap-1.5"
+                leftIcon={<UserMinus className="w-3.5 h-3.5" />}
+                className="text-[11px] py-1 h-7"
               >
-                <UserMinus className="w-3.5 h-3.5" />
-                <span>Mass Unenroll ({selectedRosterIds.size})</span>
+                Mass Unenroll ({selectedRosterIds.size})
               </Button>
             </div>
           </div>
         )}
 
         <div className="p-4 border-b border-white/[0.05] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="relative w-full max-w-sm">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search enrolled students..."
-              className="w-full bg-slate-950 border border-white/[0.08] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500/40"
-            />
+          <div className="flex items-center gap-2.5 w-full sm:max-w-md">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search enrolled students..."
+                className="w-full bg-slate-950 border border-white/[0.08] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500/40"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={toggleSelectAllRoster}
+              className={`text-xs px-2.5 py-1.5 h-8 rounded-xl border flex items-center gap-1.5 transition font-mono text-[11px] shrink-0 ${
+                selectedRosterIds.size === filteredRoster.length && filteredRoster.length > 0
+                  ? 'bg-purple-600/20 text-purple-300 border-purple-500/40'
+                  : 'bg-slate-950 border-white/[0.08] hover:border-white/20 text-slate-300 hover:text-white'
+              }`}
+            >
+              <CheckSquare className="w-3.5 h-3.5 text-purple-400" />
+              <span>
+                {selectedRosterIds.size === filteredRoster.length && filteredRoster.length > 0
+                  ? 'Deselect All'
+                  : `Select All (${filteredRoster.length})`}
+              </span>
+            </button>
           </div>
           <div className="text-xs text-slate-400 font-mono">
             Showing {filteredRoster.length} of {roster.length} students
@@ -441,11 +489,10 @@ export const AdminEnrollmentsPage: React.FC = () => {
             <thead>
               <tr className="border-b border-white/[0.05] bg-white/[0.01] text-slate-400 font-mono text-[11px] uppercase">
                 <th className="py-3 px-3 w-10 text-center">
-                  <input
-                    type="checkbox"
+                  <CustomCheckbox
                     checked={filteredRoster.length > 0 && selectedRosterIds.size === filteredRoster.length}
+                    indeterminate={selectedRosterIds.size > 0 && selectedRosterIds.size < filteredRoster.length}
                     onChange={toggleSelectAllRoster}
-                    className="w-3.5 h-3.5 rounded border-white/[0.2] bg-slate-950 text-purple-600 focus:ring-purple-500/40 cursor-pointer"
                     title="Select / Deselect All"
                   />
                 </th>
@@ -470,16 +517,15 @@ export const AdminEnrollmentsPage: React.FC = () => {
                   return (
                     <tr
                       key={item.id}
-                      className={`hover:bg-white/[0.02] transition ${
-                        isSelected ? 'bg-purple-500/[0.06]' : ''
+                      onClick={() => toggleRosterSelect(item.student.id)}
+                      className={`hover:bg-white/[0.02] cursor-pointer transition select-none ${
+                        isSelected ? 'bg-purple-500/[0.08]' : ''
                       }`}
                     >
-                      <td className="py-3 px-3 text-center align-middle">
-                        <input
-                          type="checkbox"
+                      <td className="py-3 px-3 text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                        <CustomCheckbox
                           checked={isSelected}
                           onChange={() => toggleRosterSelect(item.student.id)}
-                          className="w-3.5 h-3.5 rounded border-white/[0.2] bg-slate-950 text-purple-600 focus:ring-purple-500/40 cursor-pointer"
                         />
                       </td>
                       <td className="py-3 px-4 font-mono text-slate-500 align-middle">{idx + 1}</td>
@@ -504,7 +550,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
                       <td className="py-3 px-4 text-slate-400 font-mono text-[11px] align-middle">
                         {new Date(item.enrolledAt).toLocaleDateString()}
                       </td>
-                      <td className="py-3 px-4 text-right align-middle">
+                      <td className="py-3 px-4 text-right align-middle" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => setUnenrollTarget(item)}
                           className="px-2.5 py-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg border border-rose-500/20 transition text-xs inline-flex items-center gap-1.5"
@@ -523,7 +569,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Mass Enrollment Modal */}
+      {/* Mass Enrollment Modal - Redesigned Cyber-Slate UI */}
       <Modal
         isOpen={isEnrollModalOpen}
         onClose={() => setIsEnrollModalOpen(false)}
@@ -532,38 +578,59 @@ export const AdminEnrollmentsPage: React.FC = () => {
       >
         <form onSubmit={handleBulkEnrollSubmit} className="space-y-4">
           {modalError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
-              {modalError}
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{modalError}</span>
             </div>
           )}
 
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Target Section</label>
-            <div className="p-2.5 rounded-xl bg-slate-950 border border-white/[0.06] text-xs text-purple-300 font-mono">
-              {activeSection?.sectionCode} &bull; {activeSection?.courseName} ({activeSection?.roomNumber})
+          {/* Section Target Header Pill */}
+          <div className="p-3 rounded-xl bg-slate-950 border border-white/[0.06] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-white truncate">
+                  {activeSection?.sectionCode} &bull; {activeSection?.courseName}
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono truncate">
+                  Room {activeSection?.roomNumber} &bull; Prof. {activeSection?.faculty.lastName}
+                </div>
+              </div>
             </div>
+            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 shrink-0">
+              Target
+            </span>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-medium text-slate-300">
-                Select Students to Enroll *
-              </label>
-              {filteredAvailableStudents.length > 0 && (
+            {/* Toolbar: Counter and Quick Select/Deselect Pills */}
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-300">Select Students</span>
+                <span className="text-[11px] font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+                  {selectedEnrollIds.size} / {filteredAvailableStudents.length} selected
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={toggleSelectAllAvailable}
-                  className="text-[11px] text-purple-400 hover:text-purple-300 font-medium font-mono"
+                  className="text-[11px] font-mono px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-purple-600/20 text-slate-300 hover:text-purple-300 border border-white/[0.06] hover:border-purple-500/30 transition flex items-center gap-1"
                 >
-                  {selectedEnrollIds.size === filteredAvailableStudents.length
-                    ? 'Deselect All'
-                    : `Select All Available (${filteredAvailableStudents.length})`}
+                  <CheckSquare className="w-3 h-3 text-purple-400" />
+                  <span>
+                    {selectedEnrollIds.size === filteredAvailableStudents.length && filteredAvailableStudents.length > 0
+                      ? 'Deselect All'
+                      : `Select All (${filteredAvailableStudents.length})`}
+                  </span>
                 </button>
-              )}
+              </div>
             </div>
 
             {/* Filter Search inside Modal */}
-            <div className="relative mb-2">
+            <div className="relative mb-2.5">
               <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -575,51 +642,58 @@ export const AdminEnrollmentsPage: React.FC = () => {
             </div>
 
             {availableStudents.length === 0 ? (
-              <p className="text-xs text-slate-500 italic p-4 bg-slate-950 rounded-xl border border-white/[0.05] text-center">
+              <p className="text-xs text-slate-500 italic p-6 bg-slate-950 rounded-xl border border-white/[0.05] text-center">
                 All registered students in the institution are already enrolled in this section.
               </p>
             ) : filteredAvailableStudents.length === 0 ? (
-              <p className="text-xs text-slate-500 italic p-4 bg-slate-950 rounded-xl border border-white/[0.05] text-center">
+              <p className="text-xs text-slate-500 italic p-6 bg-slate-950 rounded-xl border border-white/[0.05] text-center">
                 No unenrolled students match your search filter.
               </p>
             ) : (
-              <div className="max-h-60 overflow-y-auto space-y-1.5 p-1 bg-slate-950/60 rounded-xl border border-white/[0.06]">
+              <div className="max-h-72 overflow-y-auto divide-y divide-white/[0.04] bg-slate-950/80 rounded-xl border border-white/[0.06]">
                 {filteredAvailableStudents.map((s) => {
                   const isChecked = selectedEnrollIds.has(s.id);
+                  const initials = `${s.firstName.charAt(0)}${s.lastName.charAt(0)}`.toUpperCase();
                   return (
                     <div
                       key={s.id}
                       onClick={() => toggleEnrollSelect(s.id)}
-                      className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition ${
+                      className={`flex items-center justify-between px-3 py-2.5 cursor-pointer transition select-none ${
                         isChecked
-                          ? 'bg-purple-950/40 border-purple-500/40 text-white'
-                          : 'bg-slate-900/60 border-white/[0.04] text-slate-300 hover:bg-white/[0.02]'
+                          ? 'bg-purple-600/10 text-white'
+                          : 'hover:bg-white/[0.03] text-slate-300'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <input
-                          type="checkbox"
+                      <div className="flex items-center gap-3 min-w-0">
+                        <CustomCheckbox
                           checked={isChecked}
-                          onChange={() => {}}
-                          className="w-3.5 h-3.5 rounded border-white/[0.2] bg-slate-950 text-purple-600 focus:ring-purple-500/40 pointer-events-none"
+                          onChange={() => toggleEnrollSelect(s.id)}
                         />
+                        <div className="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] text-slate-300 font-mono text-[10px] flex items-center justify-center font-bold shrink-0">
+                          {initials}
+                        </div>
                         <div className="min-w-0">
-                          <div className="font-medium text-xs truncate">
+                          <div className="text-xs font-semibold text-slate-200 truncate">
                             {s.lastName}, {s.firstName}
                           </div>
-                          <div className="text-[10px] text-slate-400 font-mono truncate">
-                            {s.studentId || 'No ID'} &bull; {s.email}
+                          <div className="text-[11px] text-slate-400 font-mono truncate flex items-center gap-1.5">
+                            <span>{s.studentId || 'No ID'}</span>
+                            <span className="text-slate-600">&bull;</span>
+                            <span className="text-slate-500">{s.email}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="shrink-0 text-[10px] font-mono">
+                      <div className="shrink-0 pl-2">
                         {s.rfidUid ? (
-                          <span className="text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                            Badge
+                          <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            <span>0x{s.rfidUid}</span>
                           </span>
                         ) : (
-                          <span className="text-slate-600">No Badge</span>
+                          <span className="text-[10px] font-mono text-slate-500 bg-white/[0.02] border border-white/[0.05] px-2 py-0.5 rounded-full">
+                            No Tag
+                          </span>
                         )}
                       </div>
                     </div>
@@ -629,12 +703,18 @@ export const AdminEnrollmentsPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-            <span className="text-xs font-mono text-purple-400 font-bold">
+          <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+            <span className="text-xs font-mono text-purple-300 font-medium">
               {selectedEnrollIds.size} student{selectedEnrollIds.size === 1 ? '' : 's'} selected
             </span>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsEnrollModalOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEnrollModalOpen(false)}
+                className="h-9 px-3.5"
+              >
                 Cancel
               </Button>
               <Button
@@ -642,7 +722,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
                 variant="primary"
                 size="sm"
                 disabled={isSubmitting || selectedEnrollIds.size === 0}
-                className="bg-purple-600 hover:bg-purple-500"
+                className="h-9 px-3.5 bg-purple-600 hover:bg-purple-500 border border-purple-400/30 shadow-md shadow-purple-600/20"
               >
                 {isSubmitting
                   ? 'Enrolling...'

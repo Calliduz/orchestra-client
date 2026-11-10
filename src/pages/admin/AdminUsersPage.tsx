@@ -319,14 +319,25 @@ export const AdminUsersPage: React.FC = () => {
             Centrally manage students, faculty instructors, roles, credentials, and RFID cards
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={fetchUsers} disabled={isLoading} className="gap-2">
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchUsers}
+            disabled={isLoading}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+            className="h-9 px-3.5 border-white/[0.08] hover:border-white/[0.15]"
+          >
+            Refresh
           </Button>
-          <Button variant="primary" size="sm" onClick={openAddModal} className="gap-2 bg-purple-600 hover:bg-purple-500">
-            <UserPlus className="w-4 h-4" />
-            <span>Add Student / Faculty</span>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={openAddModal}
+            leftIcon={<UserPlus className="w-3.5 h-3.5" />}
+            className="h-9 px-3.5 bg-purple-600 hover:bg-purple-500 border border-purple-400/30 shadow-md shadow-purple-600/20"
+          >
+            Add Student / Faculty
           </Button>
         </div>
       </div>
