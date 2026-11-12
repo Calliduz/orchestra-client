@@ -68,6 +68,8 @@ export const CardEnrollmentPage: React.FC = () => {
   // Modal binding state
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
   const [targetUid, setTargetUid] = useState<string>('');
+  const [userToRemove, setUserToRemove] = useState<UserItem | null>(null);
+  const [isRevoking, setIsRevoking] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -214,12 +216,15 @@ export const CardEnrollmentPage: React.FC = () => {
     }
   };
 
-  const handleRemoveCard = async (user: UserItem) => {
-    if (!confirm(`Are you sure you want to remove the badge UID from ${user.firstName} ${user.lastName}?`)) {
-      return;
-    }
+  const handleRemoveCard = (user: UserItem) => {
+    setUserToRemove(user);
+  };
+
+  const confirmRemoveCard = async () => {
+    if (!userToRemove) return;
     try {
-      const res = await fetch(`${API_V1_URL}/users/${user.id}/rfid`, {
+      setIsRevoking(true);
+      const res = await fetch(`${API_V1_URL}/users/${userToRemove.id}/rfid`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -229,7 +234,8 @@ export const CardEnrollmentPage: React.FC = () => {
       if (json.success) {
         sounds.playSuccessChime();
         setStatusMessage({ text: json.message, type: 'success' });
-        toast.success('Badge Revoked', `Removed badge from ${user.firstName} ${user.lastName}.`);
+        toast.success('Badge Revoked', `Removed badge from ${userToRemove.firstName} ${userToRemove.lastName}.`);
+        setUserToRemove(null);
         await fetchUsers();
       } else {
         toast.error('Revoke Failed', json.message);
@@ -237,6 +243,8 @@ export const CardEnrollmentPage: React.FC = () => {
     } catch (err: any) {
       console.error('Error removing RFID badge:', err);
       toast.error('Revoke Failed', err.message);
+    } finally {
+      setIsRevoking(false);
     }
   };
 
@@ -651,6 +659,22 @@ export const CardEnrollmentPage: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Confirmation Modal to revoke badge */}
+      <Modal
+        isOpen={Boolean(userToRemove)}
+        onClose={() => setUserToRemove(null)}
+        title="Revoke Badge UID"
+        description={userToRemove ? `Are you sure you want to remove the badge UID from ${userToRemove.firstName} ${userToRemove.lastName}?` : undefined}
+        confirmLabel="REVOKE"
+        confirmVariant="danger"
+        onConfirm={confirmRemoveCard}
+        isLoading={isRevoking}
+      >
+        <p className="text-xs text-slate-300">
+          This will unlink RFID card <span className="font-mono font-bold text-white">{userToRemove?.rfidUid}</span>. The user will be unable to tap into classrooms until a new badge is enrolled.
+        </p>
+      </Modal>
     </div>
   );
 };

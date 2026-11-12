@@ -31,9 +31,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     if (user.role === 'FACULTY') {
       return <Navigate to="/faculty" replace />;
     }
-    // If student, redirect to /otp
+    // If student, redirect to /student/attendance
     if (user.role === 'STUDENT') {
-      return <Navigate to="/otp" replace />;
+      return <Navigate to="/student/attendance" replace />;
     }
     return <Navigate to="/login" replace />;
   }

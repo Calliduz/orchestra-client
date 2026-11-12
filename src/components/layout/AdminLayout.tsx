@@ -4,6 +4,8 @@ import { Users, BookOpen, UserPlus, CreditCard, Terminal, LogOut, Shield, Chevro
 import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { useToast } from '../../context/ToastContext.js';
+import { SkipLink } from './SkipLink.js';
+import { ErrorBoundary } from '../ui/ErrorBoundary.js';
 
 export const AdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -26,7 +28,9 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-950 text-slate-100 flex flex-col md:flex-row">
+    <>
+      <SkipLink />
+      <div className="h-screen overflow-hidden bg-slate-950 text-slate-100 flex flex-col md:flex-row">
       {/* Sidebar - Fixed & Never Scrollable */}
       <aside className="w-full md:w-64 bg-slate-950 border-r border-white/[0.05] flex flex-col shrink-0 md:h-screen md:max-h-screen overflow-hidden justify-between select-none">
         <div className="flex flex-col min-h-0 overflow-hidden">
@@ -127,10 +131,13 @@ export const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content Area - Smooth Independent Scroll */}
-      <main className="flex-1 overflow-y-auto min-w-0 h-screen">
-        <Outlet />
+      <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto min-w-0 h-screen focus:outline-none">
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
+  </>
   );
 };
 

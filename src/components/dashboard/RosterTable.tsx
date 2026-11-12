@@ -240,7 +240,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                         disabled={disabled}
                         onClick={() => onOpenOverride(student)}
                         leftIcon={<Edit3 className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />}
-                        className="py-1 px-3 text-xs bg-hud-surface hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-semibold border-hud-border/80 shadow-xs"
+                        className="min-h-[44px] min-w-[44px] px-3.5 text-xs bg-hud-surface hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-semibold border-hud-border/80 shadow-xs"
                       >
                         Override
                       </Button>

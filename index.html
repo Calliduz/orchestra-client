@@ -1,13 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ORCHESTRA | Academic Signal Attendance Matrix</title>
     <script>
-      // Enforce ORCHESTRA Cyber-Slate Dark Mode
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('orchestra-theme', 'dark');
+      // Respect user-selected ORCHESTRA theme preference
+      (function() {
+        try {
+          var stored = localStorage.getItem('orchestra-theme');
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (stored === 'dark' || (!stored && prefersDark)) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+          }
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
     </script>
     <!-- ORCHESTRA Vector & Multi-Resolution Favicon Suite -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />

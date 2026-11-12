@@ -24,6 +24,7 @@ import { Button } from '../../components/ui/Button.js';
 import { API_V1_URL } from '../../config/api.js';
 import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
+import { useToast } from '../../context/ToastContext.js';
 
 interface SectionTaught {
   id: string;
@@ -47,6 +48,7 @@ interface SectionTaught {
 export const FacultyClassroomsPage: React.FC = () => {
   const { user, token } = useAuth();
   const { isConnected, terminalId, socket } = useSocket();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [sections, setSections] = useState<SectionTaught[]>([]);
@@ -70,7 +72,7 @@ export const FacultyClassroomsPage: React.FC = () => {
       }
       navigate('/faculty/live');
     } catch (err: any) {
-      alert(err.message);
+      toast.error('Session Error', err.message || 'Failed to start session');
     } finally {
       setStartingSectionId(null);
     }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Shield, KeyRound, Mail, ArrowRight, UserCheck, AlertCircle, Sparkles, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
@@ -51,6 +51,10 @@ export const LoginPage: React.FC = () => {
           navigate(from, { replace: true });
           return;
         }
+        if (from.startsWith('/student') && (user.role === 'STUDENT' || user.role === 'ADMIN')) {
+          navigate(from, { replace: true });
+          return;
+        }
       }
 
       if (user.role === 'ADMIN') {
@@ -58,7 +62,7 @@ export const LoginPage: React.FC = () => {
       } else if (user.role === 'FACULTY') {
         navigate('/faculty', { replace: true });
       } else {
-        navigate('/otp', { replace: true });
+        navigate('/student/attendance', { replace: true });
       }
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
@@ -229,12 +233,12 @@ export const LoginPage: React.FC = () => {
 
         {/* Footer info */}
         <div className="text-center mt-6">
-          <a
-            href="/otp"
+          <Link
+            to="/otp"
             className="text-xs text-slate-400 hover:text-white transition underline underline-offset-4"
           >
             Forgot badge? Go to Student Keypad OTP Ingress &rarr;
-          </a>
+          </Link>
         </div>
       </div>
     </div>

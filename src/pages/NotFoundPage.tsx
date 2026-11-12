@@ -1,16 +1,33 @@
 import React, { useEffect } from 'react';
-import { AlertCircle, Home, KeyRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Home, KeyRound } from 'lucide-react';
 import { Button } from '../components/ui/Button.js';
 import { Card } from '../components/ui/Card.js';
 
 interface NotFoundPageProps {
-  onNavigate: (tab: string) => void;
+  onNavigate?: (tab: string) => void;
 }
 
 export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.title = 'ORCHESTRA | 404 Route Unresolved';
   }, []);
+
+  const handleGoHome = () => {
+    if (onNavigate) {
+      onNavigate('dashboard');
+    }
+    navigate('/');
+  };
+
+  const handleGoOtp = () => {
+    if (onNavigate) {
+      onNavigate('otp');
+    }
+    navigate('/otp');
+  };
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 font-mono">
@@ -33,17 +50,17 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
             variant="primary"
             size="sm"
             className="w-full"
-            onClick={() => onNavigate('dashboard')}
+            onClick={handleGoHome}
             leftIcon={<Home className="w-3.5 h-3.5" />}
           >
-            FACULTY_CONSOLE
+            HOME_CONSOLE
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             className="w-full"
-            onClick={() => onNavigate('otp')}
+            onClick={handleGoOtp}
             leftIcon={<KeyRound className="w-3.5 h-3.5" />}
           >
             OTP_PORTAL
@@ -53,4 +70,5 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
     </div>
   );
 };
+
 export default NotFoundPage;

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { KeyRound, Clock, Key, AlertCircle, Shield, Terminal, Zap, ArrowLeft } from 'lucide-react';
+import { KeyRound, Clock, Key, AlertCircle, Eye, EyeOff, ArrowLeft, Terminal } from 'lucide-react';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { CopyButton } from '../components/ui/CopyButton.js';
+import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
 import { API_V1_URL } from '../config/api.js';
 import { sounds } from '../utils/audio.js';
@@ -20,26 +21,24 @@ interface OtpData {
   terminalId: string;
 }
 
-const STUDENT_PRESETS = [
-  { id: '2023-0001-CCS', name: 'Agbada, Justine Jay', initials: 'JA' },
-  { id: '2023-0002-CCS', name: 'Altichie, Rjhay', initials: 'RA' },
-  { id: '2023-0003-CCS', name: 'Cabunoc, Josh Lister', initials: 'JC' },
-  { id: '2023-0004-CCS', name: 'Dalupang, Juztyne Clever', initials: 'JD' },
-  { id: '2023-0005-CCS', name: 'Macadat, Karlito Jr.', initials: 'KM' },
-];
-
 export const StudentOtpPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, token } = useAuth();
   const { toast } = useToast();
+
   const [identifier, setIdentifier] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [otpData, setOtpData] = useState<OtpData | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [isMasked, setIsMasked] = useState<boolean>(false);
 
   useEffect(() => {
     document.title = 'ORCHESTRA | 60-Second Keypad PIN Fallback';
-  }, []);
+    if (user?.studentId) {
+      setIdentifier(user.studentId);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!otpData?.expiresAt) return;
@@ -72,7 +71,10 @@ export const StudentOtpPage: React.FC = () => {
 
       const response = await fetch(`${API_V1_URL}/otp/request`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ identifier: targetId.trim() }),
       });
 
@@ -100,6 +102,18 @@ export const StudentOtpPage: React.FC = () => {
     await requestOtpForId(identifier);
   };
 
+  const handleBackNavigation = () => {
+    if (user?.role === 'STUDENT') {
+      navigate('/student/attendance');
+    } else if (user?.role === 'ADMIN') {
+      navigate('/admin/users');
+    } else if (user?.role === 'FACULTY') {
+      navigate('/faculty');
+    } else {
+      navigate('/login');
+    }
+  };
+
   const isExpired = otpData && secondsRemaining <= 0;
 
   return (
@@ -107,11 +121,18 @@ export const StudentOtpPage: React.FC = () => {
       {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <button
-          onClick={() => navigate('/login')}
-          className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white transition"
+          type="button"
+          onClick={handleBackNavigation}
+          className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white transition p-2 rounded-lg hover:bg-slate-800"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Console Login</span>
+          <span>
+            {user?.role === 'STUDENT'
+              ? 'Back to Student Attendance'
+              : user
+              ? 'Back to Console'
+              : 'Back to Login'}
+          </span>
         </button>
       </div>
 
@@ -158,58 +179,9 @@ export const StudentOtpPage: React.FC = () => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. 2023-0001-CCS or altichie.rjhay@student.orchestra.edu"
+                  placeholder="e.g. 2023-0001-CCS or student@orchestra.edu"
                   className="w-full px-4 py-2.5 border border-slate-700 bg-slate-900/90 text-white focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-xl placeholder:text-slate-500 transition-colors shadow-tactile font-mono text-xs"
                 />
-                <div className="space-y-2 mt-3">
-                  <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-hud-secondary">
-                    Enrolled Student Presets:
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-body">
-                    {STUDENT_PRESETS.map((p) => {
-                      const isSelected = identifier === p.id;
-                      return (
-                        <div
-                          key={p.id}
-                          className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
-                            isSelected
-                              ? 'border-sky-500 bg-sky-500/15 text-sky-400 shadow-sm'
-                              : 'border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-hud-secondary hover:text-hud-text'
-                          }`}
-                        >
-                          <div
-                            onClick={() => {
-                              setIdentifier(p.id);
-                              sounds.playKeyChirp();
-                            }}
-                            className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
-                          >
-                            <span className="w-7 h-7 rounded-full bg-sky-500/20 text-sky-400 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
-                              {p.initials}
-                            </span>
-                            <div className="truncate">
-                              <div className="font-semibold text-xs leading-none text-slate-900 dark:text-white truncate">
-                                {p.name}
-                              </div>
-                              <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                                {p.id}
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => requestOtpForId(p.id)}
-                            title="1-Click Mint OTP PIN"
-                            className="p-1.5 ml-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-600 text-sky-500 dark:text-sky-400 hover:text-white transition-all shrink-0 text-[10px] font-bold flex items-center gap-1 border border-sky-500/25 active:scale-95"
-                          >
-                            <Zap className="w-3 h-3 text-amber-400" />
-                            <span>Mint</span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
 
               {error && (
@@ -284,8 +256,12 @@ export const StudentOtpPage: React.FC = () => {
             subtitle="Single-use ephemeral token for terminal ingress"
           >
             {otpData ? (
-              <div className="space-y-4 font-mono text-center">
-                {/* 6-Digit PIN Vault Box with High Contrast and Radiant Luminous Halo */}
+              <div
+                role="status"
+                aria-live="polite"
+                className="space-y-4 font-mono text-center"
+              >
+                {/* 6-Digit PIN Vault Box */}
                 <div
                   className={`p-6 border rounded-2xl transition-all shadow-sm ${
                     isExpired
@@ -293,12 +269,23 @@ export const StudentOtpPage: React.FC = () => {
                       : 'bg-sky-50 border-sky-300 text-sky-900 dark:bg-sky-500/15 dark:border-sky-400/40 dark:text-sky-300 dark:shadow-glow-cyan/25'
                   }`}
                 >
-                  <div className="text-[11px] font-sans font-bold uppercase tracking-wider mb-2 text-slate-500 dark:text-hud-secondary">
-                    {isExpired ? 'EXPIRED OTP TOKEN' : 'ACTIVE INGRESS PIN'}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-500 dark:text-hud-secondary">
+                      {isExpired ? 'EXPIRED OTP TOKEN' : 'ACTIVE INGRESS PIN'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsMasked((prev) => !prev)}
+                      className="inline-flex items-center gap-1 text-[11px] font-sans text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800/80"
+                      aria-label={isMasked ? 'Show PIN digits' : 'Mask PIN digits'}
+                    >
+                      {isMasked ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-amber-400" />}
+                      <span>{isMasked ? 'Reveal' : 'Mask'}</span>
+                    </button>
                   </div>
 
                   <div className="text-4xl sm:text-5xl font-mono font-extrabold tracking-widest my-2 num-tabular select-all text-slate-900 dark:text-white">
-                    {otpData.otp}
+                    {isMasked ? '••••••' : otpData.otp}
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
@@ -306,6 +293,7 @@ export const StudentOtpPage: React.FC = () => {
                     <Button
                       size="sm"
                       variant="primary"
+                      type="button"
                       onClick={() => {
                         localStorage.setItem('orchestra_ingress_otp', otpData.otp);
                         window.dispatchEvent(
@@ -368,41 +356,11 @@ export const StudentOtpPage: React.FC = () => {
               </div>
             ) : (
               <div className="py-6 px-4 space-y-5">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center p-1.5 shadow-xs transition-transform hover:scale-105">
-                  <img
-                    src="/orchestra-plain-bgrmvd-vectorized.svg"
-                    alt="ORCHESTRA Official Logo"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="text-center space-y-1">
-                  <h4 className="font-sans font-bold text-sm text-hud-text">
-                    Hardware Ingress Guard Active
-                  </h4>
-                  <p className="text-xs text-hud-secondary font-body">
-                    Select an enrolled student preset on the left or enter a Student ID to mint a single-use 60-second induction token.
+                <div className="p-4 bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs rounded-xl space-y-2 font-body">
+                  <div className="font-semibold text-white">How Emergency OTP Works:</div>
+                  <p className="leading-relaxed">
+                    If you misplace your RFID badge, generate a time-limited 6-digit PIN linked directly to your student record. Present this at the room's terminal keypad to register on-time attendance.
                   </p>
-                </div>
-
-                <div className="space-y-2.5 pt-3 border-t border-hud-border/60 text-xs font-body text-hud-secondary">
-                  <div className="flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 shrink-0" />
-                    <span>
-                      <strong className="text-hud-text">60-Second TTL Nonce:</strong> Automatically decays and expires after 60 seconds to defeat token reuse.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
-                    <span>
-                      <strong className="text-hud-text">Single-Use Consumption:</strong> The token is burned immediately upon successful terminal ingress.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                    <span>
-                      <strong className="text-hud-text">3-Strike Lockout:</strong> Keypad locks for 180s on 3 consecutive invalid PIN entries.
-                    </span>
-                  </div>
                 </div>
               </div>
             )}
