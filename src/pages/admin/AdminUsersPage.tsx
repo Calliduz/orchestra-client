@@ -839,19 +839,72 @@ export const AdminUsersPage: React.FC = () => {
       {/* Delete User Confirmation */}
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Deletion" hideFooter>
         <div className="space-y-4">
-          <p className="text-xs text-slate-300">
-            Are you sure you want to permanently delete{' '}
-            <strong className="text-white">
-              {selectedUser?.firstName} {selectedUser?.lastName}
-            </strong>{' '}
-            ({selectedUser?.email})? All associated enrollment records will be removed.
-          </p>
+          {/* User identity card */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-white/[0.06] flex items-center gap-3">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border ${
+                selectedUser?.role === 'ADMIN'
+                  ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                  : selectedUser?.role === 'FACULTY'
+                  ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+              }`}
+            >
+              {selectedUser?.firstName?.[0]}{selectedUser?.lastName?.[0]}
+            </div>
+            <div>
+              <div className="font-medium text-white text-sm">
+                {selectedUser?.firstName} {selectedUser?.lastName}
+              </div>
+              <div className="text-[11px] text-slate-400">{selectedUser?.email}</div>
+              {selectedUser?.studentId && (
+                <div className="text-[11px] text-slate-500 font-mono mt-0.5">{selectedUser.studentId}</div>
+              )}
+            </div>
+            <span
+              className={`ml-auto inline-block font-mono text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                selectedUser?.role === 'ADMIN'
+                  ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                  : selectedUser?.role === 'FACULTY'
+                  ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                  : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+              }`}
+            >
+              {selectedUser?.role}
+            </span>
+          </div>
+
+          {/* Impact warning */}
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-1.5">
+            <div className="flex items-center gap-2 text-rose-400 text-xs font-semibold">
+              <AlertCircle className="w-4 h-4" />
+              <span>Permanent Action</span>
+            </div>
+            <p className="text-[11px] text-rose-300/80 leading-relaxed">
+              This will permanently remove the user and all associated data including enrollment records, attendance logs, and OTP codes. This action cannot be undone.
+            </p>
+            {selectedUser?._count && (selectedUser._count.enrollments > 0 || selectedUser._count.sectionsTaught > 0) && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedUser._count.enrollments > 0 && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/25 text-rose-300">
+                    {selectedUser._count.enrollments} enrollment{selectedUser._count.enrollments > 1 ? 's' : ''}
+                  </span>
+                )}
+                {selectedUser._count.sectionsTaught > 0 && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-300">
+                    {selectedUser._count.sectionsTaught} section{selectedUser._count.sectionsTaught > 1 ? 's' : ''} taught
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/[0.06]">
             <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button variant="danger" size="sm" onClick={handleDeleteUser} disabled={isSubmitting}>
-              {isSubmitting ? 'Deleting...' : 'Delete User'}
+              {isSubmitting ? 'Deleting...' : 'Delete User Permanently'}
             </Button>
           </div>
         </div>
