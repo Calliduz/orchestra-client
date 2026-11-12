@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Search, Edit2, Trash2, Shield, CreditCard, CheckCircle2, AlertCircle, RefreshCw, X, Radio, Sparkles } from 'lucide-react';
-import { Card } from '../../components/ui/Card.js';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Users, UserPlus, Search, Edit2, Trash2, CheckCircle2, AlertCircle,
+  RefreshCw, Upload, Download, CheckSquare, Square, Minus, FileText,
+  ChevronDown, AlertTriangle,
+} from 'lucide-react';
 import { Button } from '../../components/ui/Button.js';
-import { Badge } from '../../components/ui/Badge.js';
 import { Modal } from '../../components/ui/Modal.js';
 import { API_V1_URL } from '../../config/api.js';
 import { useAuth } from '../../context/AuthContext.js';
@@ -24,6 +26,77 @@ interface UserItem {
     enrollments: number;
     sectionsTaught: number;
   };
+}
+
+interface ParsedRow {
+  firstName: string;
+  lastName: string;
+  email: string;
+  studentId: string;
+  rfidUid: string;
+  department: string;
+  role: 'STUDENT' | 'FACULTY' | 'ADMIN';
+  password: string;
+  _error?: string;
+}
+
+interface MassAddResult {
+  created: number;
+  failed: number;
+  results: { row: number; success: boolean; email: string; message?: string }[];
+}
+
+const CSV_TEMPLATE = `firstName,lastName,email,studentId,rfidUid,department,role,password
+Juan,dela Cruz,juan@school.edu,2024-0001-CCS,,College of Computer Studies,STUDENT,
+Maria,Santos,maria@school.edu,2024-0002-CCS,A1B2C3D4,College of Computer Studies,STUDENT,
+`;
+
+function parseCSV(raw: string): { rows: ParsedRow[]; errors: string[] } {
+  const lines = raw.trim().split('\n').map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) return { rows: [], errors: ['CSV must have a header row and at least one data row.'] };
+
+  const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+  const required = ['firstname', 'lastname', 'email'];
+  const missing = required.filter((r) => !header.includes(r));
+  if (missing.length > 0) return { rows: [], errors: [`Missing required columns: ${missing.join(', ')}`] };
+
+  const col = (row: string[], name: string) => {
+    const idx = header.indexOf(name);
+    return idx >= 0 ? (row[idx] ?? '').trim() : '';
+  };
+
+  const rows: ParsedRow[] = [];
+  const errors: string[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(',');
+    const rawRole = col(cells, 'role').toUpperCase();
+    const role = (['STUDENT', 'FACULTY', 'ADMIN'].includes(rawRole) ? rawRole : 'STUDENT') as ParsedRow['role'];
+    const email = col(cells, 'email');
+
+    if (!col(cells, 'firstname') || !col(cells, 'lastname') || !email) {
+      errors.push(`Row ${i + 1}: firstName, lastName, and email are required.`);
+      continue;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push(`Row ${i + 1}: Invalid email "${email}".`);
+      continue;
+    }
+
+    rows.push({
+      firstName: col(cells, 'firstname'),
+      lastName: col(cells, 'lastname'),
+      email,
+      studentId: col(cells, 'studentid'),
+      rfidUid: col(cells, 'rfiduid'),
+      department: col(cells, 'department') || 'College of Computer Studies',
+      role,
+      password: col(cells, 'password'),
+      _error: undefined,
+    });
+  }
+
+  return { rows, errors };
 }
 
 export const AdminUsersPage: React.FC = () => {
@@ -61,6 +134,19 @@ export const AdminUsersPage: React.FC = () => {
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── Mass-select state ───────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isMassDeleteModalOpen, setIsMassDeleteModalOpen] = useState(false);
+  const [massDeleteResult, setMassDeleteResult] = useState<{ deleted: number; skipped: { name: string; reason: string }[] } | null>(null);
+
+  // ── Mass Add (CSV Import) state ─────────────────────────────────────
+  const [isMassAddModalOpen, setIsMassAddModalOpen] = useState(false);
+  const [csvText, setCsvText] = useState('');
+  const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([]);
+  const [csvErrors, setCsvErrors] = useState<string[]>([]);
+  const [massAddResult, setMassAddResult] = useState<MassAddResult | null>(null);
+  const csvFileRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -314,6 +400,92 @@ export const AdminUsersPage: React.FC = () => {
     }
   };
 
+  // ── Mass-select helpers ─────────────────────────────────────────────
+  const toggleSelectAll = () => {
+    if (selectedIds.size === users.length && users.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(users.map((u) => u.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleMassDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${API_V1_URL}/users/bulk`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Mass delete failed');
+      setMassDeleteResult(json.data);
+      setSelectedIds(new Set());
+      fetchUsers();
+      toast.success('Mass Delete Complete', json.message);
+    } catch (err: any) {
+      toast.error('Mass Delete Failed', err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ── CSV / Mass Add helpers ──────────────────────────────────────────
+  const handleCsvTextChange = (text: string) => {
+    setCsvText(text);
+    setMassAddResult(null);
+    if (!text.trim()) { setCsvPreview([]); setCsvErrors([]); return; }
+    const { rows, errors } = parseCSV(text);
+    setCsvPreview(rows);
+    setCsvErrors(errors);
+  };
+
+  const handleCsvFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => handleCsvTextChange(ev.target?.result as string ?? '');
+    reader.readAsText(file);
+  };
+
+  const handleMassAdd = async () => {
+    if (csvPreview.length === 0) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${API_V1_URL}/users/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ users: csvPreview }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Mass add failed');
+      setMassAddResult(json.data);
+      fetchUsers();
+      toast.success('Import Complete', json.message);
+    } catch (err: any) {
+      toast.error('Import Failed', err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const downloadTemplate = () => {
+    const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'orchestra_users_template.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
@@ -340,6 +512,15 @@ export const AdminUsersPage: React.FC = () => {
             className="h-9 px-3.5 border-white/[0.08] hover:border-white/[0.15]"
           >
             Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setIsMassAddModalOpen(true); setCsvText(''); setCsvPreview([]); setCsvErrors([]); setMassAddResult(null); }}
+            leftIcon={<Upload className="w-3.5 h-3.5" />}
+            className="h-9 px-3.5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+          >
+            Import CSV
           </Button>
           <Button
             variant="primary"
@@ -403,12 +584,55 @@ export const AdminUsersPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Mass-select Action Ribbon */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-rose-950/40 border border-rose-500/30 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-sm text-rose-300">
+            <CheckSquare className="w-4 h-4" />
+            <span className="font-semibold">{selectedIds.size}</span>
+            <span className="text-rose-400">user{selectedIds.size > 1 ? 's' : ''} selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-white/[0.05] transition"
+            >
+              Clear
+            </button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => { setMassDeleteResult(null); setIsMassDeleteModalOpen(true); }}
+              leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+              className="h-8 px-3"
+            >
+              Delete Selected ({selectedIds.size})
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Users Table */}
       <div className="rounded-2xl bg-slate-900/60 border border-white/[0.06] overflow-hidden backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-white/[0.05] bg-white/[0.01] text-slate-400 font-mono text-[11px] uppercase">
+                <th className="py-3 px-4 w-10">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="text-slate-400 hover:text-white transition"
+                    title={selectedIds.size === users.length && users.length > 0 ? 'Deselect all' : 'Select all'}
+                  >
+                    {selectedIds.size === users.length && users.length > 0 ? (
+                      <CheckSquare className="w-4 h-4 text-purple-400" />
+                    ) : selectedIds.size > 0 ? (
+                      <Minus className="w-4 h-4 text-purple-400" />
+                    ) : (
+                      <Square className="w-4 h-4" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-3 px-4 font-medium">User & Name</th>
                 <th className="py-3 px-4 font-medium">Role</th>
                 <th className="py-3 px-4 font-medium">Institutional / Student ID</th>
@@ -420,13 +644,28 @@ export const AdminUsersPage: React.FC = () => {
             <tbody className="divide-y divide-white/[0.03]">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
                     No users matching criteria
                   </td>
                 </tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.id} className="hover:bg-white/[0.02] transition">
+                  <tr
+                    key={u.id}
+                    className={`hover:bg-white/[0.02] transition ${selectedIds.has(u.id) ? 'bg-purple-500/5' : ''}`}
+                  >
+                    <td className="py-3 px-4 align-middle w-10">
+                      <button
+                        onClick={() => toggleSelectOne(u.id)}
+                        className="text-slate-500 hover:text-purple-400 transition"
+                      >
+                        {selectedIds.has(u.id) ? (
+                          <CheckSquare className="w-4 h-4 text-purple-400" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                      </button>
+                    </td>
                     <td className="py-3 px-4 align-middle">
                       <div className="flex items-center gap-3">
                         <div
@@ -907,6 +1146,232 @@ export const AdminUsersPage: React.FC = () => {
               {isSubmitting ? 'Deleting...' : 'Delete User Permanently'}
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* ── Mass Delete Confirmation Modal ─────────────────────────── */}
+      <Modal isOpen={isMassDeleteModalOpen} onClose={() => setIsMassDeleteModalOpen(false)} title={`Delete ${selectedIds.size} User${selectedIds.size > 1 ? 's' : ''}`} hideFooter>
+        <div className="space-y-4">
+          {!massDeleteResult ? (
+            <>
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-1.5">
+                <div className="flex items-center gap-2 text-rose-400 text-xs font-semibold">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Mass Delete — {selectedIds.size} user{selectedIds.size > 1 ? 's' : ''} selected</span>
+                </div>
+                <p className="text-[11px] text-rose-300/80 leading-relaxed">
+                  All selected <strong>student</strong> accounts will be permanently deleted along with their enrollment records, attendance logs, and OTP codes.
+                  Faculty/Admin accounts that own sections or sessions will be <strong>skipped</strong> automatically.
+                </p>
+              </div>
+              {/* Preview list */}
+              <div className="max-h-48 overflow-y-auto rounded-xl border border-white/[0.06] divide-y divide-white/[0.04]">
+                {users.filter((u) => selectedIds.has(u.id)).map((u) => (
+                  <div key={u.id} className="flex items-center gap-3 px-3 py-2 text-xs">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                      u.role === 'ADMIN' ? 'bg-purple-500/15 text-purple-300' :
+                      u.role === 'FACULTY' ? 'bg-blue-500/15 text-blue-300' :
+                      'bg-emerald-500/15 text-emerald-300'}`}
+                    >
+                      {u.firstName[0]}{u.lastName[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-slate-200 truncate">{u.firstName} {u.lastName}</div>
+                      <div className="text-[10px] text-slate-500 truncate">{u.email}</div>
+                    </div>
+                    <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
+                      u.role === 'FACULTY' || u.role === 'ADMIN'
+                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    }`}>
+                      {u.role}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06]">
+                <Button variant="outline" size="sm" onClick={() => setIsMassDeleteModalOpen(false)}>Cancel</Button>
+                <Button variant="danger" size="sm" onClick={handleMassDelete} disabled={isSubmitting}>
+                  {isSubmitting ? 'Deleting...' : `Delete ${selectedIds.size} User${selectedIds.size > 1 ? 's' : ''}`}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Result view */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">{massDeleteResult.deleted} deleted</div>
+                    {massDeleteResult.skipped.length > 0 && (
+                      <div className="text-xs text-amber-400">{massDeleteResult.skipped.length} skipped</div>
+                    )}
+                  </div>
+                </div>
+                {massDeleteResult.skipped.length > 0 && (
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-1">
+                    <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Skipped (have active sections/sessions)
+                    </div>
+                    {massDeleteResult.skipped.map((s, i) => (
+                      <div key={i} className="text-[11px] text-amber-300/80">• {s.name} — {s.reason}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end pt-2 border-t border-white/[0.06]">
+                <Button variant="outline" size="sm" onClick={() => { setIsMassDeleteModalOpen(false); setMassDeleteResult(null); }}>Close</Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* ── Mass Add (CSV Import) Modal ─────────────────────────────── */}
+      <Modal isOpen={isMassAddModalOpen} onClose={() => setIsMassAddModalOpen(false)} title="Import Users from CSV" hideFooter>
+        <div className="space-y-4">
+          {!massAddResult ? (
+            <>
+              {/* Template download + file upload */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={downloadTemplate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sky-500/30 text-sky-400 hover:bg-sky-500/10 text-xs transition"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download Template CSV
+                </button>
+                <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.1] text-slate-300 hover:bg-white/[0.05] text-xs transition cursor-pointer">
+                  <Upload className="w-3.5 h-3.5" /> Upload CSV File
+                  <input ref={csvFileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleCsvFile} />
+                </label>
+              </div>
+
+              {/* Column reference */}
+              <div className="p-2.5 rounded-xl bg-slate-950/80 border border-white/[0.05]">
+                <div className="text-[10px] font-mono text-slate-500 mb-1.5 font-semibold uppercase tracking-wider">Required columns</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['firstName*', 'lastName*', 'email*', 'studentId', 'rfidUid', 'department', 'role', 'password'].map((c) => (
+                    <span key={c} className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${c.endsWith('*') ? 'bg-purple-500/15 text-purple-300 border border-purple-500/20' : 'bg-white/[0.04] text-slate-400 border border-white/[0.06]'}`}>
+                      {c}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1.5">role defaults to <span className="font-mono">STUDENT</span>; password defaults to <span className="font-mono">StudentPass123!</span></p>
+              </div>
+
+              {/* Paste area */}
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Paste CSV contents</label>
+                <textarea
+                  rows={6}
+                  value={csvText}
+                  onChange={(e) => handleCsvTextChange(e.target.value)}
+                  placeholder={'firstName,lastName,email,studentId,...\nJuan,dela Cruz,juan@school.edu,2024-0001,...'}
+                  className="w-full bg-slate-950 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-purple-500/40 resize-none"
+                />
+              </div>
+
+              {/* Parse errors */}
+              {csvErrors.length > 0 && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-1">
+                  <div className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5" /> Parse Errors
+                  </div>
+                  {csvErrors.map((e, i) => <div key={i} className="text-[11px] text-rose-300/80">• {e}</div>)}
+                </div>
+              )}
+
+              {/* Preview table */}
+              {csvPreview.length > 0 && (
+                <div>
+                  <div className="text-xs text-slate-400 mb-1.5 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{csvPreview.length} valid row{csvPreview.length > 1 ? 's' : ''} ready to import</span>
+                  </div>
+                  <div className="max-h-44 overflow-y-auto rounded-xl border border-white/[0.06]">
+                    <table className="w-full text-[11px] text-left">
+                      <thead className="sticky top-0 bg-slate-900 border-b border-white/[0.05]">
+                        <tr className="text-slate-500 font-mono text-[10px]">
+                          <th className="px-3 py-1.5">#</th>
+                          <th className="px-3 py-1.5">Name</th>
+                          <th className="px-3 py-1.5">Email</th>
+                          <th className="px-3 py-1.5">Student ID</th>
+                          <th className="px-3 py-1.5">Role</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.03]">
+                        {csvPreview.map((row, i) => (
+                          <tr key={i} className="hover:bg-white/[0.02]">
+                            <td className="px-3 py-1.5 text-slate-600 font-mono">{i + 1}</td>
+                            <td className="px-3 py-1.5 text-slate-200">{row.firstName} {row.lastName}</td>
+                            <td className="px-3 py-1.5 text-slate-400 truncate max-w-[140px]">{row.email}</td>
+                            <td className="px-3 py-1.5 font-mono text-slate-500">{row.studentId || '—'}</td>
+                            <td className="px-3 py-1.5">
+                              <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
+                                row.role === 'FACULTY' ? 'bg-blue-500/10 text-blue-300' :
+                                row.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-300' :
+                                'bg-emerald-500/10 text-emerald-300'}`}>
+                                {row.role}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06]">
+                <Button variant="outline" size="sm" onClick={() => setIsMassAddModalOpen(false)}>Cancel</Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleMassAdd}
+                  disabled={isSubmitting || csvPreview.length === 0}
+                  leftIcon={<Upload className="w-3.5 h-3.5" />}
+                  className="bg-emerald-600 hover:bg-emerald-500 border-emerald-400/30"
+                >
+                  {isSubmitting ? 'Importing...' : `Import ${csvPreview.length} User${csvPreview.length !== 1 ? 's' : ''}`}
+                </Button>
+              </div>
+            </>
+          ) : (
+            /* Results view after import */
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-950/80 border border-white/[0.06]">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-emerald-400">{massAddResult.created}</div>
+                  <div className="text-[10px] text-slate-500">Created</div>
+                </div>
+                <div className="w-px h-10 bg-white/[0.06]" />
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-rose-400">{massAddResult.failed}</div>
+                  <div className="text-[10px] text-slate-500">Failed</div>
+                </div>
+              </div>
+              {massAddResult.failed > 0 && (
+                <div className="max-h-44 overflow-y-auto rounded-xl border border-white/[0.06] divide-y divide-white/[0.04]">
+                  {massAddResult.results.filter((r) => !r.success).map((r) => (
+                    <div key={r.row} className="flex items-start gap-2 px-3 py-2 text-[11px]">
+                      <span className="font-mono text-slate-600 shrink-0">Row {r.row}</span>
+                      <span className="text-slate-400 truncate">{r.email}</span>
+                      <span className="ml-auto text-rose-400 shrink-0">{r.message}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06]">
+                <Button variant="outline" size="sm" onClick={() => { setMassAddResult(null); setCsvText(''); setCsvPreview([]); }}>
+                  Import More
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => setIsMassAddModalOpen(false)}>Done</Button>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>
