@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   CalendarCheck,
   CheckCircle2,
@@ -15,6 +15,16 @@ import {
   Hash,
   ShieldCheck,
   Award,
+  Flame,
+  Download,
+  Copy,
+  Check,
+  Sparkles,
+  Wifi,
+  Shield,
+  TrendingUp,
+  ArrowUpRight,
+  Info,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card.js';
 import { Button } from '../../components/ui/Button.js';
@@ -50,7 +60,7 @@ interface KpiData {
 
 export const StudentPortalPage: React.FC = () => {
   const { user, token } = useAuth();
-  const { socket, isConnected } = useSocket();
+  const { socket } = useSocket();
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +68,10 @@ export const StudentPortalPage: React.FC = () => {
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [hasCopiedRfid, setHasCopiedRfid] = useState(false);
+
+  // Holographic card interactive tilt coordinates
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
 
   const [kpi, setKpi] = useState<KpiData>({
     total: 0,
@@ -111,11 +125,33 @@ export const StudentPortalPage: React.FC = () => {
               room: 'Lab 304',
             },
           },
+          {
+            id: 'mock-log-2',
+            timestamp: new Date(Date.now() - 86400000).toISOString(),
+            status: 'PRESENT',
+            authMethod: 'RFID_TAP',
+            session: {
+              courseCode: 'ENG204',
+              courseName: 'Technical Communications',
+              room: 'Hall B',
+            },
+          },
+          {
+            id: 'mock-log-3',
+            timestamp: new Date(Date.now() - 172800000).toISOString(),
+            status: 'PRESENT',
+            authMethod: 'KEYPAD_OTP',
+            session: {
+              courseCode: 'MATH210',
+              courseName: 'Discrete Mathematics',
+              room: 'Room 102',
+            },
+          },
         ];
       });
       setKpi((prev) => (prev.total > 0 ? prev : {
-        total: 1,
-        present: 1,
+        total: 3,
+        present: 3,
         late: 0,
         excused: 0,
         absent: 0,
@@ -157,6 +193,153 @@ export const StudentPortalPage: React.FC = () => {
       socket.off('attendance:updated', handleAttendanceUpdated);
     };
   }, [socket, user, fetchAttendance, toast]);
+
+  // Calculate consecutive on-time attendance streak
+  const streak = useMemo(() => {
+    if (!logs || logs.length === 0) return 0;
+    const sorted = [...logs].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    let count = 0;
+    for (const log of sorted) {
+      if (log.status === 'PRESENT') {
+        count++;
+      } else if (log.status === 'EXCUSED') {
+        // Excused sessions do not break the continuous streak
+        continue;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [logs]);
+
+  // Semester Clearance threshold calculation (80% institutional threshold)
+  const institutionalThreshold = 80;
+  const attendanceRate = kpi.rate;
+  const isCleared = attendanceRate >= institutionalThreshold;
+  const isWarning = attendanceRate >= 70 && attendanceRate < institutionalThreshold;
+  const isAtRisk = attendanceRate < 70;
+
+  const clearanceDelta = (attendanceRate - institutionalThreshold).toFixed(1);
+
+  // Clearance color themes
+  const clearanceColor = isCleared
+    ? {
+        badgeBg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        progressBar: 'bg-gradient-to-r from-emerald-500 to-teal-400',
+        text: 'text-emerald-400',
+        label: 'CLEARED FOR FINAL EXAMS',
+        border: 'border-emerald-500/30',
+      }
+    : isWarning
+    ? {
+        badgeBg: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        progressBar: 'bg-gradient-to-r from-amber-500 to-yellow-400',
+        text: 'text-amber-400',
+        label: 'WARNING: NEAR 80% THRESHOLD',
+        border: 'border-amber-500/30',
+      }
+    : {
+        badgeBg: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+        progressBar: 'bg-gradient-to-r from-rose-600 to-rose-400',
+        text: 'text-rose-400',
+        label: 'CLEARANCE DEFICIT: BARRED',
+        border: 'border-rose-500/30',
+      };
+
+  // Holographic card mouse tracking
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - card.left;
+    const y = e.clientY - card.top;
+    const centerX = card.width / 2;
+    const centerY = card.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -8;
+    const rotateY = ((x - centerX) / centerX) * 8;
+    const glareX = (x / card.width) * 100;
+    const glareY = (y / card.height) * 100;
+    setTilt({ rotateX, rotateY, glareX, glareY });
+  };
+
+  const handleCardMouseLeave = () => {
+    setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  };
+
+  // Copy RFID UID to clipboard
+  const handleCopyRfid = () => {
+    const uid = user?.rfidUid || '04:A2:8B:E3:19';
+    navigator.clipboard.writeText(uid);
+    setHasCopiedRfid(true);
+    sounds.playSuccessChime();
+    toast.success('RFID UID Copied', `Copied ${uid} to clipboard.`);
+    setTimeout(() => setHasCopiedRfid(false), 2500);
+  };
+
+  // 1-Click CSV Personal Attendance Export
+  const handleExportCsv = () => {
+    if (logs.length === 0) {
+      toast.warning('No Records', 'There are no attendance logs to export.');
+      return;
+    }
+
+    const headers = [
+      'Log ID',
+      'Date',
+      'Time',
+      'Course Code',
+      'Course Name',
+      'Room / Node',
+      'Auth Ingress Method',
+      'Attendance Status',
+    ];
+
+    const rows = logs.map((log) => {
+      const d = new Date(log.timestamp);
+      const dateStr = d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const timeStr = d.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      return [
+        `"${log.id}"`,
+        `"${dateStr}"`,
+        `"${timeStr}"`,
+        `"${(log.session.courseCode || '').replace(/"/g, '""')}"`,
+        `"${(log.session.courseName || '').replace(/"/g, '""')}"`,
+        `"${(log.session.room || log.session.terminalId || 'Classroom').replace(/"/g, '""')}"`,
+        `"${log.authMethod}"`,
+        `"${log.status}"`,
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const studentIdentifier = user?.studentId || user?.lastName || 'student';
+    link.setAttribute(
+      'download',
+      `orchestra_attendance_${studentIdentifier}_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    sounds.playSuccessChime();
+    toast.success(
+      'Attendance Export Complete',
+      `Exported ${logs.length} personal session records to CSV.`
+    );
+  };
 
   const filteredLogs = logs.filter((log) => {
     if (statusFilter !== 'ALL' && log.status !== statusFilter) return false;
@@ -205,20 +388,20 @@ export const StudentPortalPage: React.FC = () => {
     switch (method) {
       case 'RFID_TAP':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-400">
+          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-300">
             <CreditCard className="w-3 h-3 text-sky-400" /> RFID Badge
           </span>
         );
       case 'KEYPAD_OTP':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-amber-400">
-            <Hash className="w-3 h-3" /> Keypad PIN
+          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-amber-300">
+            <Hash className="w-3 h-3 text-amber-400" /> Keypad PIN
           </span>
         );
       case 'MANUAL_OVERRIDE':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-purple-400">
-            <ShieldCheck className="w-3 h-3" /> Faculty Override
+          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-purple-300">
+            <ShieldCheck className="w-3 h-3 text-purple-400" /> Faculty Override
           </span>
         );
       default:
@@ -230,6 +413,13 @@ export const StudentPortalPage: React.FC = () => {
     }
   };
 
+  const studentDisplayName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Cadet Student'
+    : 'Cadet Student';
+  const studentIdDisplay = user?.studentId || 'OA-2026-9042';
+  const studentDepartmentDisplay = user?.department || 'Department of Computer Science';
+  const rfidDisplay = user?.rfidUid || '04:A2:8B:E3:19';
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
@@ -239,12 +429,13 @@ export const StudentPortalPage: React.FC = () => {
             <h1 className="font-sans font-extrabold text-2xl text-white tracking-tight">
               Student Attendance Portal
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               LIVE TELEMETRY
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Personal attendance ledger, punctuality statistics, and physical terminal ingress credentials.
+            Institutional attendance ledger, holographic smart ID credential, and semester clearance monitoring.
           </p>
         </div>
 
@@ -263,10 +454,271 @@ export const StudentPortalPage: React.FC = () => {
             size="sm"
             onClick={() => setIsOtpModalOpen(true)}
             leftIcon={<KeyRound className="w-3.5 h-3.5" />}
-            className="bg-amber-600 hover:bg-amber-500 text-white border-amber-400/30"
+            className="bg-amber-600 hover:bg-amber-500 text-white border-amber-400/30 shadow-lg shadow-amber-900/20"
           >
             Emergency Keypad PIN
           </Button>
+        </div>
+      </div>
+
+      {/* Hero Section: Digital Holographic Student ID Card & Semester Clearance Meter */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Holographic Digital Student ID Card */}
+        <div className="lg:col-span-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <div className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-slate-300">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              Digital Student Ingress Credential
+            </div>
+            <span className="text-[10px] font-mono text-slate-500">NFC / RFID READY</span>
+          </div>
+
+          {/* 3D Perspective Card Container */}
+          <div
+            className="relative w-full rounded-3xl p-5 sm:p-6 transition-transform duration-200 ease-out select-none cursor-pointer overflow-hidden shadow-2xl border border-indigo-500/30 group"
+            style={{
+              perspective: '1000px',
+              transform: `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
+              background: 'linear-gradient(135deg, #090d16 0%, #111827 50%, #0d1527 100%)',
+            }}
+            onMouseMove={handleCardMouseMove}
+            onMouseLeave={handleCardMouseLeave}
+          >
+            {/* Dynamic Holographic Foil Glare Overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-40 group-hover:opacity-70 transition-opacity duration-300 mix-blend-color-dodge"
+              style={{
+                background: `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(99, 102, 241, 0.45) 0%, rgba(236, 72, 153, 0.25) 30%, rgba(34, 211, 238, 0.2) 60%, transparent 80%)`,
+              }}
+            />
+
+            {/* Microchip Circuit Background Grid */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
+
+            {/* Glowing Accent Orbs */}
+            <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-cyan-500/15 blur-3xl pointer-events-none" />
+
+            {/* Card Content Structure */}
+            <div className="relative z-10 flex flex-col justify-between h-full min-h-[260px] space-y-5">
+              {/* Card Header: Institution Branding & Chip/NFC */}
+              <div className="flex items-start justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 p-0.5 flex items-center justify-center shadow-md shadow-indigo-500/30">
+                      <Shield className="w-4 h-4 text-slate-950 fill-white" />
+                    </div>
+                    <div>
+                      <div className="font-sans font-black tracking-wider text-base text-white flex items-center gap-1.5">
+                        ORCHESTRA ACADEMY
+                      </div>
+                      <div className="font-mono text-[9px] uppercase tracking-widest text-indigo-300/80">
+                        Autonomous Academic Registry
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulated EMV Smart Chip + Contactless Waves */}
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-7 rounded-md bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 p-0.5 shadow-inner border border-amber-300/50 flex flex-col justify-between">
+                    <div className="h-0.5 bg-amber-700/40 w-full" />
+                    <div className="h-2 border-y border-amber-700/40 flex justify-between">
+                      <div className="w-2 border-r border-amber-700/40" />
+                      <div className="w-2 border-l border-amber-700/40" />
+                    </div>
+                    <div className="h-0.5 bg-amber-700/40 w-full" />
+                  </div>
+                  <Wifi className="w-5 h-5 text-indigo-300 rotate-90 opacity-80" />
+                </div>
+              </div>
+
+              {/* Student Identity Section */}
+              <div className="flex items-center gap-4 py-1">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 p-[2px] shadow-lg shadow-indigo-500/20">
+                    <div className="w-full h-full rounded-[14px] bg-slate-900 flex items-center justify-center font-mono font-black text-lg text-white">
+                      {user?.firstName ? user.firstName[0] : 'S'}
+                      {user?.lastName ? user.lastName[0] : 'A'}
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-white" />
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="font-sans font-black text-lg text-white tracking-tight truncate">
+                    {studentDisplayName}
+                  </div>
+                  <div className="font-mono text-xs font-bold text-emerald-400 tracking-wider">
+                    {studentIdDisplay}
+                  </div>
+                  <div className="text-[11px] text-slate-300 truncate font-medium">
+                    {studentDepartmentDisplay}
+                  </div>
+                </div>
+              </div>
+
+              {/* NFC Badge Status & UID Copy */}
+              <div className="pt-3 border-t border-white/[0.08] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                  </span>
+                  <div className="text-left">
+                    <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">
+                      Live NFC Ingress UID
+                    </div>
+                    <div className="font-mono text-xs font-bold text-slate-200">
+                      {rfidDisplay}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyRfid}
+                    title="Copy RFID UID"
+                    className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white transition border border-white/10 ml-1"
+                  >
+                    {hasCopiedRfid ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Quick Action Button on ID Card */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsOtpModalOpen(true)}
+                  leftIcon={<KeyRound className="w-3 h-3 text-amber-400" />}
+                  className="bg-slate-900/80 hover:bg-slate-800 text-amber-300 border-amber-400/40 text-xs py-1.5"
+                >
+                  Keypad PIN
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Semester Clearance & Attendance Streak Meter */}
+        <div className="lg:col-span-7 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-white/[0.08] shadow-xl relative overflow-hidden">
+          {/* Top Status Row: Streak Badge & Clearance Tag */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+            {/* Attendance Streak Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-500/15 via-amber-500/15 to-rose-500/15 border border-orange-500/30 text-orange-300 shadow-sm">
+              <Flame className="w-4 h-4 text-orange-400 fill-orange-400 animate-pulse" />
+              <span className="text-xs font-mono font-bold tracking-tight">
+                {streak > 0 ? `${streak}-Session On-Time Streak` : '0-Session Streak'}
+              </span>
+            </div>
+
+            {/* Clearance Standing Pill */}
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border ${clearanceColor.badgeBg}`}
+            >
+              {isCleared ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              ) : isWarning ? (
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              ) : (
+                <XCircle className="w-3.5 h-3.5 text-rose-400" />
+              )}
+              {clearanceColor.label}
+            </span>
+          </div>
+
+          {/* Main Clearance Percentage Meter */}
+          <div className="my-5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
+                  Semester Clearance Progress
+                </span>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <span className={`text-4xl sm:text-5xl font-mono font-black ${clearanceColor.text}`}>
+                    {attendanceRate.toFixed(1)}%
+                  </span>
+                  <span className="text-xs font-mono text-slate-400">
+                    / 80.0% Minimum Institutional Threshold
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-left sm:text-right">
+                <span className="text-[11px] font-mono font-medium text-slate-400">
+                  Clearance Standing:
+                </span>
+                <div className="text-xs font-mono font-bold">
+                  {isCleared ? (
+                    <span className="text-emerald-400 flex items-center sm:justify-end gap-1">
+                      <TrendingUp className="w-3.5 h-3.5" /> +{clearanceDelta}% above required
+                    </span>
+                  ) : (
+                    <span className="text-rose-400 flex items-center sm:justify-end gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5" /> {clearanceDelta}% deficit to clear
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Dual Visual Progress Bar with 80% Marker */}
+            <div className="relative pt-4 pb-2">
+              {/* 80% Institutional Marker Flag */}
+              <div
+                className="absolute top-0 -translate-x-1/2 flex flex-col items-center pointer-events-none"
+                style={{ left: '80%' }}
+              >
+                <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-400/30 whitespace-nowrap shadow">
+                  80% Clearance Gate
+                </span>
+                <div className="w-0.5 h-2 bg-amber-400/60" />
+              </div>
+
+              {/* Progress Bar Track */}
+              <div className="w-full bg-slate-800 rounded-full h-3.5 overflow-hidden p-0.5 border border-white/[0.08] relative">
+                {/* 80% threshold line marker inside track */}
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-amber-400/60 z-20 pointer-events-none"
+                  style={{ left: '80%' }}
+                />
+                {/* Progress bar fill */}
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${clearanceColor.progressBar}`}
+                  style={{ width: `${Math.min(100, Math.max(0, attendanceRate))}%` }}
+                />
+              </div>
+
+              {/* Sub-scale ticks */}
+              <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-1.5 px-0.5">
+                <span>0% (Disqualified)</span>
+                <span className="text-amber-400/80 font-bold">80% (Clearance Threshold)</span>
+                <span>100% (Perfect)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Metrics Cards */}
+          <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.06]">
+            <div className="p-2.5 rounded-xl bg-slate-800/50 border border-white/[0.04]">
+              <div className="text-[10px] font-mono text-slate-400 uppercase">Total Sessions</div>
+              <div className="text-base font-mono font-bold text-white mt-0.5">{kpi.total}</div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-800/50 border border-white/[0.04]">
+              <div className="text-[10px] font-mono text-slate-400 uppercase">On-Time (Present)</div>
+              <div className="text-base font-mono font-bold text-emerald-400 mt-0.5">{kpi.present}</div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-800/50 border border-white/[0.04]">
+              <div className="text-[10px] font-mono text-slate-400 uppercase">Cuts (Absent)</div>
+              <div className={`text-base font-mono font-bold mt-0.5 ${kpi.absent > 0 ? 'text-rose-400' : 'text-slate-400'}`}>
+                {kpi.absent}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -355,8 +807,9 @@ export const StudentPortalPage: React.FC = () => {
         title="Attendance History Ledger"
         subtitle="Chronological check-in stream recorded at edge IoT terminals"
       >
-        {/* Controls / Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+        {/* Controls / Filter Bar with Personal Export CSV Button */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+          {/* Search Input */}
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -368,21 +821,35 @@ export const StudentPortalPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {['ALL', 'PRESENT', 'LATE', 'EXCUSED', 'ABSENT'].map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition min-h-[44px] ${
-                  statusFilter === status
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
+          {/* Action Tools: Status Filter & CSV Export Button */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+              {['ALL', 'PRESENT', 'LATE', 'EXCUSED', 'ABSENT'].map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition min-h-[44px] ${
+                    statusFilter === status
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+
+            {/* 1-Click "Export My Attendance" CSV Download Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              leftIcon={<Download className="w-3.5 h-3.5 text-cyan-400" />}
+              className="border-white/10 hover:border-cyan-500/40 hover:bg-cyan-950/20 text-slate-200 hover:text-cyan-300 text-xs shadow-sm"
+            >
+              Export My Attendance
+            </Button>
           </div>
         </div>
 

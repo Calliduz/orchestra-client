@@ -113,8 +113,8 @@ describe('StudentPortalPage Component', () => {
     expect(screen.getByText('Student Attendance Portal')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('90.0%')).toBeInTheDocument();
-      expect(screen.getByText('8')).toBeInTheDocument(); // Present
+      expect(screen.getAllByText('90.0%')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('8')[0]).toBeInTheDocument(); // Present
       // Both Late and Excused are 1
       expect(screen.getAllByText('1')).toHaveLength(2);
     });
@@ -194,7 +194,7 @@ describe('StudentPortalPage Component', () => {
     render(<StudentPortalPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('90.0%')).toBeInTheDocument();
+      expect(screen.getAllByText('90.0%')[0]).toBeInTheDocument();
     });
 
     const statuses = ['ALL', 'PRESENT', 'LATE', 'EXCUSED', 'ABSENT'];
