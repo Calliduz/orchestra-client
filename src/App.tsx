@@ -141,11 +141,11 @@ export const App: React.FC = () => {
                     <Route path="terminal" element={<TerminalMonitorPage />} />
                   </Route>
 
-                  {/* Faculty Portal (Protected: FACULTY only) */}
+                  {/* Faculty Portal (Protected: FACULTY or ADMIN) */}
                   <Route
                     path="/faculty"
                     element={
-                      <ProtectedRoute allowedRoles={['FACULTY']}>
+                      <ProtectedRoute allowedRoles={['FACULTY', 'ADMIN']}>
                         <FacultyLayout />
                       </ProtectedRoute>
                     }

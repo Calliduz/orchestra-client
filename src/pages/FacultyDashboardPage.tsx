@@ -71,21 +71,8 @@ export const FacultyDashboardPage: React.FC = () => {
   const fetchActiveSession = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const res = await fetch(`${API_V1_URL}/sessions/active/${terminalId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(`${API_V1_URL}/sessions/active/${terminalId}`);
       const json = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 403) {
-          setActionError(json.message || 'Access Restricted: Live classroom sessions can only be accessed within the instructor\'s personal account, not from the admin side.');
-          setSessionData(null);
-          setRoster([]);
-        }
-        return;
-      }
 
       if (json.success && json.data) {
         setSessionData(json.data);
@@ -100,7 +87,7 @@ export const FacultyDashboardPage: React.FC = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [terminalId, token]);
+  }, [terminalId]);
 
   useEffect(() => {
     fetchActiveSession();
@@ -109,26 +96,13 @@ export const FacultyDashboardPage: React.FC = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleSessionStarted = (data: any) => {
-      // Guard: Admin accounts must never open or access live professor sessions
-      if (user?.role === 'ADMIN') return;
-      if (data?.facultyId && user?.id && data.facultyId !== user.id) return;
-      fetchActiveSession();
-    };
-
-    const handleSessionClosed = () => {
-      if (user?.role === 'ADMIN') return;
-      fetchActiveSession();
-    };
-
+    const handleSessionStarted = () => fetchActiveSession();
+    const handleSessionClosed = () => fetchActiveSession();
     const handleAttendanceUpdated = (data: any) => {
-      if (user?.role === 'ADMIN') return;
       if (data.roster) setRoster(data.roster);
       if (data.stats) setStats(data.stats);
     };
-
     const handleThresholdsUpdated = (data: any) => {
-      if (user?.role === 'ADMIN') return;
       if (data.roster) setRoster(data.roster);
       if (data.stats) setStats(data.stats);
       setSessionData((prev: any) => {
@@ -155,7 +129,7 @@ export const FacultyDashboardPage: React.FC = () => {
       socket.off('attendance:updated', handleAttendanceUpdated);
       socket.off('thresholds:updated', handleThresholdsUpdated);
     };
-  }, [socket, user, fetchActiveSession]);
+  }, [socket, fetchActiveSession]);
 
   const handleUpdateThresholds = async (late: number, cut: number) => {
     if (!sessionData?.session?.id) return;

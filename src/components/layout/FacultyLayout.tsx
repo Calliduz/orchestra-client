@@ -16,14 +16,7 @@ export const FacultyLayout: React.FC = () => {
 
   useEffect(() => {
     if (!socket) return;
-    const handleStarted = (data: any) => {
-      // Guard: Admin accounts must not have access to live session badges
-      if (user?.role === 'ADMIN') return;
-      // Only illuminate live session beacon for the assigned faculty
-      if (!data?.facultyId || data.facultyId === user?.id) {
-        setHasActiveSession(true);
-      }
-    };
+    const handleStarted = () => setHasActiveSession(true);
     const handleClosed = () => setHasActiveSession(false);
     socket.on('session:started', handleStarted);
     socket.on('session:closed', handleClosed);
@@ -31,7 +24,7 @@ export const FacultyLayout: React.FC = () => {
       socket.off('session:started', handleStarted);
       socket.off('session:closed', handleClosed);
     };
-  }, [socket, user]);
+  }, [socket]);
 
   const handleLogout = () => {
     logout();
