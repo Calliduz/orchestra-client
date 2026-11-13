@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, Plus, Edit2, Trash2, Clock, Users, RefreshCw,
   Search, ArrowRight, Calendar, CheckCircle2, AlertCircle,
+  Keyboard, SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
@@ -67,7 +68,7 @@ const formatDisplayTime = (timeStr: string | null | undefined): string => {
   return `${hour12}:${m} ${ampm}`;
 };
 
-/** Interactive Time Picker with hours, minutes, and AM/PM buttons */
+/** Interactive Time Picker with editable hour/minute inputs, stepper buttons, and AM/PM */
 const InteractiveTimePicker: React.FC<{
   value: string; // "HH:MM" 24h
   onChange: (val: string) => void;
@@ -80,12 +81,35 @@ const InteractiveTimePicker: React.FC<{
   const isPM = h24 >= 12;
   const h12 = h24 % 12 || 12;
 
+  const [hourInput, setHourInput] = useState(String(h12).padStart(2, '0'));
+  const [minInput, setMinInput] = useState(String(m).padStart(2, '0'));
+
+  useEffect(() => {
+    setHourInput(String(h12).padStart(2, '0'));
+    setMinInput(String(m).padStart(2, '0'));
+  }, [h12, m]);
+
   const update = (newH24: number, newMin: number) => {
     const validH = (newH24 + 24) % 24;
     const validM = (newMin + 60) % 60;
     const hh = String(validH).padStart(2, '0');
     const mm = String(validM).padStart(2, '0');
     onChange(`${hh}:${mm}`);
+  };
+
+  const commitHour = (val: string) => {
+    let parsed = parseInt(val, 10);
+    if (isNaN(parsed) || parsed < 1) parsed = 12;
+    if (parsed > 12) parsed = 12;
+    const newH24 = isPM ? (parsed === 12 ? 12 : parsed + 12) : (parsed === 12 ? 0 : parsed);
+    update(newH24, m);
+  };
+
+  const commitMin = (val: string) => {
+    let parsed = parseInt(val, 10);
+    if (isNaN(parsed) || parsed < 0) parsed = 0;
+    if (parsed > 59) parsed = 59;
+    update(h24, parsed);
   };
 
   const spinBtnClass = 'w-7 h-5 flex items-center justify-center text-[10px] text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition';
@@ -97,20 +121,58 @@ const InteractiveTimePicker: React.FC<{
         {/* Hour Column */}
         <div className="flex flex-col items-center">
           <button type="button" onClick={() => update(h24 + 1, m)} className={spinBtnClass}>▲</button>
-          <span className="font-mono text-xs font-bold text-white px-2 py-1 bg-slate-900 border border-white/[0.08] rounded-md min-w-[28px] text-center">
-            {String(h12).padStart(2, '0')}
-          </span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={2}
+            value={hourInput}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/[^0-9]/g, '');
+              setHourInput(cleaned);
+              if (cleaned.length === 2) {
+                commitHour(cleaned);
+              }
+            }}
+            onBlur={() => commitHour(hourInput)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowUp') { e.preventDefault(); update(h24 + 1, m); }
+              if (e.key === 'ArrowDown') { e.preventDefault(); update(h24 - 1, m); }
+              if (e.key === 'Enter') { e.preventDefault(); commitHour(hourInput); }
+            }}
+            className="w-8 h-6 font-mono text-xs font-bold text-white px-1 bg-slate-900 border border-white/[0.08] rounded-md text-center focus:outline-none focus:ring-1 focus:ring-purple-500"
+            title="Click or type hour (1-12)"
+          />
           <button type="button" onClick={() => update(h24 - 1, m)} className={spinBtnClass}>▼</button>
         </div>
 
         <span className="font-mono text-sm font-bold text-slate-500 pb-1">:</span>
 
-        {/* Minute Column (5-min increments) */}
+        {/* Minute Column (5-min increments on arrow, exact on type) */}
         <div className="flex flex-col items-center">
           <button type="button" onClick={() => update(h24, m + 5)} className={spinBtnClass}>▲</button>
-          <span className="font-mono text-xs font-bold text-white px-2 py-1 bg-slate-900 border border-white/[0.08] rounded-md min-w-[28px] text-center">
-            {String(m).padStart(2, '0')}
-          </span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={2}
+            value={minInput}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/[^0-9]/g, '');
+              setMinInput(cleaned);
+              if (cleaned.length === 2) {
+                commitMin(cleaned);
+              }
+            }}
+            onBlur={() => commitMin(minInput)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowUp') { e.preventDefault(); update(h24, m + 5); }
+              if (e.key === 'ArrowDown') { e.preventDefault(); update(h24, m - 5); }
+              if (e.key === 'Enter') { e.preventDefault(); commitMin(minInput); }
+            }}
+            className="w-8 h-6 font-mono text-xs font-bold text-white px-1 bg-slate-900 border border-white/[0.08] rounded-md text-center focus:outline-none focus:ring-1 focus:ring-purple-500"
+            title="Click or type minute (00-59)"
+          />
           <button type="button" onClick={() => update(h24, m - 5)} className={spinBtnClass}>▼</button>
         </div>
 
@@ -189,6 +251,7 @@ export const AdminSectionsPage: React.FC = () => {
   const [form, setForm]           = useState(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeInputMode, setTimeInputMode] = useState<'manual' | 'picker'>('manual');
 
   useEffect(() => {
     fetchSections();
@@ -478,22 +541,88 @@ export const AdminSectionsPage: React.FC = () => {
           )}
         </div>
 
-        {/* Start Time and End Time Interactive Pickers */}
+        {/* Start Time and End Time Input Options */}
         <div>
-          <label className="block text-[11px] text-slate-400 mb-2">Class Time Window:</label>
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <InteractiveTimePicker
-              label="Start Time"
-              value={form.scheduleTime}
-              onChange={(t) => setForm({ ...form, scheduleTime: t })}
-            />
-            <div className="hidden md:block text-slate-500 font-bold text-xs mt-4">→</div>
-            <InteractiveTimePicker
-              label="End Time"
-              value={form.scheduleEndTime}
-              onChange={(t) => setForm({ ...form, scheduleEndTime: t })}
-            />
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-[11px] text-slate-400 font-medium">Class Time Window:</label>
+            <div className="flex items-center bg-slate-900 border border-white/[0.08] p-0.5 rounded-lg text-[10px] font-mono">
+              <button
+                type="button"
+                onClick={() => setTimeInputMode('manual')}
+                className={`px-2 py-1 rounded flex items-center gap-1 transition ${
+                  timeInputMode === 'manual'
+                    ? 'bg-purple-600 text-white font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Input/type time directly using keyboard"
+              >
+                <Keyboard className="w-3 h-3" />
+                <span>Type Time</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeInputMode('picker')}
+                className={`px-2 py-1 rounded flex items-center gap-1 transition ${
+                  timeInputMode === 'picker'
+                    ? 'bg-purple-600 text-white font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Use visual stepper picker"
+              >
+                <SlidersHorizontal className="w-3 h-3" />
+                <span>Stepper</span>
+              </button>
+            </div>
           </div>
+
+          {timeInputMode === 'manual' ? (
+            <div className="p-2.5 rounded-xl bg-slate-900/60 border border-white/[0.06] space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-mono text-slate-400 mb-1 flex items-center justify-between">
+                    <span>Start Time:</span>
+                    <span className="text-purple-300 font-bold">{formatDisplayTime(form.scheduleTime)}</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={form.scheduleTime || '08:00'}
+                    onChange={(e) => setForm({ ...form, scheduleTime: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 [color-scheme:dark]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono text-slate-400 mb-1 flex items-center justify-between">
+                    <span>End Time:</span>
+                    <span className="text-purple-300 font-bold">{formatDisplayTime(form.scheduleEndTime)}</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={form.scheduleEndTime || '10:00'}
+                    onChange={(e) => setForm({ ...form, scheduleEndTime: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 font-mono">
+                💡 Tip: Click each input to type the hours and minutes with keyboard, or switch to Stepper mode.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <InteractiveTimePicker
+                label="Start Time"
+                value={form.scheduleTime}
+                onChange={(t) => setForm({ ...form, scheduleTime: t })}
+              />
+              <div className="hidden md:block text-slate-500 font-bold text-xs mt-4">→</div>
+              <InteractiveTimePicker
+                label="End Time"
+                value={form.scheduleEndTime}
+                onChange={(t) => setForm({ ...form, scheduleEndTime: t })}
+              />
+            </div>
+          )}
+
           <div className="text-xs text-slate-400 font-mono mt-2 flex items-center gap-1.5">
             <Clock className="w-3 h-3 text-sky-400" />
             <span>
