@@ -71,19 +71,8 @@ export const FacultyDashboardPage: React.FC = () => {
   const fetchActiveSession = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const res = await fetch(`${API_V1_URL}/sessions/active/${terminalId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`${API_V1_URL}/sessions/active/${terminalId}`);
       const json = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 403) {
-          setActionError(json.message || 'Access Denied: This active classroom belongs to another instructor.');
-          setSessionData(null);
-          setRoster([]);
-        }
-        return;
-      }
 
       if (json.success && json.data) {
         setSessionData(json.data);
@@ -98,7 +87,7 @@ export const FacultyDashboardPage: React.FC = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [terminalId, token]);
+  }, [terminalId]);
 
   useEffect(() => {
     fetchActiveSession();
