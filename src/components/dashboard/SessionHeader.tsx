@@ -15,7 +15,7 @@ import { Modal } from '../ui/Modal.js';
 import { CopyButton } from '../ui/CopyButton.js';
 import { API_V1_URL } from '../../config/api.js';
 
-interface SessionData {
+export interface SessionData {
   id: string;
   sectionCode: string;
   courseName: string;

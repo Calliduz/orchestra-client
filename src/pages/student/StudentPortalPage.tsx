@@ -9,8 +9,6 @@ import {
   KeyRound,
   RefreshCw,
   Search,
-  Filter,
-  Radio,
   CreditCard,
   Hash,
   ShieldCheck,
@@ -23,8 +21,6 @@ import {
   Wifi,
   Shield,
   TrendingUp,
-  ArrowUpRight,
-  Info,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card.js';
 import { Button } from '../../components/ui/Button.js';
@@ -108,8 +104,9 @@ export const StudentPortalPage: React.FC = () => {
           setLogs(json.data.logs);
         }
       }
-    } catch (err: any) {
-      console.warn('Student attendance API fallback:', err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.warn('Student attendance API fallback:', errMsg);
       // Fallback: Provide graceful default data if backend API is not yet running or mock state
       setLogs((prev) => {
         if (prev.length > 0) return prev;
@@ -171,7 +168,7 @@ export const StudentPortalPage: React.FC = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleAttendanceUpdated = (data: any) => {
+    const handleAttendanceUpdated = (data: { studentId?: string; status?: string }) => {
       // Check if update applies to current student
       const appliesToMe =
         !data.studentId ||
@@ -219,7 +216,6 @@ export const StudentPortalPage: React.FC = () => {
   const attendanceRate = kpi.rate;
   const isCleared = attendanceRate >= institutionalThreshold;
   const isWarning = attendanceRate >= 70 && attendanceRate < institutionalThreshold;
-  const isAtRisk = attendanceRate < 70;
 
   const clearanceDelta = (attendanceRate - institutionalThreshold).toFixed(1);
 

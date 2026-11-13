@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
-  Sparkles,
   Wifi,
   SquareTerminal,
   XCircle,
@@ -224,10 +223,11 @@ export const CardEnrollmentPage: React.FC = () => {
         setStatusMessage({ text: json.message || 'Failed to assign card', type: 'error' });
         toast.error('Assignment Failed', json.message);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       sounds.playErrorBuzz();
-      setStatusMessage({ text: err.message || 'Error assigning RFID card', type: 'error' });
-      toast.error('Assignment Error', err.message);
+      setStatusMessage({ text: errMsg || 'Error assigning RFID card', type: 'error' });
+      toast.error('Assignment Error', errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -257,9 +257,10 @@ export const CardEnrollmentPage: React.FC = () => {
       } else {
         toast.error('Revoke Failed', json.message);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       console.error('Error removing RFID badge:', err);
-      toast.error('Revoke Failed', err.message);
+      toast.error('Revoke Failed', errMsg);
     } finally {
       setIsRevoking(false);
     }

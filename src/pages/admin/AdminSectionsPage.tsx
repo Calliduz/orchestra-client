@@ -380,9 +380,10 @@ export const AdminSectionsPage: React.FC = () => {
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.message || 'Failed to retrieve course sections');
       setSections(json.data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       console.error('Failed to fetch sections:', err);
-      setFetchError(err.message || 'Failed to load course sections. Please check network connection.');
+      setFetchError(errMsg || 'Failed to load course sections. Please check network connection.');
     } finally {
       setIsLoading(false);
     }
@@ -488,10 +489,11 @@ export const AdminSectionsPage: React.FC = () => {
       setIsAddModalOpen(false);
       fetchSections();
       toast.success('Section Created', `Successfully configured ${form.sectionCode.trim().toUpperCase()} (${form.courseName.trim()}).`);
-    } catch (err: any) {
-      setFormError(err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setFormError(errMsg);
       setIsConfirmModalOpen(false);
-      toast.error('Creation Failed', err.message);
+      toast.error('Creation Failed', errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -531,9 +533,10 @@ export const AdminSectionsPage: React.FC = () => {
       setIsEditModalOpen(false);
       fetchSections();
       toast.success('Section Updated', `Saved settings for ${form.sectionCode.trim().toUpperCase()}.`);
-    } catch (err: any) {
-      setFormError(err.message);
-      toast.error('Update Failed', err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setFormError(errMsg);
+      toast.error('Update Failed', errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -553,8 +556,9 @@ export const AdminSectionsPage: React.FC = () => {
       setIsDeleteModalOpen(false);
       fetchSections();
       toast.success('Section Deleted', `Removed ${selectedSection.sectionCode} from database.`);
-    } catch (err: any) {
-      toast.error('Deletion Failed', err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      toast.error('Deletion Failed', errMsg);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Lock, Unlock, Eye, EyeOff, LogIn, CheckCircle2, User, Cpu, AlertTriangle } from 'lucide-react';
+import { Shield, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { useSocket } from '../context/SocketContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
-import { SessionHeader } from '../components/dashboard/SessionHeader.js';
+import { SessionHeader, SessionData } from '../components/dashboard/SessionHeader.js';
 import { KpiGrid } from '../components/dashboard/KpiGrid.js';
 import { ThresholdSliders } from '../components/dashboard/ThresholdSliders.js';
 import { RosterTable, StudentRosterRow } from '../components/dashboard/RosterTable.js';
@@ -13,6 +13,29 @@ import { Button } from '../components/ui/Button.js';
 import { API_V1_URL } from '../config/api.js';
 import { sounds } from '../utils/audio.js';
 
+interface ActiveSessionPayload {
+  isLocked: boolean;
+  status: string;
+  terminalId: string;
+  section: {
+    id: string;
+    sectionCode: string;
+    courseName: string;
+    roomNumber: string;
+    terminalId: string;
+  } | null;
+  session: SessionData | null;
+  roster: StudentRosterRow[];
+  stats: {
+    totalEnrolled: number;
+    present: number;
+    late: number;
+    cut: number;
+    absent: number;
+    excused: number;
+  };
+}
+
 export const FacultyDashboardPage: React.FC = () => {
   const { socket, terminalId } = useSocket();
   const { user, token } = useAuth();
@@ -20,7 +43,7 @@ export const FacultyDashboardPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [sessionData, setSessionData] = useState<any>(null);
+  const [sessionData, setSessionData] = useState<ActiveSessionPayload | null>(null);
   const [roster, setRoster] = useState<StudentRosterRow[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -55,10 +78,11 @@ export const FacultyDashboardPage: React.FC = () => {
       sounds.playSuccessChime();
       fetchActiveSession();
       toast.success('Session Initialized', `Classroom ingress opened for ${sessionData?.section?.sectionCode || 'section'}.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       sounds.playErrorBuzz();
-      setActionError(err.message);
-      toast.error('Session Initialization Failed', err.message);
+      setActionError(errMsg);
+      toast.error('Session Initialization Failed', errMsg);
     } finally {
       setIsStartingSession(false);
     }
@@ -98,14 +122,14 @@ export const FacultyDashboardPage: React.FC = () => {
 
     const handleSessionStarted = () => fetchActiveSession();
     const handleSessionClosed = () => fetchActiveSession();
-    const handleAttendanceUpdated = (data: any) => {
+    const handleAttendanceUpdated = (data: { roster?: StudentRosterRow[]; stats?: typeof stats }) => {
       if (data.roster) setRoster(data.roster);
       if (data.stats) setStats(data.stats);
     };
-    const handleThresholdsUpdated = (data: any) => {
+    const handleThresholdsUpdated = (data: { roster?: StudentRosterRow[]; stats?: typeof stats; lateThresholdMins: number; cutThresholdMins: number }) => {
       if (data.roster) setRoster(data.roster);
       if (data.stats) setStats(data.stats);
-      setSessionData((prev: any) => {
+      setSessionData((prev) => {
         if (!prev?.session) return prev;
         return {
           ...prev,
@@ -148,10 +172,11 @@ export const FacultyDashboardPage: React.FC = () => {
       sounds.playSuccessChime();
       fetchActiveSession();
       toast.success('Punctuality Policy Applied', `Updated thresholds: ${late}m grace, ${cut}m cut-off.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       sounds.playErrorBuzz();
-      setActionError(err.message);
-      toast.error('Policy Update Failed', err.message);
+      setActionError(errMsg);
+      toast.error('Policy Update Failed', errMsg);
     }
   };
 
@@ -172,10 +197,11 @@ export const FacultyDashboardPage: React.FC = () => {
       sounds.playSuccessChime();
       fetchActiveSession();
       toast.success('Attendance Overridden', `Status manual override applied: ${status}.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       sounds.playErrorBuzz();
-      setActionError(err.message);
-      toast.error('Override Failed', err.message);
+      setActionError(errMsg);
+      toast.error('Override Failed', errMsg);
       throw err;
     }
   };
@@ -195,10 +221,11 @@ export const FacultyDashboardPage: React.FC = () => {
       sounds.playSuccessChime();
       fetchActiveSession();
       toast.info('Session Terminated', 'Doorway terminal locked. Manifest archived and reports generated.');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       sounds.playErrorBuzz();
-      setActionError(err.message);
-      toast.error('Session Termination Failed', err.message);
+      setActionError(errMsg);
+      toast.error('Session Termination Failed', errMsg);
     }
   };
 
