@@ -126,9 +126,9 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby="modal-title"
         aria-describedby={description ? 'modal-description' : undefined}
         tabIndex={-1}
-        className="relative w-full max-w-lg bg-slate-900 border border-white/[0.08] shadow-2xl p-6 z-10 rounded-2xl focus:outline-none"
+        className="relative w-full max-w-lg bg-slate-900 border border-white/[0.08] shadow-2xl p-5 sm:p-6 z-10 rounded-2xl focus:outline-none my-auto max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] flex flex-col"
       >
-        <div className="flex items-start justify-between pb-3.5 border-b border-white/[0.06]">
+        <div className="flex items-start justify-between pb-3.5 border-b border-white/[0.06] shrink-0">
           <div>
             <h3 id="modal-title" className="font-sans font-extrabold text-base tracking-tight text-white">
               {title}
@@ -149,10 +149,10 @@ export const Modal: React.FC<ModalProps> = ({
           </button>
         </div>
 
-        <div className="py-4 text-sm text-slate-200">{children}</div>
+        <div className="py-4 text-sm text-slate-200 overflow-y-auto flex-1 min-h-0 pr-1">{children}</div>
 
         {renderFooter && (
-          <div className="flex items-center justify-end gap-2.5 pt-3.5 border-t border-white/[0.06]">
+          <div className="flex items-center justify-end gap-2.5 pt-3.5 border-t border-white/[0.06] shrink-0">
             <Button variant="ghost" size="sm" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>

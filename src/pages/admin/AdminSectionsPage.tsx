@@ -62,7 +62,7 @@ const formatDisplayTime = (timeStr: string | null | undefined): string => {
   if (!timeStr) return '';
   const [hStr, mStr] = timeStr.split(':');
   const h = parseInt(hStr || '0', 10);
-  const m = mStr || '00';
+  const m = (mStr || '00').padStart(2, '0');
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour12 = h % 12 || 12;
   return `${hour12}:${m} ${ampm}`;
@@ -112,7 +112,7 @@ const InteractiveTimePicker: React.FC<{
     update(h24, parsed);
   };
 
-  const spinBtnClass = 'w-7 h-5 flex items-center justify-center text-[10px] text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition';
+  const spinBtnClass = 'w-7 h-5 flex items-center justify-center text-[10px] text-slate-400 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.15] rounded transition focus:outline-none focus:ring-1 focus:ring-purple-400';
 
   return (
     <div className="flex flex-col gap-1">
@@ -120,12 +120,20 @@ const InteractiveTimePicker: React.FC<{
       <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-950 border border-slate-700/80 w-fit select-none">
         {/* Hour Column */}
         <div className="flex flex-col items-center">
-          <button type="button" onClick={() => update(h24 + 1, m)} className={spinBtnClass}>▲</button>
+          <button
+            type="button"
+            onClick={() => update(h24 + 1, m)}
+            aria-label="Increment hour"
+            className={spinBtnClass}
+          >
+            ▲
+          </button>
           <input
             type="text"
             inputMode="numeric"
             maxLength={2}
             value={hourInput}
+            aria-label="Hour (1-12)"
             onFocus={(e) => e.target.select()}
             onChange={(e) => {
               const cleaned = e.target.value.replace(/[^0-9]/g, '');
@@ -134,28 +142,43 @@ const InteractiveTimePicker: React.FC<{
                 commitHour(cleaned);
               }
             }}
-            onBlur={() => commitHour(hourInput)}
+            onBlur={(e) => commitHour(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'ArrowUp') { e.preventDefault(); update(h24 + 1, m); }
               if (e.key === 'ArrowDown') { e.preventDefault(); update(h24 - 1, m); }
-              if (e.key === 'Enter') { e.preventDefault(); commitHour(hourInput); }
+              if (e.key === 'Enter') { e.preventDefault(); commitHour((e.target as HTMLInputElement).value); }
             }}
             className="w-8 h-6 font-mono text-xs font-bold text-white px-1 bg-slate-900 border border-white/[0.08] rounded-md text-center focus:outline-none focus:ring-1 focus:ring-purple-500"
             title="Click or type hour (1-12)"
           />
-          <button type="button" onClick={() => update(h24 - 1, m)} className={spinBtnClass}>▼</button>
+          <button
+            type="button"
+            onClick={() => update(h24 - 1, m)}
+            aria-label="Decrement hour"
+            className={spinBtnClass}
+          >
+            ▼
+          </button>
         </div>
 
-        <span className="font-mono text-sm font-bold text-slate-500 pb-1">:</span>
+        <span className="font-mono text-sm font-bold text-slate-500 pb-1" aria-hidden="true">:</span>
 
         {/* Minute Column (5-min increments on arrow, exact on type) */}
         <div className="flex flex-col items-center">
-          <button type="button" onClick={() => update(h24, m + 5)} className={spinBtnClass}>▲</button>
+          <button
+            type="button"
+            onClick={() => update(h24, m + 5)}
+            aria-label="Increment minutes"
+            className={spinBtnClass}
+          >
+            ▲
+          </button>
           <input
             type="text"
             inputMode="numeric"
             maxLength={2}
             value={minInput}
+            aria-label="Minute (00-59)"
             onFocus={(e) => e.target.select()}
             onChange={(e) => {
               const cleaned = e.target.value.replace(/[^0-9]/g, '');
@@ -164,24 +187,32 @@ const InteractiveTimePicker: React.FC<{
                 commitMin(cleaned);
               }
             }}
-            onBlur={() => commitMin(minInput)}
+            onBlur={(e) => commitMin(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'ArrowUp') { e.preventDefault(); update(h24, m + 5); }
               if (e.key === 'ArrowDown') { e.preventDefault(); update(h24, m - 5); }
-              if (e.key === 'Enter') { e.preventDefault(); commitMin(minInput); }
+              if (e.key === 'Enter') { e.preventDefault(); commitMin((e.target as HTMLInputElement).value); }
             }}
             className="w-8 h-6 font-mono text-xs font-bold text-white px-1 bg-slate-900 border border-white/[0.08] rounded-md text-center focus:outline-none focus:ring-1 focus:ring-purple-500"
             title="Click or type minute (00-59)"
           />
-          <button type="button" onClick={() => update(h24, m - 5)} className={spinBtnClass}>▼</button>
+          <button
+            type="button"
+            onClick={() => update(h24, m - 5)}
+            aria-label="Decrement minutes"
+            className={spinBtnClass}
+          >
+            ▼
+          </button>
         </div>
 
         {/* AM / PM Toggle */}
-        <div className="flex flex-col gap-1 ml-1">
+        <div className="flex flex-col gap-1 ml-1" role="group" aria-label="Meridiem selection">
           <button
             type="button"
+            aria-pressed={!isPM}
             onClick={() => { if (isPM) update(h24 - 12, m); }}
-            className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition ${
+            className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition focus:outline-none focus:ring-1 focus:ring-purple-400 ${
               !isPM
                 ? 'bg-purple-600 text-white shadow-xs'
                 : 'text-slate-400 hover:text-slate-200 bg-white/[0.03]'
@@ -191,8 +222,9 @@ const InteractiveTimePicker: React.FC<{
           </button>
           <button
             type="button"
+            aria-pressed={isPM}
             onClick={() => { if (!isPM) update(h24 + 12, m); }}
-            className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition ${
+            className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition focus:outline-none focus:ring-1 focus:ring-purple-400 ${
               isPM
                 ? 'bg-purple-600 text-white shadow-xs'
                 : 'text-slate-400 hover:text-slate-200 bg-white/[0.03]'
@@ -226,6 +258,7 @@ export const AdminSectionsPage: React.FC = () => {
   const [sections, setSections] = useState<SectionItem[]>([]);
   const [facultyList, setFacultyList] = useState<FacultyOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredSections = sections.filter((sec) => {
@@ -261,11 +294,14 @@ export const AdminSectionsPage: React.FC = () => {
   const fetchSections = async () => {
     try {
       setIsLoading(true);
+      setFetchError(null);
       const res  = await fetch(`${API_V1_URL}/sections`, { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
-      if (json.success) setSections(json.data);
-    } catch (err) {
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to retrieve course sections');
+      setSections(json.data || []);
+    } catch (err: any) {
       console.error('Failed to fetch sections:', err);
+      setFetchError(err.message || 'Failed to load course sections. Please check network connection.');
     } finally {
       setIsLoading(false);
     }
@@ -275,7 +311,7 @@ export const AdminSectionsPage: React.FC = () => {
     try {
       const res  = await fetch(`${API_V1_URL}/users?role=FACULTY`, { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
-      if (json.success) setFacultyList(json.data);
+      if (json.success) setFacultyList(json.data || []);
     } catch (err) {
       console.error('Failed to fetch faculty:', err);
     }
@@ -313,15 +349,34 @@ export const AdminSectionsPage: React.FC = () => {
     }));
   };
 
+  const validateSectionForm = (): string | null => {
+    if (!form.sectionCode.trim()) return 'Section code is required.';
+    if (!form.roomNumber.trim()) return 'Room number is required.';
+    if (!form.courseName.trim()) return 'Course title is required.';
+    if (!form.terminalId.trim()) return 'Terminal Node ID is required.';
+    if (!form.facultyId) return 'Please select an assigned instructor.';
+
+    const late = parseInt(form.lateStr, 10);
+    const cut  = parseInt(form.cutStr, 10);
+    if (isNaN(late) || late < 1 || late > 120) return 'Late window must be 1–120 minutes.';
+    if (isNaN(cut)  || cut  < 2 || cut  > 240) return 'Cut window must be 2–240 minutes.';
+    if (cut <= late) return 'Cut window must be greater than the Late window.';
+
+    if (form.scheduleTime && form.scheduleEndTime && form.scheduleEndTime <= form.scheduleTime) {
+      return 'Class end time must be later than start time.';
+    }
+    return null;
+  };
+
   /** Form review trigger */
   const handleAddFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    const late = parseInt(form.lateStr);
-    const cut  = parseInt(form.cutStr);
-    if (isNaN(late) || late < 1 || late > 120) { setFormError('Late window must be 1–120 minutes.'); return; }
-    if (isNaN(cut)  || cut  < 2 || cut  > 240) { setFormError('Cut window must be 2–240 minutes.'); return; }
-    if (cut <= late) { setFormError('Cut window must be greater than the Late window.'); return; }
+    const err = validateSectionForm();
+    if (err) {
+      setFormError(err);
+      return;
+    }
     setIsConfirmModalOpen(true);
   };
 
@@ -333,13 +388,13 @@ export const AdminSectionsPage: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          sectionCode:              form.sectionCode,
-          courseName:               form.courseName,
-          roomNumber:               form.roomNumber,
-          terminalId:               form.terminalId,
+          sectionCode:              form.sectionCode.trim().toUpperCase(),
+          courseName:               form.courseName.trim(),
+          roomNumber:               form.roomNumber.trim(),
+          terminalId:               form.terminalId.trim().toUpperCase(),
           facultyId:                form.facultyId,
-          defaultLateThresholdMins: parseInt(form.lateStr),
-          defaultCutThresholdMins:  parseInt(form.cutStr),
+          defaultLateThresholdMins: parseInt(form.lateStr, 10),
+          defaultCutThresholdMins:  parseInt(form.cutStr, 10),
           scheduleDay:              form.selectedDay || null,
           scheduleTime:             form.scheduleTime || null,
           scheduleEndTime:          form.scheduleEndTime || null,
@@ -351,7 +406,7 @@ export const AdminSectionsPage: React.FC = () => {
       setIsConfirmModalOpen(false);
       setIsAddModalOpen(false);
       fetchSections();
-      toast.success('Section Created', `Successfully configured ${form.sectionCode} (${form.courseName}).`);
+      toast.success('Section Created', `Successfully configured ${form.sectionCode.trim().toUpperCase()} (${form.courseName.trim()}).`);
     } catch (err: any) {
       setFormError(err.message);
       setIsConfirmModalOpen(false);
@@ -365,11 +420,11 @@ export const AdminSectionsPage: React.FC = () => {
     e.preventDefault();
     if (!selectedSection) return;
     setFormError(null);
-    const late = parseInt(form.lateStr);
-    const cut  = parseInt(form.cutStr);
-    if (isNaN(late) || late < 1) { setFormError('Late window must be at least 1 minute.'); return; }
-    if (isNaN(cut)  || cut  < 2) { setFormError('Cut window must be at least 2 minutes.'); return; }
-    if (cut <= late) { setFormError('Cut window must be greater than the Late window.'); return; }
+    const err = validateSectionForm();
+    if (err) {
+      setFormError(err);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -377,13 +432,13 @@ export const AdminSectionsPage: React.FC = () => {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          sectionCode:              form.sectionCode,
-          courseName:               form.courseName,
-          roomNumber:               form.roomNumber,
-          terminalId:               form.terminalId,
+          sectionCode:              form.sectionCode.trim().toUpperCase(),
+          courseName:               form.courseName.trim(),
+          roomNumber:               form.roomNumber.trim(),
+          terminalId:               form.terminalId.trim().toUpperCase(),
           facultyId:                form.facultyId,
-          defaultLateThresholdMins: late,
-          defaultCutThresholdMins:  cut,
+          defaultLateThresholdMins: parseInt(form.lateStr, 10),
+          defaultCutThresholdMins:  parseInt(form.cutStr, 10),
           scheduleDay:              form.selectedDay || null,
           scheduleTime:             form.scheduleTime || null,
           scheduleEndTime:          form.scheduleEndTime || null,
@@ -394,7 +449,7 @@ export const AdminSectionsPage: React.FC = () => {
 
       setIsEditModalOpen(false);
       fetchSections();
-      toast.success('Section Updated', `Saved settings for ${form.sectionCode}.`);
+      toast.success('Section Updated', `Saved settings for ${form.sectionCode.trim().toUpperCase()}.`);
     } catch (err: any) {
       setFormError(err.message);
       toast.error('Update Failed', err.message);
@@ -517,8 +572,10 @@ export const AdminSectionsPage: React.FC = () => {
                 <button
                   type="button"
                   key={d.value}
+                  aria-pressed={isSelected}
+                  aria-label={`Select ${d.label}`}
                   onClick={() => selectSingleDay(d.value)}
-                  className={`py-1.5 px-2 rounded-lg text-xs font-medium transition border text-center ${
+                  className={`py-1.5 px-2 min-h-[36px] flex items-center justify-center rounded-lg text-xs font-medium transition border text-center focus:outline-none focus:ring-1 focus:ring-purple-400 ${
                     isSelected
                       ? 'bg-purple-600/30 border-purple-500 text-purple-200 font-bold shadow-xs'
                       : 'bg-slate-900 border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/[0.15]'
@@ -545,11 +602,12 @@ export const AdminSectionsPage: React.FC = () => {
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-[11px] text-slate-400 font-medium">Class Time Window:</label>
-            <div className="flex items-center bg-slate-900 border border-white/[0.08] p-0.5 rounded-lg text-[10px] font-mono">
+            <div className="flex items-center bg-slate-900 border border-white/[0.08] p-0.5 rounded-lg text-[10px] font-mono" role="group" aria-label="Time input method">
               <button
                 type="button"
+                aria-pressed={timeInputMode === 'manual'}
                 onClick={() => setTimeInputMode('manual')}
-                className={`px-2 py-1 rounded flex items-center gap-1 transition ${
+                className={`px-2 py-1 rounded flex items-center gap-1 transition focus:outline-none focus:ring-1 focus:ring-purple-400 ${
                   timeInputMode === 'manual'
                     ? 'bg-purple-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200'
@@ -561,8 +619,9 @@ export const AdminSectionsPage: React.FC = () => {
               </button>
               <button
                 type="button"
+                aria-pressed={timeInputMode === 'picker'}
                 onClick={() => setTimeInputMode('picker')}
-                className={`px-2 py-1 rounded flex items-center gap-1 transition ${
+                className={`px-2 py-1 rounded flex items-center gap-1 transition focus:outline-none focus:ring-1 focus:ring-purple-400 ${
                   timeInputMode === 'picker'
                     ? 'bg-purple-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200'
@@ -585,6 +644,7 @@ export const AdminSectionsPage: React.FC = () => {
                   </label>
                   <input
                     type="time"
+                    aria-label="Class Start Time"
                     value={form.scheduleTime || '08:00'}
                     onChange={(e) => setForm({ ...form, scheduleTime: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 [color-scheme:dark]"
@@ -597,6 +657,7 @@ export const AdminSectionsPage: React.FC = () => {
                   </label>
                   <input
                     type="time"
+                    aria-label="Class End Time"
                     value={form.scheduleEndTime || '10:00'}
                     onChange={(e) => setForm({ ...form, scheduleEndTime: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 [color-scheme:dark]"
@@ -608,13 +669,13 @@ export const AdminSectionsPage: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <InteractiveTimePicker
                 label="Start Time"
                 value={form.scheduleTime}
                 onChange={(t) => setForm({ ...form, scheduleTime: t })}
               />
-              <div className="hidden md:block text-slate-500 font-bold text-xs mt-4">→</div>
+              <div className="hidden sm:block text-slate-500 font-bold text-xs mt-4" aria-hidden="true">→</div>
               <InteractiveTimePicker
                 label="End Time"
                 value={form.scheduleEndTime}
@@ -730,10 +791,36 @@ export const AdminSectionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Sections Grid */}
-      {filteredSections.length === 0 ? (
+      {/* Fetch Error Banner */}
+      {fetchError && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-xs">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span><strong>Connection Alert:</strong> {fetchError}</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchSections}
+            disabled={isLoading}
+            className="text-xs shrink-0 border-rose-500/30 hover:bg-rose-500/10 text-rose-200 self-start sm:self-auto"
+          >
+            Retry Connection
+          </Button>
+        </div>
+      )}
+
+      {/* Sections Grid / Loading / Empty States */}
+      {isLoading && sections.length === 0 ? (
+        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-white/[0.05] text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+          <RefreshCw className="w-5 h-5 text-purple-400 animate-spin" />
+          <span>Loading course sections...</span>
+        </div>
+      ) : filteredSections.length === 0 ? (
         <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-white/[0.05] text-slate-500 text-xs">
-          {sections.length === 0
+          {fetchError
+            ? 'Unable to display sections due to a connection error. Click "Retry Connection" above.'
+            : sections.length === 0
             ? 'No course sections configured. Click "Create New Section" above to register one.'
             : `No course sections match "${searchQuery}".`}
         </div>
