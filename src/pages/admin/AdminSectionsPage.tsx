@@ -22,6 +22,7 @@ interface SectionItem {
   defaultCutThresholdMins: number;
   scheduleDay: string | null;
   scheduleTime: string | null;
+  scheduleEndTime: string | null;
   _count: { enrollments: number; sessions: number };
 }
 
@@ -42,21 +43,17 @@ const INDIVIDUAL_DAYS = [
   { value: 'Sun', label: 'Sunday' },
 ];
 
-/** Parse "Mon, Wed, Fri" or "MWF" or "Mon,Tue" into string array of days */
-const parseDays = (raw: string | null): string[] => {
-  if (!raw) return [];
+/** Parse single day or legacy multi-day string into a single selected day string */
+const parseSingleDay = (raw: string | null): string => {
+  if (!raw) return '';
   if (raw.includes(',')) {
-    return raw.split(',').map((s) => s.trim()).filter(Boolean);
+    return raw.split(',')[0].trim();
   }
-  // If legacy pattern like MWF, TTH, etc.
-  if (raw === 'MWF') return ['Mon', 'Wed', 'Fri'];
-  if (raw === 'TTH' || raw === 'TTh') return ['Tue', 'Thu'];
-  if (raw === 'SAT' || raw === 'Sat') return ['Sat'];
-  if (raw === 'SUN' || raw === 'Sun') return ['Sun'];
-  if (raw === 'DAILY') return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-  if (raw === 'MW') return ['Mon', 'Wed'];
-  if (raw === 'TF') return ['Tue', 'Fri'];
-  return [raw];
+  if (raw === 'MWF' || raw === 'DAILY' || raw === 'MW') return 'Mon';
+  if (raw === 'TTH' || raw === 'TTh' || raw === 'TF') return 'Tue';
+  if (raw === 'SAT') return 'Sat';
+  if (raw === 'SUN') return 'Sun';
+  return raw;
 };
 
 /** Format stored "08:30" or "13:45" to "8:30 AM" */
@@ -74,7 +71,8 @@ const formatDisplayTime = (timeStr: string | null | undefined): string => {
 const InteractiveTimePicker: React.FC<{
   value: string; // "HH:MM" 24h
   onChange: (val: string) => void;
-}> = ({ value, onChange }) => {
+  label?: string;
+}> = ({ value, onChange, label }) => {
   const currentVal = value || '08:00';
   const [hStr, mStr] = currentVal.split(':');
   const h24 = parseInt(hStr || '8', 10);
@@ -93,51 +91,54 @@ const InteractiveTimePicker: React.FC<{
   const spinBtnClass = 'w-7 h-5 flex items-center justify-center text-[10px] text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition';
 
   return (
-    <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-950 border border-slate-700/80 w-fit select-none">
-      {/* Hour Column */}
-      <div className="flex flex-col items-center">
-        <button type="button" onClick={() => update(h24 + 1, m)} className={spinBtnClass}>▲</button>
-        <span className="font-mono text-xs font-bold text-white px-2 py-1 bg-slate-900 border border-white/[0.08] rounded-md min-w-[28px] text-center">
-          {String(h12).padStart(2, '0')}
-        </span>
-        <button type="button" onClick={() => update(h24 - 1, m)} className={spinBtnClass}>▼</button>
-      </div>
+    <div className="flex flex-col gap-1">
+      {label && <span className="text-[10px] font-mono text-slate-400">{label}</span>}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-950 border border-slate-700/80 w-fit select-none">
+        {/* Hour Column */}
+        <div className="flex flex-col items-center">
+          <button type="button" onClick={() => update(h24 + 1, m)} className={spinBtnClass}>▲</button>
+          <span className="font-mono text-xs font-bold text-white px-2 py-1 bg-slate-900 border border-white/[0.08] rounded-md min-w-[28px] text-center">
+            {String(h12).padStart(2, '0')}
+          </span>
+          <button type="button" onClick={() => update(h24 - 1, m)} className={spinBtnClass}>▼</button>
+        </div>
 
-      <span className="font-mono text-sm font-bold text-slate-500 pb-1">:</span>
+        <span className="font-mono text-sm font-bold text-slate-500 pb-1">:</span>
 
-      {/* Minute Column (10-min increments or direct step) */}
-      <div className="flex flex-col items-center">
-        <button type="button" onClick={() => update(h24, m + 5)} className={spinBtnClass}>▲</button>
-        <span className="font-mono text-xs font-bold text-white px-2 py-1 bg-slate-900 border border-white/[0.08] rounded-md min-w-[28px] text-center">
-          {String(m).padStart(2, '0')}
-        </span>
-        <button type="button" onClick={() => update(h24, m - 5)} className={spinBtnClass}>▼</button>
-      </div>
+        {/* Minute Column (5-min increments) */}
+        <div className="flex flex-col items-center">
+          <button type="button" onClick={() => update(h24, m + 5)} className={spinBtnClass}>▲</button>
+          <span className="font-mono text-xs font-bold text-white px-2 py-1 bg-slate-900 border border-white/[0.08] rounded-md min-w-[28px] text-center">
+            {String(m).padStart(2, '0')}
+          </span>
+          <button type="button" onClick={() => update(h24, m - 5)} className={spinBtnClass}>▼</button>
+        </div>
 
-      {/* AM / PM Toggle */}
-      <div className="flex flex-col gap-1 ml-1">
-        <button
-          type="button"
-          onClick={() => { if (isPM) update(h24 - 12, m); }}
-          className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition ${
-            !isPM
-              ? 'bg-purple-600 text-white shadow-xs'
-              : 'text-slate-400 hover:text-slate-200 bg-white/[0.03]'
-          }`}
-        >
-          AM
-        </button>
-        <button
-          type="button"
-          onClick={() => { if (!isPM) update(h24 + 12, m); }}
-          className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition ${
-            isPM
-              ? 'bg-purple-600 text-white shadow-xs'
-              : 'text-slate-400 hover:text-slate-200 bg-white/[0.03]'
-          }`}
-        >
-          PM
-        </button>
+        {/* AM / PM Toggle */}
+        <div className="flex flex-col gap-1 ml-1">
+          <button
+            type="button"
+            onClick={() => { if (isPM) update(h24 - 12, m); }}
+            className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition ${
+              !isPM
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-slate-400 hover:text-slate-200 bg-white/[0.03]'
+            }`}
+          >
+            AM
+          </button>
+          <button
+            type="button"
+            onClick={() => { if (!isPM) update(h24 + 12, m); }}
+            className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition ${
+              isPM
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-slate-400 hover:text-slate-200 bg-white/[0.03]'
+            }`}
+          >
+            PM
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -151,8 +152,9 @@ const emptyForm = {
   facultyId: '',
   lateStr: '15',
   cutStr: '45',
-  selectedDays: [] as string[],
+  selectedDay: '', // exactly ONE day limit
   scheduleTime: '08:00',
+  scheduleEndTime: '10:00',
 };
 
 export const AdminSectionsPage: React.FC = () => {
@@ -225,28 +227,27 @@ export const AdminSectionsPage: React.FC = () => {
   const openEditModal = (sec: SectionItem) => {
     setSelectedSection(sec);
     setForm({
-      sectionCode:  sec.sectionCode,
-      courseName:   sec.courseName,
-      roomNumber:   sec.roomNumber,
-      terminalId:   sec.terminalId,
-      facultyId:    sec.facultyId,
-      lateStr:      String(sec.defaultLateThresholdMins),
-      cutStr:       String(sec.defaultCutThresholdMins),
-      selectedDays: parseDays(sec.scheduleDay),
-      scheduleTime: sec.scheduleTime || '08:00',
+      sectionCode:     sec.sectionCode,
+      courseName:      sec.courseName,
+      roomNumber:      sec.roomNumber,
+      terminalId:      sec.terminalId,
+      facultyId:       sec.facultyId,
+      lateStr:         String(sec.defaultLateThresholdMins),
+      cutStr:          String(sec.defaultCutThresholdMins),
+      selectedDay:     parseSingleDay(sec.scheduleDay),
+      scheduleTime:    sec.scheduleTime || '08:00',
+      scheduleEndTime: sec.scheduleEndTime || '10:00',
     });
     setFormError(null);
     setIsEditModalOpen(true);
   };
 
-  const toggleDay = (day: string) => {
-    setForm((prev) => {
-      const exists = prev.selectedDays.includes(day);
-      const updated = exists
-        ? prev.selectedDays.filter((d) => d !== day)
-        : [...prev.selectedDays, day];
-      return { ...prev, selectedDays: updated };
-    });
+  // Limit day to strictly one choice (clicking active day deselects it)
+  const selectSingleDay = (day: string) => {
+    setForm((prev) => ({
+      ...prev,
+      selectedDay: prev.selectedDay === day ? '' : day,
+    }));
   };
 
   /** Form review trigger */
@@ -265,7 +266,6 @@ export const AdminSectionsPage: React.FC = () => {
   const handleCreateSection = async () => {
     setIsSubmitting(true);
     try {
-      const scheduleDayFormatted = form.selectedDays.length > 0 ? form.selectedDays.join(', ') : null;
       const res = await fetch(`${API_V1_URL}/sections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -277,8 +277,9 @@ export const AdminSectionsPage: React.FC = () => {
           facultyId:                form.facultyId,
           defaultLateThresholdMins: parseInt(form.lateStr),
           defaultCutThresholdMins:  parseInt(form.cutStr),
-          scheduleDay:              scheduleDayFormatted,
+          scheduleDay:              form.selectedDay || null,
           scheduleTime:             form.scheduleTime || null,
+          scheduleEndTime:          form.scheduleEndTime || null,
         }),
       });
       const json = await res.json();
@@ -309,7 +310,6 @@ export const AdminSectionsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const scheduleDayFormatted = form.selectedDays.length > 0 ? form.selectedDays.join(', ') : null;
       const res = await fetch(`${API_V1_URL}/sections/${selectedSection.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -321,8 +321,9 @@ export const AdminSectionsPage: React.FC = () => {
           facultyId:                form.facultyId,
           defaultLateThresholdMins: late,
           defaultCutThresholdMins:  cut,
-          scheduleDay:              scheduleDayFormatted,
+          scheduleDay:              form.selectedDay || null,
           scheduleTime:             form.scheduleTime || null,
+          scheduleEndTime:          form.scheduleEndTime || null,
         }),
       });
       const json = await res.json();
@@ -436,27 +437,27 @@ export const AdminSectionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Schedule with Separate Days & Interactive Time Picker ── */}
+      {/* ── Schedule: One Day Only & Class Start/End Time ── */}
       <div className="p-3.5 rounded-xl bg-slate-950/60 border border-white/[0.06] space-y-3.5">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
           <Calendar className="w-3.5 h-3.5 text-purple-400" />
-          <span>Class Schedule <span className="text-slate-500 font-normal">(optional)</span></span>
+          <span>Class Schedule <span className="text-slate-500 font-normal">(1 day limit, with Start & End Time)</span></span>
         </div>
 
-        {/* Separated Individual Day Selection */}
+        {/* 1 Day Limit Radio-Style Selection */}
         <div>
-          <label className="block text-[11px] text-slate-400 mb-2">Class Days (Select each day individually):</label>
+          <label className="block text-[11px] text-slate-400 mb-2">Class Day (Select 1 Day Only):</label>
           <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
             {INDIVIDUAL_DAYS.map((d) => {
-              const isSelected = form.selectedDays.includes(d.value);
+              const isSelected = form.selectedDay === d.value;
               return (
                 <button
                   type="button"
                   key={d.value}
-                  onClick={() => toggleDay(d.value)}
+                  onClick={() => selectSingleDay(d.value)}
                   className={`py-1.5 px-2 rounded-lg text-xs font-medium transition border text-center ${
                     isSelected
-                      ? 'bg-purple-600/25 border-purple-500 text-purple-200 font-bold shadow-xs'
+                      ? 'bg-purple-600/30 border-purple-500 text-purple-200 font-bold shadow-xs'
                       : 'bg-slate-900 border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/[0.15]'
                   }`}
                 >
@@ -465,28 +466,42 @@ export const AdminSectionsPage: React.FC = () => {
               );
             })}
           </div>
-          {form.selectedDays.length > 0 && (
-            <div className="text-[11px] text-purple-300 font-mono mt-1.5 flex items-center gap-1.5">
+          {form.selectedDay ? (
+            <div className="text-[11px] text-purple-300 font-mono mt-2 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              <span>Selected: {form.selectedDays.join(', ')}</span>
+              <span>Assigned Schedule: Every <strong>{form.selectedDay}</strong></span>
+            </div>
+          ) : (
+            <div className="text-[11px] text-slate-500 font-mono mt-1.5">
+              No day selected (optional)
             </div>
           )}
         </div>
 
-        {/* Time Picker */}
+        {/* Start Time and End Time Interactive Pickers */}
         <div>
-          <label className="block text-[11px] text-slate-400 mb-1.5">Class Start Time:</label>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <label className="block text-[11px] text-slate-400 mb-2">Class Time Window:</label>
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
             <InteractiveTimePicker
+              label="Start Time"
               value={form.scheduleTime}
               onChange={(t) => setForm({ ...form, scheduleTime: t })}
             />
-            <div className="text-xs text-slate-400 font-mono">
-              Session start:{' '}
+            <div className="hidden md:block text-slate-500 font-bold text-xs mt-4">→</div>
+            <InteractiveTimePicker
+              label="End Time"
+              value={form.scheduleEndTime}
+              onChange={(t) => setForm({ ...form, scheduleEndTime: t })}
+            />
+          </div>
+          <div className="text-xs text-slate-400 font-mono mt-2 flex items-center gap-1.5">
+            <Clock className="w-3 h-3 text-sky-400" />
+            <span>
+              Schedule:{' '}
               <span className="text-sky-300 font-bold">
-                {formatDisplayTime(form.scheduleTime)}
+                {formatDisplayTime(form.scheduleTime)} - {formatDisplayTime(form.scheduleEndTime)}
               </span>
-            </div>
+            </span>
           </div>
         </div>
       </div>
@@ -641,7 +656,12 @@ export const AdminSectionsPage: React.FC = () => {
                       <span className="font-mono text-sky-300 text-[11px]">
                         {sec.scheduleDay && <span>{sec.scheduleDay}</span>}
                         {sec.scheduleDay && sec.scheduleTime && ' · '}
-                        {sec.scheduleTime && <span>{formatDisplayTime(sec.scheduleTime)}</span>}
+                        {sec.scheduleTime && (
+                          <span>
+                            {formatDisplayTime(sec.scheduleTime)}
+                            {sec.scheduleEndTime && ` - ${formatDisplayTime(sec.scheduleEndTime)}`}
+                          </span>
+                        )}
                       </span>
                     </div>
                   )}
@@ -696,14 +716,19 @@ export const AdminSectionsPage: React.FC = () => {
             <Row label="Course Title"   value={form.courseName} />
             <Row label="Room / Terminal" value={<span className="font-mono">{form.roomNumber} · {form.terminalId}</span>} />
             <Row label="Instructor"     value={selectedFaculty ? `Prof. ${selectedFaculty.firstName} ${selectedFaculty.lastName}` : '—'} />
-            {(form.selectedDays.length > 0 || form.scheduleTime) && (
+            {(form.selectedDay || form.scheduleTime) && (
               <Row
                 label="Schedule"
                 value={
                   <span className="font-mono text-sky-300">
-                    {form.selectedDays.length > 0 && form.selectedDays.join(', ')}
-                    {form.selectedDays.length > 0 && form.scheduleTime && ' · '}
-                    {form.scheduleTime && formatDisplayTime(form.scheduleTime)}
+                    {form.selectedDay && `Every ${form.selectedDay}`}
+                    {form.selectedDay && form.scheduleTime && ' · '}
+                    {form.scheduleTime && (
+                      <span>
+                        {formatDisplayTime(form.scheduleTime)}
+                        {form.scheduleEndTime && ` - ${formatDisplayTime(form.scheduleEndTime)}`}
+                      </span>
+                    )}
                   </span>
                 }
               />
