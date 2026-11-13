@@ -80,7 +80,15 @@ export const Modal: React.FC<ModalProps> = ({
       }
     };
 
-    // Initial focus on open
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  // Initial focus — fires ONLY when the modal opens (isOpen: false→true), not on re-renders
+  useEffect(() => {
+    if (!isOpen) return;
     const timer = setTimeout(() => {
       if (modalRef.current) {
         const focusable = modalRef.current.querySelectorAll<HTMLElement>(
@@ -93,13 +101,9 @@ export const Modal: React.FC<ModalProps> = ({
         }
       }
     }, 50);
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); // ← intentionally excludes onClose so re-renders don't re-fire initial focus
 
   if (!isOpen) return null;
 

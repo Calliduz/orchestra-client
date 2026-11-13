@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Users, UserPlus, Search, Edit2, Trash2, CheckCircle2, AlertCircle,
   RefreshCw, Upload, Download, CheckSquare, Square, Minus, FileText,
@@ -215,12 +215,12 @@ export const AdminUsersPage: React.FC = () => {
     }
   };
 
-  const closeModals = () => {
+  const closeModals = useCallback(() => {
     setIsAddModalOpen(false);
     setIsEditModalOpen(false);
     setIsDeleteModalOpen(false);
     stopHardwareEnrollment();
-  };
+  }, []);
 
   const fetchUsers = async () => {
     try {
