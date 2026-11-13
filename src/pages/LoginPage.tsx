@@ -161,53 +161,13 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Credentials */}
+          {/* Quick Demo Credentials — Admin only */}
           <div className="mt-8 pt-6 border-t border-slate-800">
             <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-3">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>1-Click Quick Login Profiles:</span>
             </div>
             <div className="grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => handleQuickLogin('faculty@orchestra.edu')}
-                className="text-left p-2.5 rounded-lg bg-slate-950/50 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between group disabled:opacity-60"
-              >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-blue-400 flex items-center gap-2">
-                    <span>Prof. Karlito Macadat</span>
-                    {activeQuickEmail === 'faculty@orchestra.edu' && (
-                      <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    )}
-                  </div>
-                  <div className="text-[11px] text-slate-400">faculty@orchestra.edu &bull; Pass: Password123!</div>
-                </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  FACULTY 1
-                </span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => handleQuickLogin('agbada.faculty@orchestra.edu')}
-                className="text-left p-2.5 rounded-lg bg-slate-950/50 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between group disabled:opacity-60"
-              >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-blue-400 flex items-center gap-2">
-                    <span>Prof. Justine Jay Agbada</span>
-                    {activeQuickEmail === 'agbada.faculty@orchestra.edu' && (
-                      <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    )}
-                  </div>
-                  <div className="text-[11px] text-slate-400">agbada.faculty@orchestra.edu &bull; Pass: Password123!</div>
-                </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  FACULTY 2
-                </span>
-              </button>
-
               <button
                 type="button"
                 disabled={isLoading}
