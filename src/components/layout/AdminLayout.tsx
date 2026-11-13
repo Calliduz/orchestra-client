@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Users, BookOpen, UserPlus, CreditCard, Terminal, LogOut, Shield, ChevronRight, GraduationCap, ArrowRight } from 'lucide-react';
+import { Users, BookOpen, UserPlus, CreditCard, Terminal, LogOut, Shield, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { useToast } from '../../context/ToastContext.js';
@@ -92,20 +92,6 @@ export const AdminLayout: React.FC = () => {
               </span>
             </div>
             <div className="text-slate-300 font-mono text-[11px] truncate">{terminalId}</div>
-          </div>
-
-          {/* Switch Portal Button */}
-          <div className="px-2.5 pb-2">
-            <button
-              onClick={() => navigate('/faculty')}
-              className="w-full py-1.5 px-3 rounded-xl bg-blue-600/10 hover:bg-blue-600/15 border border-blue-500/20 text-blue-400 text-xs font-medium flex items-center justify-between group transition"
-            >
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Faculty Portal View</span>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
           </div>
 
           {/* User bar */}
