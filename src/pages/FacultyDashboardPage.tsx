@@ -272,6 +272,8 @@ export const FacultyDashboardPage: React.FC = () => {
           setIsOverrideModalOpen(true);
         }}
         disabled={isLocked}
+        sectionCode={sessionData?.session?.sectionCode || sessionData?.section?.sectionCode}
+        courseName={sessionData?.session?.courseName || sessionData?.section?.courseName}
       />
 
       {/* Dynamic Threshold Sliders & Faculty Authority Card */}

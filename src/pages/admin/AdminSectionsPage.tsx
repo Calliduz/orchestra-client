@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, Plus, Edit2, Trash2, Clock, Users, RefreshCw,
   Search, ArrowRight, Calendar, CheckCircle2, AlertCircle,
-  Keyboard, SlidersHorizontal,
+  Keyboard, SlidersHorizontal, Copy, Check, Filter, Layers,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
@@ -261,7 +261,69 @@ export const AdminSectionsPage: React.FC = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Quick Filters & Live Window states
+  const [filterMode, setFilterMode] = useState<'all' | 'today' | 'room'>('all');
+  const [selectedRoom, setSelectedRoom] = useState<string>('all');
+  const [copiedSectionId, setCopiedSectionId] = useState<string | null>(null);
+  const [, setCurrentTimeTick] = useState<number>(Date.now());
+
+  // 30s heartbeat to keep live "Class Window Active" status real-time
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTimeTick(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const DAY_ABBREVS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const DAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  /** Check if a section's schedule matches today */
+  const isSectionScheduledToday = (sec: SectionItem): boolean => {
+    if (!sec.scheduleDay) return false;
+    const now = new Date();
+    const dayIndex = now.getDay();
+    const todayAbbrev = DAY_ABBREVS[dayIndex];
+    const todayFullName = DAY_FULL[dayIndex];
+    const raw = sec.scheduleDay.trim();
+    return (
+      raw.includes(todayAbbrev) ||
+      raw.toLowerCase().includes(todayFullName.toLowerCase()) ||
+      parseSingleDay(raw) === todayAbbrev
+    );
+  };
+
+  /** Check if current time is within section schedule window today */
+  const isClassWindowActive = (sec: SectionItem): boolean => {
+    if (!sec.scheduleDay || !sec.scheduleTime || !sec.scheduleEndTime) return false;
+    if (!isSectionScheduledToday(sec)) return false;
+
+    const now = new Date();
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+
+    const parseMin = (tStr: string) => {
+      const [h, m] = tStr.split(':');
+      return parseInt(h || '0', 10) * 60 + parseInt(m || '0', 10);
+    };
+
+    const startMin = parseMin(sec.scheduleTime);
+    const endMin = parseMin(sec.scheduleEndTime);
+
+    return currentMin >= startMin && currentMin <= endMin;
+  };
+
+  const availableRooms = Array.from(new Set(sections.map((s) => s.roomNumber).filter(Boolean))).sort();
+  const scheduledTodayCount = sections.filter(isSectionScheduledToday).length;
+
   const filteredSections = sections.filter((sec) => {
+    // 1. Quick Filter Mode
+    if (filterMode === 'today') {
+      if (!isSectionScheduledToday(sec)) return false;
+    } else if (filterMode === 'room') {
+      if (selectedRoom !== 'all' && sec.roomNumber !== selectedRoom) {
+        return false;
+      }
+    }
+
+    // 2. Search Query
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
     return (
@@ -273,6 +335,25 @@ export const AdminSectionsPage: React.FC = () => {
       sec.terminalId?.toLowerCase().includes(q)
     );
   });
+
+  const handleCopyCodeAndSchedule = (sec: SectionItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const scheduleFormatted = sec.scheduleDay
+      ? `${sec.scheduleDay} ${formatDisplayTime(sec.scheduleTime)}${sec.scheduleEndTime ? ` - ${formatDisplayTime(sec.scheduleEndTime)}` : ''}`
+      : 'No schedule set';
+    const textToCopy = `[${sec.sectionCode}] ${sec.courseName}\nSchedule: ${scheduleFormatted}\nLocation: ${sec.roomNumber} (${sec.terminalId})\nFaculty: Prof. ${sec.faculty?.firstName || ''} ${sec.faculty?.lastName || ''}`;
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(textToCopy).catch((err) => {
+        console.warn('Clipboard write failed:', err);
+      });
+    }
+    setCopiedSectionId(sec.id);
+    setTimeout(() => {
+      setCopiedSectionId((prev) => (prev === sec.id ? null : prev));
+    }, 2000);
+    toast.success('Copied to Clipboard', `Copied ${sec.sectionCode} code & schedule details.`);
+  };
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen]         = useState(false);
@@ -769,25 +850,126 @@ export const AdminSectionsPage: React.FC = () => {
       </div>
 
       {/* Search & Filter Ribbon */}
-      <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-slate-400">Sections Directory:</span>
-          <span className="px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 font-mono text-xs font-bold">
-            {sections.length} Configured
-          </span>
-          {searchQuery && (
-            <span className="text-xs text-slate-400 font-mono">({filteredSections.length} matched)</span>
-          )}
+      <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-slate-400">Sections Directory:</span>
+            <span className="px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 font-mono text-xs font-bold">
+              {sections.length} Configured
+            </span>
+            {(searchQuery || filterMode !== 'all') && (
+              <span className="text-xs text-slate-400 font-mono">({filteredSections.length} matched)</span>
+            )}
+          </div>
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search code, course, faculty, or room..."
+              className="w-full bg-slate-950 border border-white/[0.08] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500/40"
+            />
+          </div>
         </div>
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search code, course, faculty, or room..."
-            className="w-full bg-slate-950 border border-white/[0.08] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500/40"
-          />
+
+        {/* Quick Filter Chips */}
+        <div className="pt-2.5 border-t border-white/[0.05] flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-mono text-slate-400 mr-1 flex items-center gap-1.5">
+            <Filter className="w-3 h-3 text-purple-400" />
+            <span>Filter:</span>
+          </span>
+
+          {/* [All Sections] Chip */}
+          <button
+            type="button"
+            onClick={() => {
+              setFilterMode('all');
+              setSelectedRoom('all');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 border ${
+              filterMode === 'all'
+                ? 'bg-purple-600 border-purple-500 text-white font-semibold shadow-xs shadow-purple-600/30'
+                : 'bg-slate-950/80 border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/20'
+            }`}
+          >
+            <span>All Sections</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+              filterMode === 'all' ? 'bg-purple-800 text-purple-100' : 'bg-white/[0.06] text-slate-400'
+            }`}>
+              {sections.length}
+            </span>
+          </button>
+
+          {/* [Scheduled Today] Chip */}
+          <button
+            type="button"
+            onClick={() => setFilterMode('today')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 border ${
+              filterMode === 'today'
+                ? 'bg-purple-600 border-purple-500 text-white font-semibold shadow-xs shadow-purple-600/30'
+                : 'bg-slate-950/80 border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/20'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5 text-sky-400" />
+            <span>Scheduled Today ({DAY_FULL[new Date().getDay()]})</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+              filterMode === 'today' ? 'bg-purple-800 text-purple-100' : 'bg-white/[0.06] text-slate-400'
+            }`}>
+              {scheduledTodayCount}
+            </span>
+          </button>
+
+          {/* [By Department/Room] Chip */}
+          <button
+            type="button"
+            onClick={() => setFilterMode('room')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 border ${
+              filterMode === 'room'
+                ? 'bg-purple-600 border-purple-500 text-white font-semibold shadow-xs shadow-purple-600/30'
+                : 'bg-slate-950/80 border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/20'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-400" />
+            <span>By Department/Room</span>
+            {selectedRoom !== 'all' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
+                {selectedRoom}
+              </span>
+            )}
+          </button>
+
+          {/* Inline Room Selector dropdown */}
+          {filterMode === 'room' && (
+            <select
+              aria-label="Filter by specific Room"
+              value={selectedRoom}
+              onChange={(e) => setSelectedRoom(e.target.value)}
+              className="bg-slate-950 border border-purple-500/40 text-purple-200 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-400 font-mono"
+            >
+              <option value="all">All Rooms ({availableRooms.length})</option>
+              {availableRooms.map((room) => (
+                <option key={room} value={room}>
+                  Room: {room}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Clear Filters Button */}
+          {(filterMode !== 'all' || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setFilterMode('all');
+                setSelectedRoom('all');
+                setSearchQuery('');
+              }}
+              className="text-[11px] text-purple-400 hover:text-purple-300 underline font-mono ml-auto py-1"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -817,12 +999,56 @@ export const AdminSectionsPage: React.FC = () => {
           <span>Loading course sections...</span>
         </div>
       ) : filteredSections.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-white/[0.05] text-slate-500 text-xs">
-          {fetchError
-            ? 'Unable to display sections due to a connection error. Click "Retry Connection" above.'
-            : sections.length === 0
-            ? 'No course sections configured. Click "Create New Section" above to register one.'
-            : `No course sections match "${searchQuery}".`}
+        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-white/[0.05] flex flex-col items-center justify-center gap-3">
+          {fetchError ? (
+            <>
+              <AlertCircle className="w-8 h-8 text-rose-400" />
+              <div className="space-y-1 text-center">
+                <h4 className="text-sm font-semibold text-white">Connection Error</h4>
+                <p className="text-xs text-slate-400 max-w-sm">
+                  Unable to display sections due to a connection error. Click "Retry Connection" above.
+                </p>
+              </div>
+            </>
+          ) : sections.length === 0 ? (
+            <>
+              <BookOpen className="w-8 h-8 text-slate-500" />
+              <div className="space-y-1 text-center">
+                <h4 className="text-sm font-semibold text-white">No Course Sections</h4>
+                <p className="text-xs text-slate-400 max-w-sm">
+                  No course sections configured. Click "Create New Section" above to register one.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-slate-400">
+                <SlidersHorizontal className="w-6 h-6 text-purple-400" />
+              </div>
+              <div className="space-y-1 text-center">
+                <h4 className="text-sm font-semibold text-white">No Matching Course Sections</h4>
+                <p className="text-xs text-slate-400 max-w-md">
+                  No course sections match your current criteria
+                  {searchQuery ? ` matching "${searchQuery}"` : ''}
+                  {filterMode === 'today' ? ` scheduled for today (${DAY_FULL[new Date().getDay()]})` : ''}
+                  {filterMode === 'room' && selectedRoom !== 'all' ? ` in room "${selectedRoom}"` : ''}.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilterMode('all');
+                  setSelectedRoom('all');
+                }}
+                leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                className="mt-1 text-xs border-purple-500/30 text-purple-300 hover:bg-purple-500/10"
+              >
+                Reset All Filters
+              </Button>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -833,17 +1059,50 @@ export const AdminSectionsPage: React.FC = () => {
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <span className="font-mono text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-lg">
-                      {sec.sectionCode}
-                    </span>
-                    <h3 className="text-sm font-semibold text-white mt-2 leading-snug">{sec.courseName}</h3>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-lg">
+                        {sec.sectionCode}
+                      </span>
+                      {isClassWindowActive(sec) && (
+                        <span
+                          data-testid="class-window-active-badge"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 shadow-xs shadow-emerald-500/20 animate-in fade-in"
+                          title="Class Window Active (currently in scheduled session today)"
+                        >
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span>Class Window Active</span>
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-semibold text-white leading-snug">{sec.courseName}</h3>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => handleCopyCodeAndSchedule(sec, e)}
+                      className={`p-1.5 rounded-lg border transition flex items-center gap-1 text-[11px] font-medium ${
+                        copiedSectionId === sec.id
+                          ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                          : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] text-slate-400 hover:text-slate-200'
+                      }`}
+                      title="Copy Code & Schedule"
+                      aria-label="Copy Code & Schedule"
+                    >
+                      {copiedSectionId === sec.id ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                     <button
                       onClick={() => openEditModal(sec)}
                       className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-slate-400 hover:text-slate-200 transition"
                       title="Edit Section Settings"
+                      aria-label="Edit Section Settings"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
@@ -851,6 +1110,7 @@ export const AdminSectionsPage: React.FC = () => {
                       onClick={() => { setSelectedSection(sec); setIsDeleteModalOpen(true); }}
                       className="p-1.5 rounded-lg bg-rose-500/5 hover:bg-rose-500/15 border border-rose-500/10 hover:border-rose-500/30 text-rose-400 hover:text-rose-300 transition"
                       title="Delete Section"
+                      aria-label="Delete Section"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

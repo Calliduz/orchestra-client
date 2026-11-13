@@ -16,6 +16,9 @@ import {
   UserMinus,
   AlertTriangle,
   Check,
+  GraduationCap,
+  UserCheck,
+  Layers,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card.js';
 import { Button } from '../../components/ui/Button.js';
@@ -32,6 +35,10 @@ interface SectionOption {
   faculty: {
     firstName: string;
     lastName: string;
+  };
+  _count?: {
+    enrollments: number;
+    sessions?: number;
   };
 }
 
@@ -119,8 +126,12 @@ export const AdminEnrollmentsPage: React.FC = () => {
   const [isMassUnenrollModalOpen, setIsMassUnenrollModalOpen] = useState(false);
   const [isMassUnenrolling, setIsMassUnenrolling] = useState(false);
 
+  // Analytics State
+  const [totalStudentsCount, setTotalStudentsCount] = useState<number>(0);
+
   useEffect(() => {
     fetchSections();
+    fetchTotalStudents();
   }, []);
 
   useEffect(() => {
@@ -129,6 +140,20 @@ export const AdminEnrollmentsPage: React.FC = () => {
       fetchRoster(selectedSectionId);
     }
   }, [selectedSectionId]);
+
+  const fetchTotalStudents = async () => {
+    try {
+      const res = await fetch(`${API_V1_URL}/users?role=STUDENT`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setTotalStudentsCount(json.data.length);
+      }
+    } catch (err) {
+      console.error('Failed to fetch total students:', err);
+    }
+  };
 
   const fetchSections = async () => {
     try {
@@ -214,6 +239,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
       setIsEnrollModalOpen(false);
       setSelectedEnrollIds(new Set());
       fetchRoster(selectedSectionId);
+      fetchSections();
       toast.success('Enrollment Complete', `Successfully enrolled ${enrolledCount} student(s) into ${activeSection?.sectionCode || 'section'}.`);
     } catch (err: any) {
       setModalError(err.message);
@@ -247,6 +273,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
         return next;
       });
       fetchRoster(selectedSectionId);
+      fetchSections();
       toast.success('Student Unenrolled', `${targetStudentName} removed from ${activeSection?.sectionCode || 'section'}.`);
     } catch (err: any) {
       toast.error('Unenroll Failed', err.message);
@@ -281,6 +308,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
       setIsMassUnenrollModalOpen(false);
       setSelectedRosterIds(new Set());
       fetchRoster(selectedSectionId);
+      fetchSections();
       toast.success('Mass Unenroll Complete', `Removed ${removedCount} student(s) from ${activeSection?.sectionCode || 'section'}.`);
     } catch (err: any) {
       toast.error('Mass Unenroll Failed', err.message);
@@ -355,6 +383,11 @@ export const AdminEnrollmentsPage: React.FC = () => {
     }
   };
 
+  const totalEnrollmentsAcrossSections = sections.reduce(
+    (acc, s) => acc + (s._count?.enrollments || 0),
+    0
+  );
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
@@ -374,6 +407,8 @@ export const AdminEnrollmentsPage: React.FC = () => {
             size="sm"
             onClick={() => {
               fetchRoster(selectedSectionId);
+              fetchSections();
+              fetchTotalStudents();
               toast.info('Roster Synced', `Roster updated for ${activeSection?.sectionCode || 'section'}.`);
             }}
             disabled={isLoading}
@@ -392,6 +427,60 @@ export const AdminEnrollmentsPage: React.FC = () => {
           >
             Enroll Students
           </Button>
+        </div>
+      </div>
+
+      {/* Analytics Summary Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Total Enrollments */}
+        <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm relative overflow-hidden group hover:border-white/[0.12] transition shadow-xs">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <span>Total Enrollments</span>
+            <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
+              <UserCheck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-purple-300 mt-2 font-mono">
+            {totalEnrollmentsAcrossSections}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+            <span>Active student classroom seats</span>
+          </div>
+        </div>
+
+        {/* Total Students */}
+        <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm relative overflow-hidden group hover:border-white/[0.12] transition shadow-xs">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <span>Total Students</span>
+            <div className="p-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-sky-300 mt-2 font-mono">
+            {totalStudentsCount}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+            <span>Registered institutional students</span>
+          </div>
+        </div>
+
+        {/* Active Sections */}
+        <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/[0.06] backdrop-blur-sm relative overflow-hidden group hover:border-white/[0.12] transition shadow-xs">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <span>Active Sections</span>
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <Layers className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-300 mt-2 font-mono">
+            {sections.length}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>Configured course sections</span>
+          </div>
         </div>
       </div>
 
