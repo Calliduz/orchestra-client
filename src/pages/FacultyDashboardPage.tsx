@@ -45,6 +45,8 @@ interface PendingExcuseItem {
     id: string;
     status: string;
     tapTimestamp: string | null;
+    egressTimestamp?: string | null;
+    totalMinutesAttended?: number | null;
     createdAt: string;
     session: {
       id: string;

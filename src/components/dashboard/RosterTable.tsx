@@ -30,6 +30,8 @@ export interface StudentRosterRow {
   status: BadgeStatus;
   authMethod?: string | null;
   tapTimestamp?: string | null;
+  egressTimestamp?: string | null;
+  totalMinutesAttended?: number | null;
   isManualOverride?: boolean;
   overrideReason?: string | null;
   reverseReceiptSent?: boolean;
@@ -55,6 +57,30 @@ const AVATAR_PALETTES = [
   'from-teal-600/30 to-emerald-600/30 text-teal-300 border-teal-500/40',
   'from-indigo-600/30 to-sky-600/30 text-indigo-300 border-indigo-500/40',
 ];
+
+function formatDuration(minutes?: number | null, timeIn?: string | null, timeOut?: string | null): string {
+  if (minutes !== undefined && minutes !== null && minutes >= 0) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m`;
+    }
+    return `${mins} mins`;
+  }
+  if (timeIn && timeOut) {
+    const diff = Math.max(0, Math.round((new Date(timeOut).getTime() - new Date(timeIn).getTime()) / 60000));
+    const hrs = Math.floor(diff / 60);
+    const mins = diff % 60;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m`;
+    }
+    return `${mins} mins`;
+  }
+  if (timeIn && !timeOut) {
+    return 'In Session';
+  }
+  return '--';
+}
 
 function getAvatarPalette(key: string): string {
   let hash = 0;
@@ -163,16 +189,18 @@ export const RosterTable: React.FC<RosterTableProps> = ({
       'Last Name',
       'Email Address',
       'Attendance Status',
-      'Check-in Timestamp',
+      'Time In (Ingress)',
+      'Time Out (Egress)',
+      'Duration Attended',
       'Ingress Method',
       'RFID UID',
       'Manual Override',
       'Override Reason',
-      'Reverse Receipt Sent',
+      'Receipt Sent',
     ];
 
     const rows = exportTarget.map((student) => {
-      const formattedTime = student.tapTimestamp
+      const formattedTimeIn = student.tapTimestamp
         ? new Date(student.tapTimestamp).toLocaleString('en-US', {
             year: 'numeric',
             month: '2-digit',
@@ -183,6 +211,22 @@ export const RosterTable: React.FC<RosterTableProps> = ({
             hour12: true,
           })
         : 'N/A';
+
+      const formattedTimeOut = student.egressTimestamp
+        ? new Date(student.egressTimestamp).toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true,
+          })
+        : student.tapTimestamp
+        ? (disabled ? 'No Exit Tap' : 'In Session')
+        : 'N/A';
+
+      const durationStr = formatDuration(student.totalMinutesAttended, student.tapTimestamp, student.egressTimestamp);
 
       const methodLabel =
         student.authMethod === 'RFID_TAP'
@@ -198,7 +242,9 @@ export const RosterTable: React.FC<RosterTableProps> = ({
         escapeCsv(student.lastName),
         escapeCsv(student.email),
         escapeCsv(student.status),
-        escapeCsv(formattedTime),
+        escapeCsv(formattedTimeIn),
+        escapeCsv(formattedTimeOut),
+        escapeCsv(durationStr),
         escapeCsv(methodLabel),
         escapeCsv(student.rfidUid ? `0x${student.rfidUid}` : 'N/A'),
         escapeCsv(student.isManualOverride ? 'Yes' : 'No'),
@@ -412,17 +458,19 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           <thead className="bg-slate-900/50 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-white/[0.05]">
             <tr>
               <th className="py-3 px-3.5 w-10 text-center">#</th>
-              <th className="py-3 px-3.5 min-w-[220px]">STUDENT &amp; CREDENTIAL</th>
-              <th className="py-3 px-3 whitespace-nowrap min-w-[95px]">RFID UID</th>
-              <th className="py-3 px-3 whitespace-nowrap min-w-[120px]">CHECK-IN &amp; INGRESS</th>
-              <th className="py-3 px-3 whitespace-nowrap min-w-[110px]">STATUS</th>
+              <th className="py-3 px-3.5 min-w-[200px]">STUDENT &amp; CREDENTIAL</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[90px]">RFID UID</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[110px]">TIME IN</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[110px]">TIME OUT</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[105px]">DURATION</th>
+              <th className="py-3 px-3 whitespace-nowrap min-w-[105px]">STATUS</th>
               <th className="py-3 px-3.5 text-right whitespace-nowrap w-24">ACTION</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.03] text-xs">
             {filteredRoster.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-14 text-center text-slate-400 font-sans">
+                <td colSpan={8} className="py-14 text-center text-slate-400 font-sans">
                   <div className="flex flex-col items-center justify-center gap-3 max-w-sm mx-auto">
                     <div className="w-12 h-12 rounded-2xl bg-slate-800/60 border border-white/[0.06] flex items-center justify-center text-slate-400 shadow-inner">
                       <Users className="w-6 h-6" />
@@ -548,6 +596,58 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                             PENDING
                           </div>
                         </div>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-3 whitespace-nowrap font-mono">
+                      {student.egressTimestamp ? (
+                        <div>
+                          <div className="text-hud-text font-bold text-xs num-tabular text-teal-400">
+                            {new Date(student.egressTimestamp)
+                              .toLocaleTimeString('en-US', {
+                                hour12: true,
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                second: '2-digit',
+                              })
+                              .replace(/[\s\u202F]+/g, ' ')}
+                          </div>
+                          <div className="text-[10px] text-teal-500 font-sans font-semibold mt-0.5">
+                            EGRESS
+                          </div>
+                        </div>
+                      ) : student.tapTimestamp ? (
+                        <div>
+                          {disabled ? (
+                            <span className="text-hud-muted text-xs">No Exit Tap</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              In Class
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-hud-muted text-xs">--:--:--</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
+                            PENDING
+                          </div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-3 whitespace-nowrap font-mono">
+                      {student.egressTimestamp || (student.totalMinutesAttended !== null && student.totalMinutesAttended !== undefined) ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/15 text-sky-200 border border-sky-500/30">
+                          <Clock className="w-3.5 h-3.5 text-sky-400" />
+                          {formatDuration(student.totalMinutesAttended, student.tapTimestamp, student.egressTimestamp)}
+                        </span>
+                      ) : student.tapTimestamp ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-slate-800/60 text-slate-300 border border-white/[0.06]">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          {disabled ? 'Session Closed' : 'In Session'}
+                        </span>
+                      ) : (
+                        <span className="text-hud-muted text-xs">--</span>
                       )}
                     </td>
                     <td className="py-3.5 px-3 whitespace-nowrap">

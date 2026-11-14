@@ -38,10 +38,13 @@ import { sounds } from '../../utils/audio.js';
 interface AttendanceLogItem {
   id: string;
   timestamp: string;
+  egressTimestamp?: string | null;
+  totalMinutesAttended?: number | null;
   status: 'PRESENT' | 'LATE' | 'EXCUSED' | 'ABSENT' | 'CUT';
   authMethod: 'RFID_TAP' | 'KEYPAD_OTP' | 'MANUAL_OVERRIDE' | string;
   session: {
     id?: string;
+    status?: string;
     courseCode: string;
     courseName: string;
     room?: string;
@@ -62,6 +65,30 @@ interface KpiData {
   excused: number;
   absent: number;
   rate: number;
+}
+
+function formatDuration(minutes?: number | null, timeIn?: string | null, timeOut?: string | null): string {
+  if (minutes !== undefined && minutes !== null && minutes >= 0) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m`;
+    }
+    return `${mins} mins`;
+  }
+  if (timeIn && timeOut) {
+    const diff = Math.max(0, Math.round((new Date(timeOut).getTime() - new Date(timeIn).getTime()) / 60000));
+    const hrs = Math.floor(diff / 60);
+    const mins = diff % 60;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m`;
+    }
+    return `${mins} mins`;
+  }
+  if (timeIn && !timeOut) {
+    return 'In Session';
+  }
+  return '--';
 }
 
 export const StudentPortalPage: React.FC = () => {
@@ -357,7 +384,9 @@ export const StudentPortalPage: React.FC = () => {
     const headers = [
       'Log ID',
       'Date',
-      'Time',
+      'Time In',
+      'Time Out',
+      'Duration Attended',
       'Course Code',
       'Course Name',
       'Room / Node',
@@ -372,16 +401,29 @@ export const StudentPortalPage: React.FC = () => {
         month: '2-digit',
         day: '2-digit',
       });
-      const timeStr = d.toLocaleTimeString('en-US', {
+      const timeInStr = d.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
       });
+      const timeOutStr = log.egressTimestamp
+        ? new Date(log.egressTimestamp).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })
+        : log.timestamp && log.status !== 'ABSENT' && log.session?.status !== 'CLOSED'
+        ? 'In Session'
+        : 'N/A';
+
+      const durationStr = formatDuration(log.totalMinutesAttended, log.timestamp, log.egressTimestamp);
 
       return [
         `"${log.id}"`,
         `"${dateStr}"`,
-        `"${timeStr}"`,
+        `"${timeInStr}"`,
+        `"${timeOutStr}"`,
+        `"${durationStr}"`,
         `"${(log.session.courseCode || '').replace(/"/g, '""')}"`,
         `"${(log.session.courseName || '').replace(/"/g, '""')}"`,
         `"${(log.session.room || log.session.terminalId || 'Classroom').replace(/"/g, '""')}"`,
@@ -945,9 +987,12 @@ export const StudentPortalPage: React.FC = () => {
             <table className="w-full text-left text-xs text-slate-300 border-collapse">
               <thead>
                 <tr className="border-b border-white/[0.06] text-slate-400 uppercase font-mono text-[10px]">
-                  <th className="py-3 px-3">Date &amp; Time</th>
+                  <th className="py-3 px-3">Date</th>
                   <th className="py-3 px-3">Course / Subject</th>
                   <th className="py-3 px-3">Room / Node</th>
+                  <th className="py-3 px-3">Time In</th>
+                  <th className="py-3 px-3">Time Out</th>
+                  <th className="py-3 px-3">Duration</th>
                   <th className="py-3 px-3">Ingress Method</th>
                   <th className="py-3 px-3 text-right">Status</th>
                   <th className="py-3 px-3 text-right">Excuse Slip</th>
@@ -973,7 +1018,6 @@ export const StudentPortalPage: React.FC = () => {
                     >
                       <td className="py-3 px-3 whitespace-nowrap">
                         <div className="font-medium text-white">{formattedDate}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{formattedTime}</div>
                       </td>
                       <td className="py-3 px-3">
                         <div className="font-bold text-white flex items-center gap-1.5">
@@ -984,6 +1028,45 @@ export const StudentPortalPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap font-mono text-slate-400">
                         {log.session.room || log.session.terminalId || 'Classroom Terminal'}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap font-mono">
+                        {log.timestamp ? (
+                          <div className="font-medium text-slate-200">{formattedTime}</div>
+                        ) : (
+                          <div className="text-slate-500 text-[11px]">--:--</div>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap font-mono">
+                        {log.egressTimestamp ? (
+                          <div className="font-medium text-teal-300">
+                            {new Date(log.egressTimestamp).toLocaleTimeString(undefined, {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        ) : log.timestamp && log.status !== 'ABSENT' && log.session?.status !== 'CLOSED' ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-sans font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            In Class
+                          </span>
+                        ) : (
+                          <div className="text-slate-500 text-[11px]">--:--</div>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap font-mono">
+                        {log.egressTimestamp || (log.totalMinutesAttended !== null && log.totalMinutesAttended !== undefined) ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-sky-500/15 text-sky-200 border border-sky-500/30">
+                            <Clock className="w-3 h-3 text-sky-400" />
+                            {formatDuration(log.totalMinutesAttended, log.timestamp, log.egressTimestamp)}
+                          </span>
+                        ) : log.timestamp && log.status !== 'ABSENT' && log.session?.status !== 'CLOSED' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-800/60 text-slate-300 border border-white/[0.06]">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            In Session
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 text-[11px]">--</span>
+                        )}
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap">
                         {getAuthMethodIcon(log.authMethod)}
