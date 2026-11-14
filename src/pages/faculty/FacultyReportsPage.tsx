@@ -15,6 +15,8 @@ import {
   Layers,
   Clock,
   Sparkles,
+  GraduationCap,
+  Building2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button.js';
 import { Modal } from '../../components/ui/Modal.js';
@@ -37,9 +39,10 @@ interface SessionReportItem {
     courseName: string;
     roomNumber: string;
   };
-  _count: {
+  _count?: {
     attendanceLogs: number;
   };
+  attendanceLogs?: any[];
 }
 
 interface SectionOption {
@@ -149,9 +152,50 @@ export const FacultyReportsPage: React.FC = () => {
   };
 
   // Downloads
-  const downloadReport = (sessionId: string, format: 'pdf' | 'csv' | 'xlsx') => {
-    toast.info('Export Initiated', `Generating ${format.toUpperCase()} attendance report...`);
-    window.open(`${API_V1_URL}/sessions/${sessionId}/export/${format}`, '_blank');
+  const downloadReport = async (sessionId: string, format: 'pdf' | 'csv' | 'xlsx' | 'canvas' | 'moodle' | 'institutional-pdf') => {
+    const labels: Record<string, string> = {
+      pdf: 'PDF Master Roster',
+      csv: 'Standard CSV',
+      xlsx: 'Excel Spreadsheet',
+      canvas: 'Canvas SIS Gradebook CSV',
+      moodle: 'Moodle Attendance CSV',
+      'institutional-pdf': 'Formal Institutional Master PDF',
+    };
+    toast.info('Export Initiated', `Generating ${labels[format] || format.toUpperCase()}...`);
+    try {
+      const res = await fetch(`${API_V1_URL}/sessions/${sessionId}/export/${format}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || `Export failed with HTTP ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const ext = format === 'xlsx' ? 'xlsx' : format.includes('pdf') ? 'pdf' : 'csv';
+      const disposition = res.headers.get('Content-Disposition');
+      let filename = `ORCHESTRA_${format.toUpperCase()}_${sessionId.slice(0, 8)}.${ext}`;
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename=(?:["']?)([^"';]+)(?:["']?)/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Download Complete', `Exported ${labels[format] || format.toUpperCase()}`);
+    } catch (err: any) {
+      console.error('Export download error:', err);
+      toast.error('Export Failed', err.message);
+    }
   };
 
   const openEmailModal = (sessionId: string) => {
@@ -408,12 +452,42 @@ export const FacultyReportsPage: React.FC = () => {
                       </td>
 
                       <td className="py-3 px-4 font-mono text-slate-300">
-                        <span className="font-bold text-white text-sm">{sess._count.attendanceLogs}</span>{' '}
+                        <span className="font-bold text-white text-sm">{sess._count?.attendanceLogs ?? sess.attendanceLogs?.length ?? 0}</span>{' '}
                         <span className="text-slate-500 text-[11px]">Logged</span>
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1 justify-end p-1 rounded-xl bg-slate-950/70 border border-white/[0.08] shadow-xs">
+                        <div className="inline-flex flex-wrap items-center gap-1 justify-end p-1 rounded-xl bg-slate-950/70 border border-white/[0.08] shadow-xs">
+                          {/* Institutional Master PDF Button */}
+                          <button
+                            onClick={() => downloadReport(sess.id, 'institutional-pdf')}
+                            className="px-2 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition-all text-[11px] font-mono font-medium flex items-center gap-1 active:scale-95"
+                            title="Download Formal Institutional Master PDF with University Header & Signatures"
+                          >
+                            <Building2 className="w-3 h-3 text-indigo-400" />
+                            <span>INSTITUTIONAL PDF</span>
+                          </button>
+
+                          {/* Canvas SIS CSV Export */}
+                          <button
+                            onClick={() => downloadReport(sess.id, 'canvas')}
+                            className="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all text-[11px] font-mono font-medium flex items-center gap-1 active:scale-95"
+                            title="Download Canvas SIS Gradebook CSV (Student ID, Name, Grade / 100)"
+                          >
+                            <GraduationCap className="w-3 h-3 text-amber-400" />
+                            <span>CANVAS</span>
+                          </button>
+
+                          {/* Moodle Attendance Plugin CSV Export */}
+                          <button
+                            onClick={() => downloadReport(sess.id, 'moodle')}
+                            className="px-2 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/30 transition-all text-[11px] font-mono font-medium flex items-center gap-1 active:scale-95"
+                            title="Download Moodle Attendance Plugin CSV (P, L, E, A notation)"
+                          >
+                            <Layers className="w-3 h-3 text-orange-400" />
+                            <span>MOODLE</span>
+                          </button>
+
                           {/* Excel Export Button */}
                           <button
                             onClick={() => downloadReport(sess.id, 'xlsx')}

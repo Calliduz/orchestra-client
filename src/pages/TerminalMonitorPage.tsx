@@ -1,15 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, Radio, Shield, Zap, RefreshCw, Keyboard, Play, CheckCircle2, AlertTriangle, Terminal, Volume2, VolumeX, WifiOff, HardDrive, UploadCloud } from 'lucide-react';
+import { Cpu, Radio, Shield, Zap, RefreshCw, Keyboard, Play, CheckCircle2, AlertTriangle, Terminal, Volume2, VolumeX, WifiOff, HardDrive, UploadCloud, Wifi, Activity, Clock, Sliders, BellOff, Bell } from 'lucide-react';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
 import { Badge } from '../components/ui/Badge.js';
 import { useSocket } from '../context/SocketContext.js';
+import { useAuth } from '../context/AuthContext.js';
 import { API_V1_URL } from '../config/api.js';
 import { sounds } from '../utils/audio.js';
 
+export interface FleetTerminal {
+  terminalId: string;
+  rssi: number;
+  freeHeap: number;
+  uptimeSec: number;
+  readerStatus: string;
+  version: string;
+  lastSeen: string | null;
+  status: 'ONLINE' | 'WEAK_RSSI' | 'OFFLINE';
+  roomNumber?: string;
+  isQuietMode?: boolean;
+}
+
 export const TerminalMonitorPage: React.FC = () => {
-  const { terminalId } = useSocket();
+  const { socket, terminalId, setTerminalId } = useSocket();
+  const { token } = useAuth();
   const [terminalStatus, setTerminalStatus] = useState<any>(null);
+  const [fleetTerminals, setFleetTerminals] = useState<FleetTerminal[]>([]);
+  const [isFleetLoading, setIsFleetLoading] = useState(false);
+  const [isQuietModeToggling, setIsQuietModeToggling] = useState(false);
   const [authorizedFaculty, setAuthorizedFaculty] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [oledMessage, setOledMessage] = useState<string>('LOCKED\nSCAN MASTER BADGE');
@@ -32,6 +50,7 @@ export const TerminalMonitorPage: React.FC = () => {
   useEffect(() => {
     document.title = 'ORCHESTRA | Edge Hardware Diagnostic Matrix';
     fetchTerminalStatus();
+    fetchFleetTerminals();
 
     // Check if user navigated here with a minted PIN from StudentOtpPage
     const autoOtp = localStorage.getItem('orchestra_ingress_otp');
@@ -55,6 +74,40 @@ export const TerminalMonitorPage: React.FC = () => {
 
     window.addEventListener('orchestra:test_keypad', handleKeypadBridge);
     window.addEventListener('orchestra:sound_toggled', handleSoundToggle);
+
+    // Socket.io telemetry listeners for live fleet updates
+    if (socket) {
+      socket.on('terminal:heartbeat', (telemetry: FleetTerminal) => {
+        setFleetTerminals((prev) => {
+          const idx = prev.findIndex((t) => t.terminalId === telemetry.terminalId);
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = telemetry;
+            return updated;
+          }
+          return [...prev, telemetry];
+        });
+        if (telemetry.terminalId === terminalId) {
+          addSimLog(`[HEARTBEAT] ${telemetry.terminalId} -> RSSI: ${telemetry.rssi}dBm | Heap: ${(telemetry.freeHeap / 1024).toFixed(0)}KB | Uptime: ${telemetry.uptimeSec}s`);
+        }
+      });
+
+      socket.on('terminal:quiet-mode', ({ terminalId: tid, isQuietMode: qm }: { terminalId: string; isQuietMode: boolean }) => {
+        setFleetTerminals((prev) =>
+          prev.map((t) => (t.terminalId === tid ? { ...t, isQuietMode: qm } : t))
+        );
+        if (tid === terminalId) {
+          setTerminalStatus((prev: any) => ({ ...prev, isQuietMode: qm }));
+          addSimLog(`[QUIET_MODE] Terminal ${tid} quiet mode set to ${qm ? 'DAMPENED' : 'NORMAL'}`);
+        }
+      });
+    }
+
+    // Live relative time tick for last-seen timer
+    const fleetTicker = window.setInterval(() => {
+      setFleetTerminals((prev) => [...prev]);
+    }, 5000);
+
     return () => {
       window.removeEventListener('orchestra:test_keypad', handleKeypadBridge);
       window.removeEventListener('orchestra:sound_toggled', handleSoundToggle);
@@ -62,8 +115,82 @@ export const TerminalMonitorPage: React.FC = () => {
         clearInterval(cooldownIntervalRef.current);
         cooldownIntervalRef.current = null;
       }
+      clearInterval(fleetTicker);
+      if (socket) {
+        socket.off('terminal:heartbeat');
+        socket.off('terminal:quiet-mode');
+      }
     };
-  }, [terminalId]);
+  }, [terminalId, socket]);
+
+  const fetchFleetTerminals = async () => {
+    try {
+      setIsFleetLoading(true);
+      const res = await fetch(`${API_V1_URL}/hardware/terminals`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'x-api-key': 'ORCHESTRA_ESP32_SECURE_TOKEN_2026',
+        },
+      });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setFleetTerminals(json.data);
+      }
+    } catch (err) {
+      console.error('Error fetching fleet terminals:', err);
+    } finally {
+      setIsFleetLoading(false);
+    }
+  };
+
+  const toggleQuietMode = async (targetId?: string) => {
+    const tid = targetId || terminalId;
+    try {
+      setIsQuietModeToggling(true);
+      const currentTerminal = fleetTerminals.find((t) => t.terminalId === tid);
+      const currentQuiet = currentTerminal ? currentTerminal.isQuietMode : terminalStatus?.isQuietMode || false;
+      const res = await fetch(`${API_V1_URL}/hardware/quiet-mode`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'x-api-key': 'ORCHESTRA_ESP32_SECURE_TOKEN_2026',
+        },
+        body: JSON.stringify({
+          terminalId: tid,
+          enabled: !currentQuiet,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setTerminalStatus((prev: any) => ({ ...prev, isQuietMode: json.data?.isQuietMode }));
+        addSimLog(`>> [QUIET_MODE] Toggled quiet mode on ${tid} to ${json.data?.isQuietMode ? 'DAMPENED' : 'NORMAL'}`);
+        fetchFleetTerminals();
+      }
+    } catch (err: any) {
+      addSimLog(`!! [QUIET_MODE_ERR] ${err.message}`);
+    } finally {
+      setIsQuietModeToggling(false);
+    }
+  };
+
+  const formatLastSeen = (isoStr: string | null): string => {
+    if (!isoStr) return 'Never seen';
+    const diffSec = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+    if (diffSec < 5) return 'Just now';
+    if (diffSec < 60) return `${diffSec}s ago`;
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    return `${Math.floor(diffSec / 3600)}h ago`;
+  };
+
+  const formatUptime = (seconds: number): string => {
+    if (!seconds || seconds <= 0) return '0s';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    return `${mins}m ${secs}s`;
+  };
 
   const loadKeypadOtp = (pin: string) => {
     setIsOtpMode(true);
@@ -84,7 +211,12 @@ export const TerminalMonitorPage: React.FC = () => {
   const fetchTerminalStatus = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_V1_URL}/hardware/status/${terminalId}`);
+      const res = await fetch(`${API_V1_URL}/hardware/status/${terminalId}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'x-api-key': 'ORCHESTRA_ESP32_SECURE_TOKEN_2026',
+        },
+      });
       const json = await res.json();
       setTerminalStatus(json);
       if (json.authorizedFaculty) {
@@ -497,6 +629,21 @@ export const TerminalMonitorPage: React.FC = () => {
             status={terminalStatus?.isLocked ? 'LOCKED' : 'OPEN'}
             label={terminalStatus?.isLocked ? 'STATE: LOCKED' : 'STATE: OPEN'}
           />
+          {/* Lecture Quiet Mode Quick Toggle */}
+          <button
+            type="button"
+            disabled={isQuietModeToggling}
+            onClick={() => toggleQuietMode(terminalId)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 ${
+              terminalStatus?.isQuietMode
+                ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-sm'
+                : 'bg-hud-surface text-hud-secondary border-hud-border/70 hover:bg-hud-hover'
+            }`}
+            title="Toggle Lecture Quiet Mode (Dampen buzzer clicks & chimes)"
+          >
+            {terminalStatus?.isQuietMode ? <BellOff className="w-3.5 h-3.5 text-purple-400" /> : <Bell className="w-3.5 h-3.5 text-slate-400" />}
+            <span>{terminalStatus?.isQuietMode ? 'Quiet Mode: ON' : 'Quiet Mode: OFF'}</span>
+          </button>
           <button
             type="button"
             onClick={toggleAudio}
@@ -512,14 +659,190 @@ export const TerminalMonitorPage: React.FC = () => {
           <Button
             size="sm"
             variant="outline"
-            onClick={fetchTerminalStatus}
-            isLoading={isLoading}
-            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+            onClick={() => {
+              fetchTerminalStatus();
+              fetchFleetTerminals();
+            }}
+            isLoading={isLoading || isFleetLoading}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading || isFleetLoading ? 'animate-spin' : ''}`} />}
           >
             Poll State
           </Button>
         </div>
       </div>
+
+      {/* P5: Terminal Fleet Health Monitoring & Telemetry Watchdog */}
+      <Card
+        title="Terminal Fleet Health Monitoring & Telemetry Watchdog"
+        subtitle="Real-time multi-terminal edge watchdog, Wi-Fi RSSI watchdog, and memory telemetry stream"
+        action={
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">
+              Fleet Nodes: {fleetTerminals.length}
+            </span>
+          </div>
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {fleetTerminals.length === 0 ? (
+            <div className="col-span-full py-8 text-center text-xs font-mono text-slate-500">
+              No terminals registered in fleet watchdog. Polling background edge heartbeats...
+            </div>
+          ) : (
+            fleetTerminals.map((node) => {
+              const isSelected = node.terminalId === terminalId;
+              const isOnline = node.status === 'ONLINE';
+              const isWeak = node.status === 'WEAK_RSSI';
+              const isOffline = node.status === 'OFFLINE';
+
+              // Heap percentage calculation (typical 300KB usable dynamic heap on ESP32)
+              const heapKb = Math.round(node.freeHeap / 1024);
+              const heapPercent = Math.min(100, Math.max(5, Math.round((node.freeHeap / 300000) * 100)));
+
+              return (
+                <div
+                  key={node.terminalId}
+                  className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+                    isSelected
+                      ? 'bg-slate-900/90 border-sky-500/60 shadow-lg ring-1 ring-sky-500/30'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  {/* Card Header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-extrabold text-sm text-white">{node.terminalId}</span>
+                        {isSelected && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold uppercase">
+                            Mirror Active
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-body mt-0.5">
+                        {node.roomNumber || 'Classroom Ingress'} • {node.version}
+                      </div>
+                    </div>
+
+                    {/* Status Alert Badge */}
+                    {isOnline && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        ONLINE
+                      </span>
+                    )}
+                    {isWeak && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                        <AlertTriangle className="w-3 h-3 text-amber-400" />
+                        WEAK RSSI
+                      </span>
+                    )}
+                    {isOffline && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                        <WifiOff className="w-3 h-3 text-rose-400" />
+                        OFFLINE ALERT
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Free Heap Memory Gauge */}
+                  <div className="space-y-1.5 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+                    <div className="flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Cpu className="w-3 h-3 text-sky-400" />
+                        <span>FREE HEAP MEMORY</span>
+                      </span>
+                      <span className="text-white font-bold">{heapKb} KB ({heapPercent}%)</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          heapKb > 150 ? 'bg-emerald-500' : heapKb > 70 ? 'bg-amber-500' : 'bg-rose-500'
+                        }`}
+                        style={{ width: `${heapPercent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Telemetry Metrics Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                    <div className="p-2 rounded bg-slate-950/40 border border-slate-800/60">
+                      <div className="text-[9px] text-slate-500 flex items-center gap-1">
+                        <Wifi className="w-2.5 h-2.5 text-sky-400" />
+                        <span>WI-FI RSSI</span>
+                      </div>
+                      <div className={`font-bold mt-0.5 ${node.rssi < -80 ? 'text-amber-400' : 'text-slate-200'}`}>
+                        {node.rssi} dBm
+                      </div>
+                    </div>
+
+                    <div className="p-2 rounded bg-slate-950/40 border border-slate-800/60">
+                      <div className="text-[9px] text-slate-500 flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5 text-emerald-400" />
+                        <span>UPTIME</span>
+                      </div>
+                      <div className="font-bold text-slate-200 mt-0.5">
+                        {formatUptime(node.uptimeSec)}
+                      </div>
+                    </div>
+
+                    <div className="p-2 rounded bg-slate-950/40 border border-slate-800/60">
+                      <div className="text-[9px] text-slate-500 flex items-center gap-1">
+                        <Radio className="w-2.5 h-2.5 text-purple-400" />
+                        <span>RFID READER</span>
+                      </div>
+                      <div className="font-bold text-slate-200 mt-0.5 truncate">
+                        {node.readerStatus}
+                      </div>
+                    </div>
+
+                    <div className="p-2 rounded bg-slate-950/40 border border-slate-800/60">
+                      <div className="text-[9px] text-slate-500 flex items-center gap-1">
+                        <Activity className="w-2.5 h-2.5 text-amber-400" />
+                        <span>LAST HEARTBEAT</span>
+                      </div>
+                      <div className="font-bold text-slate-200 mt-0.5">
+                        {formatLastSeen(node.lastSeen)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Card Controls */}
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/70">
+                    <button
+                      type="button"
+                      onClick={() => toggleQuietMode(node.terminalId)}
+                      className={`text-[10px] font-mono px-2 py-1 rounded-lg border flex items-center gap-1 transition ${
+                        node.isQuietMode
+                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                          : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'
+                      }`}
+                      title="Lecture Quiet Mode: Auto-dampens terminal buzzer after late threshold"
+                    >
+                      {node.isQuietMode ? <BellOff className="w-3 h-3 text-purple-400" /> : <Bell className="w-3 h-3 text-slate-400" />}
+                      <span>{node.isQuietMode ? 'Quiet: ON' : 'Quiet: OFF'}</span>
+                    </button>
+
+                    {!isSelected && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTerminalId(node.terminalId);
+                          fetchTerminalStatus();
+                        }}
+                        className="text-[10px] font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-1"
+                      >
+                        <span>Select Mirror</span>
+                        <span>&rarr;</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </Card>
 
       {/* Asymmetric 60 / 40 Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
