@@ -74,16 +74,16 @@ export const FacultyReportsPage: React.FC = () => {
 
   useEffect(() => {
     fetchSections();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchSessions();
-  }, [selectedSectionId, statusFilter]);
+  }, [selectedSectionId, statusFilter, token]);
 
   const fetchSections = async () => {
     try {
       const res = await fetch(`${API_V1_URL}/sections/my`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {
@@ -104,7 +104,7 @@ export const FacultyReportsPage: React.FC = () => {
       if (toDate) url.searchParams.set('to', new Date(toDate + 'T23:59:59').toISOString());
 
       const res = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {
@@ -217,7 +217,7 @@ export const FacultyReportsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ recipientEmail }),
       });

@@ -107,7 +107,7 @@ export const CardEnrollmentPage: React.FC = () => {
     return () => {
       socket.off('card:scanned', handleCardScanned);
     };
-  }, [socket]);
+  }, [socket, token]);
 
   // Clean up enrollment mode on unmount
   useEffect(() => {
@@ -124,7 +124,7 @@ export const CardEnrollmentPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           terminalId,
@@ -145,7 +145,7 @@ export const CardEnrollmentPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ terminalId }),
       });
@@ -157,7 +157,9 @@ export const CardEnrollmentPage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_V1_URL}/users`);
+      const res = await fetch(`${API_V1_URL}/users`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setUsers(json.data);
@@ -196,7 +198,7 @@ export const CardEnrollmentPage: React.FC = () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ rfidUid: rfidUid.trim() }),
       });
@@ -243,9 +245,7 @@ export const CardEnrollmentPage: React.FC = () => {
       setIsRevoking(true);
       const res = await fetch(`${API_V1_URL}/users/${userToRemove.id}/rfid`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {

@@ -150,7 +150,7 @@ export const AdminUsersPage: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [roleFilter]);
+  }, [roleFilter, token]);
 
   // Live RFID Intercept when modals are open
   useEffect(() => {
@@ -187,7 +187,7 @@ export const AdminUsersPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           terminalId,
@@ -206,7 +206,7 @@ export const AdminUsersPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ terminalId }),
       });
@@ -234,7 +234,7 @@ export const AdminUsersPage: React.FC = () => {
       }
 
       const res = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {
@@ -307,7 +307,7 @@ export const AdminUsersPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -353,7 +353,7 @@ export const AdminUsersPage: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -382,7 +382,7 @@ export const AdminUsersPage: React.FC = () => {
     try {
       const res = await fetch(`${API_V1_URL}/users/${selectedUser.id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       const json = await res.json();
@@ -423,7 +423,10 @@ export const AdminUsersPage: React.FC = () => {
     try {
       const res = await fetch(`${API_V1_URL}/users/bulk`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
       });
       const json = await res.json();
@@ -463,7 +466,10 @@ export const AdminUsersPage: React.FC = () => {
     try {
       const res = await fetch(`${API_V1_URL}/users/bulk`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ users: csvPreview }),
       });
       const json = await res.json();

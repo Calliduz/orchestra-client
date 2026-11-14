@@ -62,7 +62,7 @@ export const FacultyClassroomsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ sectionId }),
       });
@@ -87,13 +87,13 @@ export const FacultyClassroomsPage: React.FC = () => {
       socket.off('session:started', fetchMySections);
       socket.off('session:closed', fetchMySections);
     };
-  }, [socket]);
+  }, [socket, token]);
 
   const fetchMySections = async () => {
     try {
       setIsLoading(true);
       const res = await fetch(`${API_V1_URL}/sections/my`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {

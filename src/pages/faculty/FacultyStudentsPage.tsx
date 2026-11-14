@@ -27,13 +27,13 @@ export const FacultyStudentsPage: React.FC = () => {
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [token]);
 
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
       const res = await fetch(`${API_V1_URL}/analytics/student-punctuality`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {

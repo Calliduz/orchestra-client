@@ -121,7 +121,7 @@ export const TerminalMonitorPage: React.FC = () => {
         socket.off('terminal:quiet-mode');
       }
     };
-  }, [terminalId, socket]);
+  }, [terminalId, socket, token]);
 
   const fetchFleetTerminals = async () => {
     try {

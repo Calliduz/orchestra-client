@@ -115,7 +115,7 @@ export const FacultyDashboardPage: React.FC = () => {
   const fetchPendingExcuses = useCallback(async () => {
     try {
       const res = await fetch(`${API_V1_URL}/excuses/pending`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
@@ -138,7 +138,7 @@ export const FacultyDashboardPage: React.FC = () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ status, reviewNotes: notes }),
       });
@@ -167,7 +167,7 @@ export const FacultyDashboardPage: React.FC = () => {
   const handleDownloadExcuseDocument = async (excuseId: string, fileName?: string | null) => {
     try {
       const res = await fetch(`${API_V1_URL}/excuses/${excuseId}/document`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error('Failed to download document');
       const blob = await res.blob();
@@ -194,7 +194,7 @@ export const FacultyDashboardPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ sectionId: targetSectionId, terminalId }),
       });
@@ -220,7 +220,9 @@ export const FacultyDashboardPage: React.FC = () => {
   const fetchActiveSession = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const res = await fetch(`${API_V1_URL}/sessions/active/${terminalId}`);
+      const res = await fetch(`${API_V1_URL}/sessions/active/${terminalId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const json = await res.json();
 
       if (json.success && json.data) {
@@ -236,7 +238,7 @@ export const FacultyDashboardPage: React.FC = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [terminalId]);
+  }, [terminalId, token]);
 
   useEffect(() => {
     fetchActiveSession();
@@ -300,7 +302,7 @@ export const FacultyDashboardPage: React.FC = () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ lateThresholdMins: late, cutThresholdMins: cut }),
       });
@@ -325,7 +327,7 @@ export const FacultyDashboardPage: React.FC = () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ studentId, status, reason }),
       });
@@ -350,7 +352,7 @@ export const FacultyDashboardPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
       const json = await res.json();

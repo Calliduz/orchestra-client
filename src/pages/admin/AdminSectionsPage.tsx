@@ -370,13 +370,13 @@ export const AdminSectionsPage: React.FC = () => {
   useEffect(() => {
     fetchSections();
     fetchFacultyList();
-  }, []);
+  }, [token]);
 
   const fetchSections = async () => {
     try {
       setIsLoading(true);
       setFetchError(null);
-      const res  = await fetch(`${API_V1_URL}/sections`, { headers: { Authorization: `Bearer ${token}` } });
+      const res  = await fetch(`${API_V1_URL}/sections`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.message || 'Failed to retrieve course sections');
       setSections(json.data || []);
@@ -391,7 +391,7 @@ export const AdminSectionsPage: React.FC = () => {
 
   const fetchFacultyList = async () => {
     try {
-      const res  = await fetch(`${API_V1_URL}/users?role=FACULTY`, { headers: { Authorization: `Bearer ${token}` } });
+      const res  = await fetch(`${API_V1_URL}/users?role=FACULTY`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       const json = await res.json();
       if (json.success) setFacultyList(json.data || []);
     } catch (err) {
@@ -468,7 +468,10 @@ export const AdminSectionsPage: React.FC = () => {
     try {
       const res = await fetch(`${API_V1_URL}/sections`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           sectionCode:              form.sectionCode.trim().toUpperCase(),
           courseName:               form.courseName.trim(),
@@ -513,7 +516,10 @@ export const AdminSectionsPage: React.FC = () => {
     try {
       const res = await fetch(`${API_V1_URL}/sections/${selectedSection.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           sectionCode:              form.sectionCode.trim().toUpperCase(),
           courseName:               form.courseName.trim(),
@@ -548,7 +554,7 @@ export const AdminSectionsPage: React.FC = () => {
     try {
       const res = await fetch(`${API_V1_URL}/sections/${selectedSection.id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.message || 'Failed to delete section');

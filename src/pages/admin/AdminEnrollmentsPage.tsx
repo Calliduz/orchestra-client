@@ -161,19 +161,19 @@ export const AdminEnrollmentsPage: React.FC = () => {
   useEffect(() => {
     fetchSections();
     fetchTotalStudents();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (selectedSectionId) {
       setSelectedRosterIds(new Set());
       fetchRoster(selectedSectionId);
     }
-  }, [selectedSectionId]);
+  }, [selectedSectionId, token]);
 
   const fetchTotalStudents = async () => {
     try {
       const res = await fetch(`${API_V1_URL}/users?role=STUDENT`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
@@ -187,7 +187,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
   const fetchSections = async () => {
     try {
       const res = await fetch(`${API_V1_URL}/sections`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success && json.data.length > 0) {
@@ -204,7 +204,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
     try {
       setIsLoading(true);
       const res = await fetch(`${API_V1_URL}/enrollments/section/${sectionId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {
@@ -224,7 +224,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
     try {
       // Fetch all students to see who is not yet enrolled
       const res = await fetch(`${API_V1_URL}/users?role=STUDENT`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();
       if (json.success) {
@@ -251,7 +251,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           studentIds: Array.from(selectedEnrollIds),
@@ -286,7 +286,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
     try {
       const res = await fetch(`${API_V1_URL}/enrollments/${unenrollTarget.student.id}/${selectedSectionId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       const json = await res.json();
@@ -321,7 +321,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           studentIds: Array.from(selectedRosterIds),
@@ -375,9 +375,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
 
       const res = await fetch(`${API_V1_URL}/bulk-import/validate`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
 
@@ -406,7 +404,7 @@ export const AdminEnrollmentsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           rows: validationReport.rows.filter((r) => r.status === 'VALID'),

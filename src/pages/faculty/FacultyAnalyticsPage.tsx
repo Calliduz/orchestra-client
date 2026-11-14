@@ -122,16 +122,16 @@ export const FacultyAnalyticsPage: React.FC = () => {
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, []);
+  }, [token]);
 
   const fetchAnalyticsData = async () => {
     try {
       setIsLoading(true);
 
       const [summaryRes, trendsRes, studentsRes] = await Promise.all([
-        fetch(`${API_V1_URL}/analytics/faculty-summary`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_V1_URL}/analytics/attendance-trends`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_V1_URL}/analytics/student-punctuality`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_V1_URL}/analytics/faculty-summary`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }),
+        fetch(`${API_V1_URL}/analytics/attendance-trends`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }),
+        fetch(`${API_V1_URL}/analytics/student-punctuality`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }),
       ]);
 
       const [summaryJson, trendsJson, studentsJson] = await Promise.all([
