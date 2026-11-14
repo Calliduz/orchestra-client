@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Lock, Unlock, AlertTriangle } from 'lucide-react';
+import {
+  Shield,
+  Lock,
+  Unlock,
+  AlertTriangle,
+  FileCheck,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  Download,
+  Clock,
+  Paperclip,
+} from 'lucide-react';
 import { useSocket } from '../context/SocketContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
@@ -10,8 +22,41 @@ import { RosterTable, StudentRosterRow } from '../components/dashboard/RosterTab
 import { OverrideModal } from '../components/dashboard/OverrideModal.js';
 import { Card } from '../components/ui/Card.js';
 import { Button } from '../components/ui/Button.js';
+import { Modal } from '../components/ui/Modal.js';
 import { API_V1_URL } from '../config/api.js';
 import { sounds } from '../utils/audio.js';
+
+interface PendingExcuseItem {
+  id: string;
+  studentId: string;
+  reason: string;
+  documentUrl?: string | null;
+  documentName?: string | null;
+  status: string;
+  createdAt: string;
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    studentId: string | null;
+    email: string;
+  };
+  attendanceLog: {
+    id: string;
+    status: string;
+    tapTimestamp: string | null;
+    createdAt: string;
+    session: {
+      id: string;
+      section: {
+        id: string;
+        sectionCode: string;
+        courseName: string;
+        roomNumber: string;
+      };
+    };
+  };
+}
 
 interface ActiveSessionPayload {
   isLocked: boolean;
@@ -58,6 +103,84 @@ export const FacultyDashboardPage: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentRosterRow | null>(null);
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
   const [isStartingSession, setIsStartingSession] = useState(false);
+
+  // Excuse Requests Review Drawer State
+  const [pendingExcuses, setPendingExcuses] = useState<PendingExcuseItem[]>([]);
+  const [isExcuseDrawerOpen, setIsExcuseDrawerOpen] = useState(false);
+  const [reviewingExcuseId, setReviewingExcuseId] = useState<string | null>(null);
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+
+  const fetchPendingExcuses = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_V1_URL}/excuses/pending`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setPendingExcuses(json.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch pending excuses:', err);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchPendingExcuses();
+  }, [fetchPendingExcuses]);
+
+  const handleReviewExcuse = async (excuseId: string, status: 'APPROVED' | 'REJECTED') => {
+    setReviewingExcuseId(excuseId);
+    try {
+      const notes = reviewNotes[excuseId] || '';
+      const res = await fetch(`${API_V1_URL}/excuses/${excuseId}/review`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status, reviewNotes: notes }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to review excuse request');
+      }
+
+      sounds.playSuccessChime();
+      toast.success(
+        `Excuse Request ${status === 'APPROVED' ? 'Approved' : 'Rejected'}`,
+        status === 'APPROVED'
+          ? 'Student attendance record updated to EXCUSED.'
+          : 'Excuse request was rejected.'
+      );
+      fetchPendingExcuses();
+      fetchActiveSession();
+    } catch (err: any) {
+      sounds.playErrorBuzz();
+      toast.error('Review Action Failed', err.message);
+    } finally {
+      setReviewingExcuseId(null);
+    }
+  };
+
+  const handleDownloadExcuseDocument = async (excuseId: string, fileName?: string | null) => {
+    try {
+      const res = await fetch(`${API_V1_URL}/excuses/${excuseId}/document`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to download document');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName || 'excuse_attachment';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error('Download Failed', err.message);
+    }
+  };
 
   const handleStartSession = async () => {
     const targetSectionId = sessionData?.section?.id;
@@ -120,8 +243,18 @@ export const FacultyDashboardPage: React.FC = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleSessionStarted = () => fetchActiveSession();
-    const handleSessionClosed = () => fetchActiveSession();
+    const handleSessionStarted = () => {
+      fetchActiveSession();
+      fetchPendingExcuses();
+    };
+    const handleSessionClosed = () => {
+      fetchActiveSession();
+      fetchPendingExcuses();
+    };
+    const handleExcuseReviewed = () => {
+      fetchPendingExcuses();
+      fetchActiveSession();
+    };
     const handleAttendanceUpdated = (data: { roster?: StudentRosterRow[]; stats?: typeof stats }) => {
       if (data.roster) setRoster(data.roster);
       if (data.stats) setStats(data.stats);
@@ -146,14 +279,16 @@ export const FacultyDashboardPage: React.FC = () => {
     socket.on('session:closed', handleSessionClosed);
     socket.on('attendance:updated', handleAttendanceUpdated);
     socket.on('thresholds:updated', handleThresholdsUpdated);
+    socket.on('excuse:reviewed', handleExcuseReviewed);
 
     return () => {
       socket.off('session:started', handleSessionStarted);
       socket.off('session:closed', handleSessionClosed);
       socket.off('attendance:updated', handleAttendanceUpdated);
       socket.off('thresholds:updated', handleThresholdsUpdated);
+      socket.off('excuse:reviewed', handleExcuseReviewed);
     };
-  }, [socket, fetchActiveSession]);
+  }, [socket, fetchActiveSession, fetchPendingExcuses]);
 
   const handleUpdateThresholds = async (late: number, cut: number) => {
     if (!sessionData?.session?.id) return;
@@ -243,6 +378,37 @@ export const FacultyDashboardPage: React.FC = () => {
           <button onClick={() => setActionError(null)} className="text-slate-400 hover:text-white text-xs">
             Dismiss
           </button>
+        </div>
+      )}
+
+      {/* Pending Excuse Requests Alert Banner */}
+      {pendingExcuses.length > 0 && (
+        <div className="p-4 bg-gradient-to-r from-purple-950/70 via-slate-900 to-indigo-950/70 border border-purple-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-purple-950/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0">
+              <FileCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Pending Absence Excuse Slips</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500 text-white animate-pulse">
+                  {pendingExcuses.length} Pending
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-300 mt-0.5">
+                Students have submitted medical or absence justifications for your review.
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExcuseDrawerOpen(true)}
+            leftIcon={<FileCheck className="w-3.5 h-3.5 text-purple-300" />}
+            className="border-purple-400/30 hover:border-purple-400/60 bg-purple-500/10 hover:bg-purple-500/20 text-purple-200 text-xs shrink-0 whitespace-nowrap"
+          >
+            Review Excuses ({pendingExcuses.length})
+          </Button>
         </div>
       )}
 
@@ -363,6 +529,129 @@ export const FacultyDashboardPage: React.FC = () => {
         student={selectedStudent}
         onApplyOverride={handleApplyOverride}
       />
+
+      {/* Pending Excuse Requests Review Modal */}
+      {isExcuseDrawerOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setIsExcuseDrawerOpen(false)}
+          title={`Absence Excuse Requests (${pendingExcuses.length} Pending)`}
+          hideFooter
+        >
+          <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+            {pendingExcuses.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs space-y-1">
+                <FileCheck className="w-8 h-8 text-slate-600 mx-auto" />
+                <div className="font-semibold text-slate-300">All Excuses Reviewed</div>
+                <p className="text-slate-500">There are no pending absence justifications for your sections.</p>
+              </div>
+            ) : (
+              pendingExcuses.map((excuse) => (
+                <div
+                  key={excuse.id}
+                  className="p-4 rounded-xl bg-slate-950/80 border border-white/[0.08] space-y-3"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/[0.06] pb-2.5">
+                    <div>
+                      <div className="text-sm font-bold text-white">
+                        {excuse.student.lastName}, {excuse.student.firstName}
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-400">
+                        ID: {excuse.student.studentId || 'N/A'} • {excuse.student.email}
+                      </div>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <div className="text-xs font-mono font-bold text-purple-300">
+                        {excuse.attendanceLog.session.section.sectionCode}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono">
+                        Session: {new Date(excuse.attendanceLog.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] font-mono uppercase text-slate-400 mb-1">
+                      Student Justification:
+                    </div>
+                    <p className="text-xs text-slate-200 bg-slate-900/60 p-2.5 rounded-lg border border-white/[0.04] leading-relaxed">
+                      {excuse.reason}
+                    </p>
+                  </div>
+
+                  {excuse.documentUrl && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-purple-950/20 border border-purple-500/20 text-xs">
+                      <div className="flex items-center gap-2 truncate">
+                        <Paperclip className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                        <span className="text-purple-300 truncate font-mono text-[11px]">
+                          {excuse.documentName || 'Proof Document'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadExcuseDocument(excuse.id, excuse.documentName)}
+                        className="px-2 py-1 rounded bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 font-mono text-[10px] flex items-center gap-1 shrink-0 transition"
+                      >
+                        <Download className="w-3 h-3" />
+                        View Document
+                      </button>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                      Review Note / Feedback (Optional):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Validated clinic slip with University Health Service"
+                      value={reviewNotes[excuse.id] || ''}
+                      onChange={(e) =>
+                        setReviewNotes((prev) => ({ ...prev, [excuse.id]: e.target.value }))
+                      }
+                      className="w-full bg-slate-900 border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.04]">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      disabled={reviewingExcuseId === excuse.id}
+                      onClick={() => handleReviewExcuse(excuse.id, 'REJECTED')}
+                      leftIcon={<XCircle className="w-3.5 h-3.5" />}
+                      className="text-xs h-7 py-0"
+                    >
+                      {reviewingExcuseId === excuse.id ? 'Processing...' : 'Reject'}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={reviewingExcuseId === excuse.id}
+                      onClick={() => handleReviewExcuse(excuse.id, 'APPROVED')}
+                      leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                      className="text-xs h-7 py-0 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/30"
+                    >
+                      {reviewingExcuseId === excuse.id ? 'Processing...' : 'Approve & Mark Excused'}
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+
+            <div className="flex items-center justify-end pt-3 border-t border-white/[0.06]">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsExcuseDrawerOpen(false)}
+                className="text-xs h-8"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

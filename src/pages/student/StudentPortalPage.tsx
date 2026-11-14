@@ -21,9 +21,13 @@ import {
   Wifi,
   Shield,
   TrendingUp,
+  FileText,
+  UploadCloud,
+  Paperclip,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card.js';
 import { Button } from '../../components/ui/Button.js';
+import { Modal } from '../../components/ui/Modal.js';
 import { EmergencyOtpModal } from '../../components/dashboard/EmergencyOtpModal.js';
 import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
@@ -34,7 +38,7 @@ import { sounds } from '../../utils/audio.js';
 interface AttendanceLogItem {
   id: string;
   timestamp: string;
-  status: 'PRESENT' | 'LATE' | 'EXCUSED' | 'ABSENT';
+  status: 'PRESENT' | 'LATE' | 'EXCUSED' | 'ABSENT' | 'CUT';
   authMethod: 'RFID_TAP' | 'KEYPAD_OTP' | 'MANUAL_OVERRIDE' | string;
   session: {
     id?: string;
@@ -43,6 +47,12 @@ interface AttendanceLogItem {
     room?: string;
     terminalId?: string;
   };
+  excuseRequest?: {
+    id: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    reason: string;
+    reviewNotes?: string | null;
+  } | null;
 }
 
 interface KpiData {
@@ -78,6 +88,13 @@ export const StudentPortalPage: React.FC = () => {
     rate: 100,
   });
   const [logs, setLogs] = useState<AttendanceLogItem[]>([]);
+
+  // Digital Excuse Slip Modal State
+  const [selectedLogForExcuse, setSelectedLogForExcuse] = useState<AttendanceLogItem | null>(null);
+  const [excuseCategory, setExcuseCategory] = useState<'Medical' | 'Family Emergency' | 'Official College Duty' | 'Other'>('Medical');
+  const [excuseReason, setExcuseReason] = useState('');
+  const [excuseFile, setExcuseFile] = useState<File | null>(null);
+  const [isSubmittingExcuse, setIsSubmittingExcuse] = useState(false);
 
   const fetchAttendance = useCallback(async (quiet = false) => {
     if (!quiet) setIsLoading(true);
@@ -185,11 +202,69 @@ export const StudentPortalPage: React.FC = () => {
       }
     };
 
+    const handleExcuseReviewed = (data: any) => {
+      if (data && (data.studentId === user?.id || data.studentId === user?.studentId)) {
+        toast.info(
+          'Excuse Request Reviewed',
+          `Your excuse request was ${data.status?.toLowerCase() || 'updated'} by instructor.`
+        );
+        fetchAttendance(true);
+      }
+    };
+
     socket.on('attendance:updated', handleAttendanceUpdated);
+    socket.on('excuse:reviewed', handleExcuseReviewed);
     return () => {
       socket.off('attendance:updated', handleAttendanceUpdated);
+      socket.off('excuse:reviewed', handleExcuseReviewed);
     };
   }, [socket, user, fetchAttendance, toast]);
+
+  const handleSubmitExcuse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLogForExcuse) return;
+
+    if (!excuseReason.trim()) {
+      toast.warning('Reason Required', 'Please provide a clear justification for your absence.');
+      return;
+    }
+
+    setIsSubmittingExcuse(true);
+    try {
+      const formData = new FormData();
+      formData.append('attendanceLogId', selectedLogForExcuse.id);
+      formData.append('reason', `[${excuseCategory}] ${excuseReason.trim()}`);
+      if (excuseFile) {
+        formData.append('document', excuseFile);
+      }
+
+      const res = await fetch(`${API_V1_URL}/excuses`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to submit excuse slip');
+      }
+
+      toast.success(
+        'Excuse Slip Submitted',
+        'Your absence justification has been submitted to your faculty instructor for review.'
+      );
+      setSelectedLogForExcuse(null);
+      setExcuseReason('');
+      setExcuseFile(null);
+      fetchAttendance(true);
+    } catch (err: any) {
+      toast.error('Submission Failed', err.message);
+    } finally {
+      setIsSubmittingExcuse(false);
+    }
+  };
 
   // Calculate consecutive on-time attendance streak
   const streak = useMemo(() => {
@@ -875,6 +950,7 @@ export const StudentPortalPage: React.FC = () => {
                   <th className="py-3 px-3">Room / Node</th>
                   <th className="py-3 px-3">Ingress Method</th>
                   <th className="py-3 px-3 text-right">Status</th>
+                  <th className="py-3 px-3 text-right">Excuse Slip</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
@@ -915,6 +991,60 @@ export const StudentPortalPage: React.FC = () => {
                       <td className="py-3 px-3 text-right whitespace-nowrap">
                         {getStatusBadge(log.status)}
                       </td>
+                      <td className="py-3 px-3 text-right whitespace-nowrap">
+                        {log.status === 'ABSENT' || log.status === 'CUT' ? (
+                          log.excuseRequest ? (
+                            log.excuseRequest.status === 'PENDING' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <Clock className="w-3 h-3" /> Pending Review
+                              </span>
+                            ) : log.excuseRequest.status === 'APPROVED' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                <CheckCircle2 className="w-3 h-3" /> Approved
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                                <XCircle className="w-3 h-3" /> Rejected
+                              </span>
+                            )
+                          ) : (
+                            (() => {
+                              const daysElapsed =
+                                (Date.now() - new Date(log.timestamp).getTime()) /
+                                (1000 * 60 * 60 * 24);
+                              if (daysElapsed <= 7) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedLogForExcuse(log);
+                                      setExcuseCategory('Medical');
+                                      setExcuseReason('');
+                                      setExcuseFile(null);
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 transition shadow-xs"
+                                  >
+                                    <FileText className="w-3 h-3" />
+                                    Submit Excuse
+                                  </button>
+                                );
+                              } else {
+                                return (
+                                  <span className="text-[10px] font-mono text-slate-500">
+                                    Expired (&gt;7d)
+                                  </span>
+                                );
+                              }
+                            })()
+                          )
+                        ) : log.status === 'EXCUSED' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400">
+                            <CheckCircle2 className="w-3 h-3" /> Excused by Faculty
+                          </span>
+                        ) : (
+                          <span className="text-slate-600 font-mono text-xs">—</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -929,6 +1059,122 @@ export const StudentPortalPage: React.FC = () => {
         isOpen={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
       />
+
+      {/* Excuse Submission Modal */}
+      {selectedLogForExcuse && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            if (!isSubmittingExcuse) {
+              setSelectedLogForExcuse(null);
+            }
+          }}
+          title="Submit Absence Justification"
+          hideFooter
+        >
+          <form onSubmit={handleSubmitExcuse} className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs">
+              <div className="font-bold text-white flex items-center justify-between">
+                <span>
+                  {selectedLogForExcuse.session.courseCode} -{' '}
+                  {selectedLogForExcuse.session.courseName}
+                </span>
+                <span className="px-2 py-0.5 rounded font-mono text-[10px] bg-rose-500/20 text-rose-300">
+                  {selectedLogForExcuse.status}
+                </span>
+              </div>
+              <div className="text-slate-400 text-[11px] mt-1 font-mono">
+                Session Date:{' '}
+                {new Date(selectedLogForExcuse.timestamp).toLocaleDateString()} at{' '}
+                {new Date(selectedLogForExcuse.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-1">
+                Excuse Category
+              </label>
+              <select
+                value={excuseCategory}
+                onChange={(e: any) => setExcuseCategory(e.target.value)}
+                className="w-full bg-slate-950 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="Medical">Medical (Illness / Doctor Visit / Clinic)</option>
+                <option value="Family Emergency">Family Emergency</option>
+                <option value="Official College Duty">Official College Duty / Competition</option>
+                <option value="Other">Other Extenuating Circumstances</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-1">
+                Statement / Reason
+              </label>
+              <textarea
+                value={excuseReason}
+                onChange={(e) => setExcuseReason(e.target.value)}
+                rows={3}
+                placeholder="Explain the reason for your absence in detail..."
+                className="w-full bg-slate-950 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-1">
+                Supporting Document (Medical Certificate / Dean&apos;s Excuse Slip)
+              </label>
+              <div className="p-3 rounded-xl border border-dashed border-white/20 bg-slate-950/60 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 truncate">
+                  <Paperclip className="w-4 h-4 text-purple-400 shrink-0" />
+                  <span className="text-slate-300 truncate">
+                    {excuseFile ? excuseFile.name : 'No file selected (Optional)'}
+                  </span>
+                </div>
+                <label className="cursor-pointer px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-[11px] shrink-0">
+                  Browse
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setExcuseFile(file);
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Accepted formats: PDF, JPEG, PNG, WEBP (Max 10MB).
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedLogForExcuse(null)}
+                disabled={isSubmittingExcuse}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={isSubmittingExcuse || !excuseReason.trim()}
+                className="bg-purple-600 hover:bg-purple-500"
+              >
+                {isSubmittingExcuse ? 'Submitting...' : 'Submit Excuse Slip'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

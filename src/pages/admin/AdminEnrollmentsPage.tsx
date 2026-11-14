@@ -19,6 +19,9 @@ import {
   GraduationCap,
   UserCheck,
   Layers,
+  UploadCloud,
+  FileText,
+  Download,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card.js';
 import { Button } from '../../components/ui/Button.js';
@@ -128,6 +131,32 @@ export const AdminEnrollmentsPage: React.FC = () => {
 
   // Analytics State
   const [totalStudentsCount, setTotalStudentsCount] = useState<number>(0);
+
+  // Bulk CSV Import Modal State
+  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [isValidatingCsv, setIsValidatingCsv] = useState(false);
+  const [isCommittingCsv, setIsCommittingCsv] = useState(false);
+  const [validationReport, setValidationReport] = useState<{
+    totalRows: number;
+    validCount: number;
+    conflictCount: number;
+    rows: Array<{
+      rowNumber: number;
+      data: {
+        studentId: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        sectionCode: string;
+        rfidUid?: string;
+      };
+      status: 'VALID' | 'CONFLICT';
+      issues: string[];
+      action: string;
+    }>;
+  } | null>(null);
+  const [csvFilter, setCsvFilter] = useState<'ALL' | 'VALID' | 'CONFLICT'>('ALL');
 
   useEffect(() => {
     fetchSections();
@@ -319,6 +348,96 @@ export const AdminEnrollmentsPage: React.FC = () => {
 
   const activeSection = sections.find((s) => s.id === selectedSectionId);
 
+  const downloadSampleCsv = () => {
+    const sectionPlaceholder = activeSection?.sectionCode || 'AR101-BSIT3A';
+    const csvContent =
+      'studentId,firstName,lastName,email,sectionCode,rfidUid\r\n' +
+      `2024-0010-CCS,John,Doe,john.doe@orchestra.edu,${sectionPlaceholder},A1B2C3D4\r\n` +
+      `2024-0011-CCS,Jane,Smith,jane.smith@orchestra.edu,${sectionPlaceholder},\r\n` +
+      `2024-0012-CCS,Alex,Rivera,alex.rivera@orchestra.edu,${sectionPlaceholder},E5F6A7B8\r\n`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'orchestra_bulk_enrollment_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleValidateCsv = async () => {
+    if (!csvFile) return;
+    setIsValidatingCsv(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', csvFile);
+
+      const res = await fetch(`${API_V1_URL}/bulk-import/validate`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to validate CSV file');
+      }
+
+      setValidationReport(json.data);
+      toast.success(
+        'Validation Complete',
+        `Analyzed ${json.data.totalRows} rows: ${json.data.validCount} valid, ${json.data.conflictCount} conflict(s).`
+      );
+    } catch (err: any) {
+      toast.error('Validation Error', err.message);
+    } finally {
+      setIsValidatingCsv(false);
+    }
+  };
+
+  const handleCommitCsv = async () => {
+    if (!validationReport || validationReport.validCount === 0) return;
+    setIsCommittingCsv(true);
+    try {
+      const res = await fetch(`${API_V1_URL}/bulk-import/commit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rows: validationReport.rows.filter((r) => r.status === 'VALID'),
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to commit bulk import');
+      }
+
+      toast.success(
+        'Bulk Import Successful',
+        `Enrolled ${json.data.enrolledCount} student(s) (${json.data.createdUserCount} new accounts created).`
+      );
+
+      setIsBulkImportModalOpen(false);
+      setCsvFile(null);
+      setValidationReport(null);
+      fetchSections();
+      fetchTotalStudents();
+      if (selectedSectionId) {
+        fetchRoster(selectedSectionId);
+      }
+    } catch (err: any) {
+      toast.error('Import Failed', err.message);
+    } finally {
+      setIsCommittingCsv(false);
+    }
+  };
+
   const filteredRoster = roster.filter((r) => {
     const q = search.toLowerCase();
     return (
@@ -416,6 +535,20 @@ export const AdminEnrollmentsPage: React.FC = () => {
             className="h-9 px-3.5 border-white/[0.08] hover:border-white/[0.15]"
           >
             Refresh Roster
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCsvFile(null);
+              setValidationReport(null);
+              setCsvFilter('ALL');
+              setIsBulkImportModalOpen(true);
+            }}
+            leftIcon={<UploadCloud className="w-3.5 h-3.5" />}
+            className="h-9 px-3.5 border-purple-500/30 hover:border-purple-400/60 bg-purple-500/10 hover:bg-purple-500/20 text-purple-200"
+          >
+            Bulk Import CSV
           </Button>
           <Button
             variant="primary"
@@ -953,6 +1086,270 @@ export const AdminEnrollmentsPage: React.FC = () => {
                   : `Confirm Mass Unenroll (${selectedRosterIds.size})`}
               </Button>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Two-Stage Bulk CSV Import Modal */}
+      {isBulkImportModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            if (!isCommittingCsv && !isValidatingCsv) {
+              setIsBulkImportModalOpen(false);
+            }
+          }}
+          title="Bulk CSV Roster Import"
+          hideFooter
+        >
+          <div className="space-y-4 max-h-[80vh] flex flex-col">
+            {/* Stage 1: Upload & Instructions */}
+            {!validationReport ? (
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300">
+                  <div className="font-bold flex items-center gap-2 mb-1">
+                    <UploadCloud className="w-4 h-4 text-purple-400" />
+                    Two-Stage Automated Roster Onboarding
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    Upload a CSV file containing student identities and section assignments. The engine will parse each record in memory, cross-reference the database for duplicate IDs, conflicting emails, or unassigned sections, and provide a full interactive validation report before any changes are committed.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-dashed border-white/20 bg-slate-950/60 hover:border-purple-500/40 transition flex flex-col items-center justify-center gap-3 text-center">
+                  <div className="p-3 rounded-full bg-purple-500/10 text-purple-400">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <label className="cursor-pointer">
+                      <span className="text-sm font-semibold text-purple-400 hover:text-purple-300">
+                        {csvFile ? csvFile.name : 'Click to select a CSV file'}
+                      </span>
+                      <input
+                        type="file"
+                        accept=".csv,text/csv"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setCsvFile(file);
+                        }}
+                      />
+                    </label>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      {csvFile
+                        ? `${(csvFile.size / 1024).toFixed(1)} KB selected`
+                        : 'Supports standard CSV format with studentId, firstName, lastName, email, sectionCode'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadSampleCsv}
+                    leftIcon={<Download className="w-3.5 h-3.5" />}
+                    className="text-xs h-8"
+                  >
+                    Download CSV Template
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleValidateCsv}
+                    disabled={!csvFile || isValidatingCsv}
+                    leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                    className="text-xs h-8 bg-purple-600 hover:bg-purple-500"
+                  >
+                    {isValidatingCsv ? 'Validating Records...' : 'Analyze & Validate CSV'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Stage 2: Validation Preview & Commit */
+              <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                {/* Metric Strip */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="p-2.5 rounded-xl bg-slate-950 border border-white/[0.08] text-center">
+                    <div className="text-[10px] uppercase font-mono text-slate-400">Total Rows</div>
+                    <div className="text-xl font-bold font-mono text-white mt-0.5">
+                      {validationReport.totalRows}
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-center">
+                    <div className="text-[10px] uppercase font-mono text-emerald-400">Valid to Import</div>
+                    <div className="text-xl font-bold font-mono text-emerald-300 mt-0.5">
+                      {validationReport.validCount}
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-center">
+                    <div className="text-[10px] uppercase font-mono text-rose-400">Conflicts Detected</div>
+                    <div className="text-xl font-bold font-mono text-rose-300 mt-0.5">
+                      {validationReport.conflictCount}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Pills */}
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setCsvFilter('ALL')}
+                      className={`px-2.5 py-1 rounded-lg font-mono text-[11px] transition ${
+                        csvFilter === 'ALL'
+                          ? 'bg-purple-600 text-white font-bold'
+                          : 'bg-slate-950 text-slate-400 hover:text-white border border-white/[0.08]'
+                      }`}
+                    >
+                      All ({validationReport.totalRows})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCsvFilter('VALID')}
+                      className={`px-2.5 py-1 rounded-lg font-mono text-[11px] transition ${
+                        csvFilter === 'VALID'
+                          ? 'bg-emerald-600 text-white font-bold'
+                          : 'bg-slate-950 text-slate-400 hover:text-white border border-white/[0.08]'
+                      }`}
+                    >
+                      Valid ({validationReport.validCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCsvFilter('CONFLICT')}
+                      className={`px-2.5 py-1 rounded-lg font-mono text-[11px] transition ${
+                        csvFilter === 'CONFLICT'
+                          ? 'bg-rose-600 text-white font-bold'
+                          : 'bg-slate-950 text-slate-400 hover:text-white border border-white/[0.08]'
+                      }`}
+                    >
+                      Conflicts ({validationReport.conflictCount})
+                    </button>
+                  </div>
+                  <span className="text-[11px] text-slate-500">
+                    File: {csvFile?.name}
+                  </span>
+                </div>
+
+                {/* Preview Table */}
+                <div className="max-h-64 overflow-y-auto border border-white/[0.08] rounded-xl bg-slate-950/80">
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-slate-900 border-b border-white/[0.08] text-[10px] font-mono uppercase text-slate-400">
+                      <tr>
+                        <th className="py-2 px-3">Row</th>
+                        <th className="py-2 px-3">Status</th>
+                        <th className="py-2 px-3">Student</th>
+                        <th className="py-2 px-3">Email</th>
+                        <th className="py-2 px-3">Section</th>
+                        <th className="py-2 px-3">Action / Conflicts</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04]">
+                      {validationReport.rows
+                        .filter((r) => {
+                          if (csvFilter === 'VALID') return r.status === 'VALID';
+                          if (csvFilter === 'CONFLICT') return r.status === 'CONFLICT';
+                          return true;
+                        })
+                        .map((r) => (
+                          <tr key={r.rowNumber} className="hover:bg-white/[0.02]">
+                            <td className="py-2 px-3 font-mono text-slate-500 text-[11px]">
+                              #{r.rowNumber}
+                            </td>
+                            <td className="py-2 px-3">
+                              {r.status === 'VALID' ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Clean
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                  <AlertCircle className="w-3 h-3" />
+                                  Conflict
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2 px-3">
+                              <div className="font-medium text-white">
+                                {r.data.lastName}, {r.data.firstName}
+                              </div>
+                              <div className="text-[10px] font-mono text-slate-400">
+                                {r.data.studentId}
+                              </div>
+                            </td>
+                            <td className="py-2 px-3 font-mono text-[11px] text-slate-300">
+                              {r.data.email}
+                            </td>
+                            <td className="py-2 px-3 font-mono text-[11px] text-purple-300">
+                              {r.data.sectionCode}
+                            </td>
+                            <td className="py-2 px-3 text-[11px]">
+                              {r.issues.length > 0 ? (
+                                <div className="text-rose-400 space-y-0.5">
+                                  {r.issues.map((iss, idx) => (
+                                    <div key={idx} className="flex items-start gap-1">
+                                      <span>•</span>
+                                      <span>{iss}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 font-mono text-[10px]">
+                                  {r.action === 'CREATE_USER_AND_ENROLL'
+                                    ? 'Create account & Enroll'
+                                    : r.action === 'ENROLL_EXISTING_USER'
+                                    ? 'Enroll existing user'
+                                    : 'Already enrolled'}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Footer Controls */}
+                <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setValidationReport(null);
+                      setCsvFile(null);
+                    }}
+                    disabled={isCommittingCsv}
+                    className="text-xs h-8"
+                  >
+                    Upload Different File
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsBulkImportModalOpen(false)}
+                      disabled={isCommittingCsv}
+                      className="text-xs h-8"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleCommitCsv}
+                      disabled={validationReport.validCount === 0 || isCommittingCsv}
+                      leftIcon={<Check className="w-3.5 h-3.5" />}
+                      className="text-xs h-8 bg-purple-600 hover:bg-purple-500"
+                    >
+                      {isCommittingCsv
+                        ? 'Committing Roster...'
+                        : `Commit Import (${validationReport.validCount} Students)`}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}
